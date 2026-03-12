@@ -1,9 +1,32 @@
 import { skillSections } from "@/data/curriculum";
-import type { StudentRecord } from "@/types/student";
 import ChecklistSection from "@/components/ChecklistSection";
 
+type LessonStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
+
 type PrivateLessonViewProps = {
-  student: StudentRecord;
+  student: LessonStudent;
   onToggleDone: (item: string) => void;
   onToggleSigned: (item: string) => void;
   canEdit: boolean;

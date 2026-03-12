@@ -1,5 +1,16 @@
 import { skillSections } from "@/data/curriculum";
-import type { StudentRecord } from "@/types/student";
+
+type ProgressStudent = {
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+};
 
 const SECTION_WEIGHTS = {
   instrument: 40,
@@ -9,13 +20,19 @@ const SECTION_WEIGHTS = {
   groupBehavior: 10,
 } as const;
 
-export function getCompletedCount(student: StudentRecord, items: readonly string[]) {
+export function getCompletedCount(
+  student: ProgressStudent,
+  items: readonly string[]
+) {
   return items.filter(
     (item) => student.curriculum[item]?.done || student.curriculum[item]?.signed
   ).length;
 }
 
-export function getSectionProgress(student: StudentRecord, sectionKey: keyof typeof skillSections) {
+export function getSectionProgress(
+  student: ProgressStudent,
+  sectionKey: keyof typeof skillSections
+) {
   const section = skillSections[sectionKey];
 
   if (sectionKey === "groupBehavior") {
@@ -30,25 +47,27 @@ export function getSectionProgress(student: StudentRecord, sectionKey: keyof typ
   return Math.round((completed / section.items.length) * 100);
 }
 
-export function getOverallProgress(student: StudentRecord) {
+export function getOverallProgress(student: ProgressStudent) {
   let total = 0;
 
-  (Object.keys(skillSections) as Array<keyof typeof skillSections>).forEach((key) => {
-    const sectionProgress = getSectionProgress(student, key);
-    total += (sectionProgress / 100) * SECTION_WEIGHTS[key];
-  });
+  (Object.keys(skillSections) as Array<keyof typeof skillSections>).forEach(
+    (key) => {
+      const sectionProgress = getSectionProgress(student, key);
+      total += (sectionProgress / 100) * SECTION_WEIGHTS[key];
+    }
+  );
 
   return Math.round(total);
 }
 
-export function getTotalFistBumps(student: StudentRecord) {
+export function getTotalFistBumps(student: ProgressStudent) {
   return skillSections.groupBehavior.items.reduce(
     (sum, item) => sum + (student.curriculum[item]?.fistBumps || 0),
     0
   );
 }
 
-export function getEarnedBadges(student: StudentRecord) {
+export function getEarnedBadges(student: ProgressStudent) {
   const badges = new Set<string>();
   const totalProgress = getOverallProgress(student);
   const totalFistBumps = getTotalFistBumps(student);

@@ -1,12 +1,73 @@
-import type { StudentRecord } from "@/types/student";
 import { allCurriculumItems } from "@/data/curriculum";
 
+type SeedStudentRecord = {
+  name: string;
+  firstName: string;
+  lastInitial: string;
+  parentEmail: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
+
 const baseStudents = [
-  { name: "Avery", instrument: "Guitar", band: "Tuesday 5pm Rock 101" },
-  { name: "Zoe", instrument: "Voice", band: "Tuesday 5pm Rock 101" },
-  { name: "Milo", instrument: "Drums", band: "Tuesday 5pm Rock 101" },
-  { name: "Leo", instrument: "Bass", band: "Tuesday 5pm Rock 101" },
-  { name: "Emma", instrument: "Keys", band: "Tuesday 5pm Rock 101" },
+  {
+    name: "Avery P",
+    firstName: "Avery",
+    lastInitial: "P",
+    parentEmail: "averyparent@example.com",
+    instrument: "Guitar",
+    band: "Tuesday 5pm Rock 101",
+  },
+  {
+    name: "Zoe M",
+    firstName: "Zoe",
+    lastInitial: "M",
+    parentEmail: "zoeparent@example.com",
+    instrument: "Voice",
+    band: "Tuesday 5pm Rock 101",
+  },
+  {
+    name: "Milo R",
+    firstName: "Milo",
+    lastInitial: "R",
+    parentEmail: "miloparent@example.com",
+    instrument: "Drums",
+    band: "Tuesday 5pm Rock 101",
+  },
+  {
+    name: "Leo T",
+    firstName: "Leo",
+    lastInitial: "T",
+    parentEmail: "leoparent@example.com",
+    instrument: "Bass",
+    band: "Tuesday 5pm Rock 101",
+  },
+  {
+    name: "Emma S",
+    firstName: "Emma",
+    lastInitial: "S",
+    parentEmail: "emmaparent@example.com",
+    instrument: "Keys",
+    band: "Tuesday 5pm Rock 101",
+  },
 ];
 
 function createEmptyCurriculum() {
@@ -23,7 +84,7 @@ function createEmptyCurriculum() {
   );
 }
 
-export const students: StudentRecord[] = baseStudents.map((student) => ({
+export const students: SeedStudentRecord[] = baseStudents.map((student) => ({
   ...student,
   curriculum: createEmptyCurriculum(),
   notes: {

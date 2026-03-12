@@ -1,8 +1,31 @@
-import type { StudentRecord } from "@/types/student";
 import { getOverallProgress, getStageLabel } from "@/lib/progress";
 
+type CertificateStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
+
 type CertificateViewProps = {
-  student: StudentRecord;
+  student: CertificateStudent;
 };
 
 export default function CertificateView({ student }: CertificateViewProps) {

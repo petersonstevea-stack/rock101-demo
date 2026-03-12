@@ -1,8 +1,31 @@
-import type { StudentRecord } from "@/types/student";
 import { getOverallProgress } from "@/lib/progress";
 
+type DashboardStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
+
 type BandsDashboardProps = {
-  students: StudentRecord[];
+  students: DashboardStudent[];
 };
 
 export default function BandsDashboard({ students }: BandsDashboardProps) {

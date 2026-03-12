@@ -1,9 +1,32 @@
-import type { StudentRecord } from "@/types/student";
 import { getOverallProgress, getStageLabel } from "@/lib/progress";
+
+type RoleShellStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
 
 type RoleShellProps = {
   role: "student" | "instructor" | "director";
-  student: StudentRecord;
+  student: RoleShellStudent;
   onLogout: () => void;
 };
 

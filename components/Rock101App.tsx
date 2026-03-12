@@ -14,6 +14,7 @@ import WorkflowBanner from "@/components/WorkflowBanner";
 import BandsDashboard from "@/components/BandsDashboard";
 import PipelineView from "@/components/PipelineView";
 import CertificateView from "@/components/CertificateView";
+import ClassSetupView from "@/components/ClassSetupView";
 
 import { students as initialStudents } from "@/data/students";
 import { getEarnedBadges } from "@/lib/progress";
@@ -27,7 +28,8 @@ type Tab =
   | "parent"
   | "certificate"
   | "bandsDashboard"
-  | "pipeline";
+  | "pipeline"
+  | "classSetup";
 
 export default function Rock101App() {
   const [role, setRole] = useState<Role>(null);
@@ -199,6 +201,48 @@ export default function Rock101App() {
     }));
   }
 
+  function handleAddStudent(student: {
+    firstName: string;
+    lastInitial: string;
+    parentEmail: string;
+    instrument: string;
+    band: string;
+  }) {
+    const curriculumTemplate = initialStudents[0]?.curriculum ?? {};
+
+    const newStudent = {
+      name: `${student.firstName} ${student.lastInitial}`,
+      firstName: student.firstName,
+      lastInitial: student.lastInitial,
+      parentEmail: student.parentEmail,
+      instrument: student.instrument,
+      band: student.band,
+      curriculum: Object.fromEntries(
+        Object.keys(curriculumTemplate).map((item) => [
+          item,
+          {
+            done: false,
+            signed: false,
+            date: null,
+            fistBumps: 0,
+          },
+        ])
+      ),
+      notes: {
+        instructor: "",
+        director: "",
+      },
+      workflow: {
+        instructorSubmitted: false,
+        directorSubmitted: false,
+        parentSubmitted: false,
+      },
+    };
+
+    setStudents((prev) => [...prev, newStudent]);
+    setSelectedStudentName(newStudent.name);
+  }
+
   if (!role) {
     return <LoginScreen onSelectRole={setRole} />;
   }
@@ -294,6 +338,18 @@ export default function Rock101App() {
             <>
               <button
                 type="button"
+                onClick={() => setTab("classSetup")}
+                className={`rounded-lg px-4 py-2 ${
+                  tab === "classSetup"
+                    ? "bg-red-600"
+                    : "bg-zinc-800 hover:bg-zinc-700"
+                }`}
+              >
+                Class Setup
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setTab("bandsDashboard")}
                 className={`rounded-lg px-4 py-2 ${
                   tab === "bandsDashboard"
@@ -372,6 +428,10 @@ export default function Rock101App() {
 
         {tab === "certificate" && (
           <CertificateView student={selectedStudent} />
+        )}
+
+        {tab === "classSetup" && role === "director" && (
+          <ClassSetupView students={students} onAddStudent={handleAddStudent} />
         )}
 
         {tab === "bandsDashboard" && role === "director" && (

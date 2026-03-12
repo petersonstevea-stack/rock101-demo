@@ -1,9 +1,31 @@
-import type { StudentRecord } from "@/types/student";
+type SelectorStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
 
 type StudentSelectorProps = {
-  students: StudentRecord[];
-  selected: StudentRecord;
-  onSelect: (student: StudentRecord) => void;
+  students: SelectorStudent[];
+  selected: SelectorStudent;
+  onSelect: (student: SelectorStudent) => void;
 };
 
 export default function StudentSelector({
@@ -21,6 +43,7 @@ export default function StudentSelector({
         {students.map((student) => (
           <button
             key={student.name}
+            type="button"
             onClick={() => onSelect(student)}
             className={`rounded-lg px-4 py-2 ${
               selected.name === student.name

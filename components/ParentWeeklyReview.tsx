@@ -1,16 +1,39 @@
 import { skillSections } from "@/data/curriculum";
-import type { StudentRecord } from "@/types/student";
 import {
   getOverallProgress,
   getSectionProgress,
   getTotalFistBumps,
 } from "@/lib/progress";
 
-type ParentWeeklyReviewProps = {
-  student: StudentRecord;
+type ParentStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
 };
 
-function buildRockSummary(student: StudentRecord) {
+type ParentWeeklyReviewProps = {
+  student: ParentStudent;
+};
+
+function buildRockSummary(student: ParentStudent) {
   const progress = getOverallProgress(student);
 
   const completedCount = Object.values(student.curriculum).filter(

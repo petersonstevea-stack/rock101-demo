@@ -18,6 +18,9 @@ export type WorkflowState = {
 
 export type StudentRecord = {
   name: string;
+  firstName: string;
+  lastInitial: string;
+  parentEmail: string;
   instrument: string;
   band: string;
   curriculum: Record<string, CurriculumItem>;

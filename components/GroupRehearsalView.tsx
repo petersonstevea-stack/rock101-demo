@@ -1,10 +1,33 @@
 import { skillSections } from "@/data/curriculum";
-import type { StudentRecord } from "@/types/student";
 import ChecklistSection from "@/components/ChecklistSection";
 import GroupBehaviorSection from "@/components/GroupBehaviorSection";
 
+type RehearsalStudent = {
+  name: string;
+  instrument: string;
+  band: string;
+  curriculum: Record<
+    string,
+    {
+      done: boolean;
+      signed: boolean;
+      date: string | null;
+      fistBumps: number;
+    }
+  >;
+  notes: {
+    instructor: string;
+    director: string;
+  };
+  workflow: {
+    instructorSubmitted: boolean;
+    directorSubmitted: boolean;
+    parentSubmitted: boolean;
+  };
+};
+
 type GroupRehearsalViewProps = {
-  student: StudentRecord;
+  student: RehearsalStudent;
   onToggleDone: (item: string) => void;
   onToggleSigned: (item: string) => void;
   onAddFistBump: (item: string) => void;
