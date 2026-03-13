@@ -1,14 +1,14 @@
-export const songLibrary = [
+export const approvedSongs = [
   "Seven Nation Army",
   "Smoke on the Water",
-  "Boulevard of Broken Dreams",
   "Song 2",
-  "Highway to Hell",
-  "Zombie",
-  "We Will Rock You",
   "Back in Black",
+  "We Will Rock You",
   "Beat It",
-  "Livin' on a Prayer",
-  "Enter Sandman",
+  "Holiday",
   "Island in the Sun",
+  "Boulevard of Broken Dreams",
+  "Zombie",
+  "My Own Worst Enemy",
+  "Believer",
 ];

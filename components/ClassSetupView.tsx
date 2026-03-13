@@ -1,254 +1,376 @@
 "use client";
 
-import { useState } from "react";
-import { songLibrary } from "@/data/songLibrary";
+import { useEffect, useMemo, useState } from "react";
+import { RockClass } from "@/types/class";
+import { getSavedClasses, saveClasses } from "@/lib/classes";
+import { approvedSongs } from "@/data/songLibrary";
+import { AppUser } from "@/types/user";
 
-type SetupStudent = {
+type Student = {
   name: string;
-  firstName: string;
-  lastInitial: string;
-  parentEmail: string;
-  instrument: string;
-  band: string;
-  curriculum: Record<
-    string,
-    {
-      done: boolean;
-      signed: boolean;
-      date: string | null;
-      fistBumps: number;
-    }
-  >;
-  notes: {
-    instructor: string;
-    director: string;
-  };
-  workflow: {
-    instructorSubmitted: boolean;
-    directorSubmitted: boolean;
-    parentSubmitted: boolean;
-  };
 };
 
 type ClassSetupViewProps = {
-  students: SetupStudent[];
-  onAddStudent: (student: {
-    firstName: string;
-    lastInitial: string;
-    parentEmail: string;
-    instrument: string;
-    band: string;
-  }) => void;
+  students: Student[];
+  users?: AppUser[];
 };
-
-type ClassInfo = {
-  name: string;
-  director: string;
-  songs: string[];
-};
-
-const classTemplates: ClassInfo[] = [
-  { name: "Tuesday 5pm Rock 101", director: "Director A", songs: [] },
-  { name: "Wednesday 4pm Rock 101", director: "Director B", songs: [] },
-  { name: "Thursday 5pm Rock 101", director: "Director C", songs: [] },
-  { name: "Friday 4pm Rock 101", director: "Director D", songs: [] },
-  { name: "Saturday 11am Rock 101", director: "Director E", songs: [] },
-];
-
-const instruments = ["Guitar", "Bass", "Keys", "Drums", "Voice"];
 
 export default function ClassSetupView({
   students,
-  onAddStudent,
+  users = [],
 }: ClassSetupViewProps) {
-  const [classes, setClasses] = useState(classTemplates);
+  const [classes, setClasses] = useState<RockClass[]>([]);
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastInitial: "",
-    parentEmail: "",
-    instrument: "Guitar",
-    band: classTemplates[0].name,
-  });
+  const [className, setClassName] = useState("");
+  const [dayOfWeek, setDayOfWeek] = useState("Monday");
+  const [time, setTime] = useState("");
+  const [instructorEmail, setInstructorEmail] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
+  const [performanceTitle, setPerformanceTitle] = useState("");
+  const [performanceDate, setPerformanceDate] = useState("");
 
-  function toggleSong(className: string, song: string) {
-    setClasses((prev) =>
-      prev.map((c) => {
-        if (c.name !== className) return c;
+  useEffect(() => {
+    setClasses(getSavedClasses());
+  }, []);
 
-        const alreadySelected = c.songs.includes(song);
+  const instructorUsers = useMemo(() => {
+    return users.filter((user) => user.role === "instructor");
+  }, [users]);
 
-        if (alreadySelected) {
-          return { ...c, songs: c.songs.filter((s) => s !== song) };
-        }
+  function resetForm() {
+    setEditingClassId(null);
+    setClassName("");
+    setDayOfWeek("Monday");
+    setTime("");
+    setInstructorEmail("");
+    setSelectedStudents([]);
+    setSelectedSongs([]);
+    setPerformanceTitle("");
+    setPerformanceDate("");
+  }
 
-        if (c.songs.length >= 5) return c;
-
-        return { ...c, songs: [...c.songs, song] };
-      })
+  function toggleStudent(studentName: string) {
+    setSelectedStudents((prev) =>
+      prev.includes(studentName)
+        ? prev.filter((name) => name !== studentName)
+        : [...prev, studentName]
     );
   }
 
-  function submitStudent() {
-    if (
-      !form.firstName.trim() ||
-      !form.lastInitial.trim() ||
-      !form.parentEmail.trim()
-    ) {
-      return;
-    }
+  function toggleSong(songTitle: string) {
+    setSelectedSongs((prev) => {
+      if (prev.includes(songTitle)) {
+        return prev.filter((song) => song !== songTitle);
+      }
 
-    onAddStudent(form);
+      if (prev.length >= 5) {
+        alert("You can select up to 5 songs only.");
+        return prev;
+      }
 
-    setForm({
-      firstName: "",
-      lastInitial: "",
-      parentEmail: "",
-      instrument: "Guitar",
-      band: classTemplates[0].name,
+      return [...prev, songTitle];
     });
   }
 
+  function handleCreateOrUpdateClass() {
+    if (!className.trim()) {
+      alert("Please enter a class name.");
+      return;
+    }
+
+    const classData: RockClass = {
+      id: editingClassId ?? crypto.randomUUID(),
+      name: className.trim(),
+      dayOfWeek,
+      time: time.trim(),
+      instructorEmail: instructorEmail.trim().toLowerCase(),
+      studentNames: selectedStudents,
+      songs: selectedSongs,
+      performanceTitle: performanceTitle.trim(),
+      performanceDate,
+    };
+
+    let updatedClasses: RockClass[];
+
+    if (editingClassId) {
+      updatedClasses = classes.map((rockClass) =>
+        rockClass.id === editingClassId ? classData : rockClass
+      );
+    } else {
+      updatedClasses = [...classes, classData];
+    }
+
+    setClasses(updatedClasses);
+    saveClasses(updatedClasses);
+    resetForm();
+  }
+
+  function handleEditClass(rockClass: RockClass) {
+    setEditingClassId(rockClass.id);
+    setClassName(rockClass.name);
+    setDayOfWeek(rockClass.dayOfWeek);
+    setTime(rockClass.time);
+    setInstructorEmail(rockClass.instructorEmail);
+    setSelectedStudents(rockClass.studentNames);
+    setSelectedSongs(rockClass.songs);
+    setPerformanceTitle(rockClass.performanceTitle);
+    setPerformanceDate(rockClass.performanceDate);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleDeleteClass(classId: string) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this class?"
+    );
+
+    if (!confirmed) return;
+
+    const updatedClasses = classes.filter((rockClass) => rockClass.id !== classId);
+    setClasses(updatedClasses);
+    saveClasses(updatedClasses);
+
+    if (editingClassId === classId) {
+      resetForm();
+    }
+  }
+
   return (
-    <div className="mt-8 grid gap-8">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-        <div className="mb-4 text-xl font-bold">Add Student</div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <input
-            value={form.firstName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, firstName: e.target.value }))
-            }
-            placeholder="First Name"
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-white"
-          />
-
-          <input
-            value={form.lastInitial}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, lastInitial: e.target.value }))
-            }
-            placeholder="Last Initial"
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-white"
-          />
-
-          <input
-            value={form.parentEmail}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, parentEmail: e.target.value }))
-            }
-            placeholder="Parent Email"
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-white"
-          />
-
-          <select
-            value={form.instrument}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, instrument: e.target.value }))
-            }
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-white"
-          >
-            {instruments.map((instrument) => (
-              <option key={instrument} value={instrument}>
-                {instrument}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={form.band}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, band: e.target.value }))
-            }
-            className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 text-white"
-          >
-            {classTemplates.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={submitStudent}
-            className="rounded-lg bg-red-600 px-4 py-3 font-semibold text-white hover:bg-red-500"
-          >
-            Add Student
-          </button>
-        </div>
+    <div className="mt-8 space-y-8">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+        <h2 className="text-2xl font-bold">Class Builder</h2>
+        <p className="mt-2 text-zinc-400">
+          Create and manage Rock 101 classes with schedule, roster, approved songs,
+          and performance information.
+        </p>
       </div>
 
-      <div className="grid gap-6">
-        {classes.map((c) => {
-          const classStudents = students.filter((s) => s.band === c.name);
+      <div className="space-y-6 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">
+            {editingClassId ? "Edit Class" : "Create New Class"}
+          </h3>
 
-          return (
-            <div
-              key={c.name}
-              className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+          {editingClassId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-lg bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
             >
-              <div className="mb-2 text-xl font-bold">{c.name}</div>
-              <div className="mb-4 text-sm text-zinc-400">
-                Director: {c.director}
-              </div>
+              Cancel Edit
+            </button>
+          )}
+        </div>
 
-              <div className="mb-5">
-                <div className="mb-2 text-sm uppercase tracking-[0.2em] text-red-300">
-                  Song Selection ({c.songs.length}/5)
-                </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">Class Name</label>
+            <input
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+              placeholder="Tuesday 5pm Rock 101"
+            />
+          </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {songLibrary.map((song) => {
-                    const selected = c.songs.includes(song);
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">Instructor</label>
+            <select
+              value={instructorEmail}
+              onChange={(e) => setInstructorEmail(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+            >
+              <option value="">Select instructor</option>
+              {instructorUsers.map((user) => (
+                <option key={user.email} value={user.email}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                    return (
-                      <button
-                        key={song}
-                        type="button"
-                        onClick={() => toggleSong(c.name, song)}
-                        className={`rounded-lg px-3 py-2 text-sm ${
-                          selected
-                            ? "bg-red-600 text-white"
-                            : "bg-zinc-800 text-white hover:bg-zinc-700"
-                        }`}
-                      >
-                        {song}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">Day of Week</label>
+            <select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+            >
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
 
-              <div>
-                <div className="mb-2 text-sm uppercase tracking-[0.2em] text-red-300">
-                  Student Roster
-                </div>
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">Time</label>
+            <input
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+              placeholder="5:00 PM"
+            />
+          </div>
 
-                <div className="grid gap-2">
-                  {classStudents.map((student) => (
-                    <div
-                      key={student.name}
-                      className="rounded-xl border border-zinc-800 bg-zinc-900 p-3"
-                    >
-                      <div className="font-semibold">{student.name}</div>
-                      <div className="text-sm text-zinc-400">
-                        {student.instrument} · {student.parentEmail}
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">
+              Performance Title
+            </label>
+            <input
+              value={performanceTitle}
+              onChange={(e) => setPerformanceTitle(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+              placeholder="Spring Showcase"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">
+              Performance Date
+            </label>
+            <input
+              type="date"
+              value={performanceDate}
+              onChange={(e) => setPerformanceDate(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm text-zinc-400">Select Students</label>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {students.map((student) => (
+              <label
+                key={student.name}
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedStudents.includes(student.name)}
+                  onChange={() => toggleStudent(student.name)}
+                />
+                <span>{student.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="block text-sm text-zinc-400">Approved Songs</label>
+            <span className="text-sm text-zinc-500">
+              {selectedSongs.length}/5 selected
+            </span>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {approvedSongs.map((song) => (
+              <label
+                key={song}
+                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSongs.includes(song)}
+                  onChange={() => toggleSong(song)}
+                />
+                <span>{song}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleCreateOrUpdateClass}
+          className="rounded-lg bg-red-600 px-5 py-3 font-semibold text-white hover:bg-red-500"
+        >
+          {editingClassId ? "Save Changes" : "Create Class"}
+        </button>
+      </div>
+
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 className="text-xl font-semibold">Saved Classes</h3>
+
+        {classes.length === 0 ? (
+          <p className="mt-4 text-zinc-400">No classes created yet.</p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            {classes.map((rockClass) => {
+              const instructorName =
+                instructorUsers.find(
+                  (user) => user.email === rockClass.instructorEmail
+                )?.name ?? rockClass.instructorEmail;
+
+              return (
+                <div
+                  key={rockClass.id}
+                  className="rounded-lg border border-zinc-800 bg-black p-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <div className="text-lg font-bold">{rockClass.name}</div>
+                      <div className="mt-2 text-sm text-zinc-400">
+                        {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
+                      </div>
+                      <div className="mt-2 text-sm text-zinc-400">
+                        Instructor: {instructorName || "Not assigned"}
+                      </div>
+                      <div className="mt-2 text-sm text-zinc-400">
+                        Performance: {rockClass.performanceTitle || "Not set"}
+                        {rockClass.performanceDate
+                          ? ` · ${rockClass.performanceDate}`
+                          : ""}
                       </div>
                     </div>
-                  ))}
 
-                  {classStudents.length === 0 && (
-                    <div className="text-sm text-zinc-500">
-                      No students assigned yet.
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditClass(rockClass)}
+                        className="rounded-lg bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClass(rockClass.id)}
+                        className="rounded-lg bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-sm font-semibold text-white">Students</div>
+                    <div className="mt-2 text-sm text-zinc-300">
+                      {rockClass.studentNames.length > 0
+                        ? rockClass.studentNames.join(", ")
+                        : "No students assigned"}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-sm font-semibold text-white">Songs</div>
+                    <div className="mt-2 text-sm text-zinc-300">
+                      {rockClass.songs.length > 0
+                        ? rockClass.songs.join(", ")
+                        : "No songs assigned"}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

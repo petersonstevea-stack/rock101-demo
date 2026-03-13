@@ -1,12 +1,16 @@
 type AppHeaderProps = {
-  role: string | null;
+  role: "parent" | "instructor" | "director" | "generalManager" | null;
   studentName: string;
+  userName: string;
+  userEmail: string;
   onLogout: () => void;
 };
 
 export default function AppHeader({
   role,
   studentName,
+  userName,
+  userEmail,
   onLogout,
 }: AppHeaderProps) {
   return (
@@ -21,7 +25,7 @@ export default function AppHeader({
 
           <div className="min-w-0">
             <div className="truncate text-lg font-bold">
-              Rock 101 Progress Tracker
+              Progress Tracker
             </div>
             <div className="text-sm tracking-wider text-red-400">
               {role ? `${role.toUpperCase()} VIEW` : ""}
@@ -30,6 +34,16 @@ export default function AppHeader({
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="hidden text-sm text-zinc-400 md:block">
+            <div>
+              Signed in as:
+              <span className="ml-2 font-semibold text-white">
+                {userName}
+              </span>
+            </div>
+            <div className="text-xs text-zinc-500">{userEmail}</div>
+          </div>
+
           <div className="hidden text-sm text-zinc-400 md:block">
             Student:
             <span className="ml-2 font-semibold text-white">
