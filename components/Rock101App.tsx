@@ -102,10 +102,6 @@ export default function Rock101App() {
     if (currentUser.role === "instructor") {
       return students;
     }
-      }
-
-      return students;
-    }
 
     if (canManageRock101) {
       if (selectedClass) {
@@ -116,13 +112,7 @@ export default function Rock101App() {
     }
 
     return students;
-  }, [
-    currentUser,
-    students,
-    canManageRock101,
-    selectedClass,
-    studentsInSelectedClass,
-  ]);  
+  }, [currentUser, students, canManageRock101, selectedClass, studentsInSelectedClass]);
 
   const selectedStudent = useMemo(() => {
     return (
