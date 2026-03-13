@@ -112,7 +112,13 @@ export default function Rock101App() {
     }
 
     return students;
-  }, [currentUser, students, canManageRock101, selectedClass, studentsInSelectedClass]);
+  }, [
+    currentUser,
+    students,
+    canManageRock101,
+    selectedClass,
+    studentsInSelectedClass,
+  ]);
 
   const selectedStudent = useMemo(() => {
     return (
@@ -131,7 +137,9 @@ export default function Rock101App() {
     }
   }, [currentUser, selectedStudent, visibleStudents]);
 
-  const earnedBadges = selectedStudent ? getEarnedBadges(selectedStudent) : [];
+  const earnedBadges: Set<string> = selectedStudent
+    ? getEarnedBadges(selectedStudent)
+    : new Set<string>();
 
   const workflowReady = selectedStudent
     ? selectedStudent.workflow.instructorSubmitted &&

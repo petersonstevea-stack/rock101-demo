@@ -15,15 +15,24 @@ type Student = {
 type AdminViewProps = {
   users: AppUser[];
   students: Student[];
-  onUpdateStudentParentEmail: (studentName: string, parentEmail: string) => void;
+  canManageUsers: boolean;
+  onUpdateStudentParentEmail: (
+    studentName: string,
+    parentEmail: string
+  ) => void;
+  onDeleteStudent: (studentName: string) => void;
 };
 
 export default function AdminView({
   users,
   students,
+  canManageUsers,
   onUpdateStudentParentEmail,
+  onDeleteStudent,
 }: AdminViewProps) {
-  const [editingStudentName, setEditingStudentName] = useState<string | null>(null);
+  const [editingStudentName, setEditingStudentName] = useState<string | null>(
+    null
+  );
   const [editingParentEmail, setEditingParentEmail] = useState("");
 
   const parentUsers = users.filter((user) => user.role === "parent");
@@ -87,11 +96,29 @@ export default function AdminView({
     cancelEditing();
   }
 
+  function handleDeleteStudent(studentName: string) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${studentName}?`
+    );
+
+    if (!confirmed) return;
+
+    onDeleteStudent(studentName);
+
+    if (editingStudentName === studentName) {
+      cancelEditing();
+    }
+  }
+
   const parentLinkRows = students.map((student) => {
     const normalizedParentEmail = student.parentEmail?.trim().toLowerCase();
 
     if (!normalizedParentEmail) {
-      return { ...student, linkStatus: "Missing Parent Email", matchedParent: null };
+      return {
+        ...student,
+        linkStatus: "Missing Parent Email",
+        matchedParent: null,
+      };
     }
 
     const matchedParent =
@@ -100,7 +127,11 @@ export default function AdminView({
       ) ?? null;
 
     if (!matchedParent) {
-      return { ...student, linkStatus: "Parent Not Invited", matchedParent: null };
+      return {
+        ...student,
+        linkStatus: "Parent Not Invited",
+        matchedParent: null,
+      };
     }
 
     return {
@@ -125,6 +156,12 @@ export default function AdminView({
         <h2 className="text-2xl font-bold">Admin Page</h2>
         <p className="mt-2 text-zinc-400">
           Manage parent invitations and student-parent links.
+        </p>
+
+        <p className="mt-3 text-sm text-zinc-500">
+          {canManageUsers
+            ? "You have full admin permissions."
+            : "You have limited admin permissions."}
         </p>
       </div>
 
@@ -181,12 +218,16 @@ export default function AdminView({
                     )}
                   </td>
 
-                  <td className={`px-3 py-3 font-semibold ${getStatusColor(row.linkStatus)}`}>
+                  <td
+                    className={`px-3 py-3 font-semibold ${getStatusColor(
+                      row.linkStatus
+                    )}`}
+                  >
                     {row.linkStatus}
                   </td>
 
                   <td className="px-3 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => startEditing(row.name, row.parentEmail)}
@@ -203,15 +244,28 @@ export default function AdminView({
                         >
                           Invite Parent
                         </button>
-                      ) : row.linkStatus === "Parent Invited" && row.parentEmail ? (
+                      ) : row.linkStatus === "Parent Invited" &&
+                        row.parentEmail ? (
                         <button
                           type="button"
-                          onClick={() => handleMarkParentActive(row.parentEmail!)}
+                          onClick={() =>
+                            handleMarkParentActive(row.parentEmail!)
+                          }
                           className="rounded-md bg-blue-600 px-3 py-2 text-white hover:bg-blue-500"
                         >
                           Mark Parent Active
                         </button>
                       ) : null}
+
+                      {canManageUsers && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStudent(row.name)}
+                          className="rounded-md bg-zinc-950 px-3 py-2 text-white hover:bg-zinc-800"
+                        >
+                          Delete Student
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
