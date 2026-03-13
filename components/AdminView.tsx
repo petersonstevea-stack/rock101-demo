@@ -359,10 +359,13 @@ export default function AdminView({
                         row.parentEmail ? (
                         <button
                           type="button"
-                          onClick={() => handleMarkParentActive(row.parentEmail)}
-                          className="rounded-md bg-blue-600 px-3 py-2 text-white hover:bg-blue-500"
+                          onClick={() => {
+                            if (!row.parentEmail) return;
+                            handleMarkParentActive(row.parentEmail);
+                          }}
+                         className="rounded-md bg-blue-600 px-3 py-2 text-white hover:bg-blue-500"
                         >
-                          Mark Parent Active
+                         Mark Parent Active
                         </button>
                       ) : null}
                     </div>
