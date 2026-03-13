@@ -119,11 +119,10 @@ export default function Rock101App() {
   }, [
     currentUser,
     students,
-    instructorStudentFilter,
     canManageRock101,
     selectedClass,
     studentsInSelectedClass,
-  ]);
+  ]);  
 
   const selectedStudent = useMemo(() => {
     return (
