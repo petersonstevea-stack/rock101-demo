@@ -100,12 +100,8 @@ export default function Rock101App() {
     }
 
     if (currentUser.role === "instructor") {
-      if (instructorStudentFilter === "myStudents") {
-        return students.filter(
-          (student) =>
-            student.primaryInstructorEmail?.toLowerCase() ===
-            currentUser.email.toLowerCase()
-        );
+      return students;
+    }
       }
 
       return students;
