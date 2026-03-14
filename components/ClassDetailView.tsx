@@ -3,6 +3,7 @@
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
 import { schools } from "@/data/schools";
+import PageHero from "@/components/PageHero";
 
 type Student = {
   id?: string;
@@ -38,6 +39,14 @@ export default function ClassDetailView({
 
   return (
     <div className="mt-8 space-y-6">
+      <PageHero
+        title={rockClass.name}
+        subtitle={`${schoolName} • ${rockClass.dayOfWeek} • ${
+          rockClass.time || "Time not set"
+        }`}
+        imageSrc="/images/rock101-drums.jpg"
+      />
+
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -48,30 +57,28 @@ export default function ClassDetailView({
         </button>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h2 className="text-2xl font-bold">{rockClass.name}</h2>
-
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">School</div>
-            <div className="mt-2 font-semibold">{schoolName}</div>
+            <div className="mt-2 font-semibold text-white">{schoolName}</div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">Schedule</div>
-            <div className="mt-2 font-semibold">
+            <div className="mt-2 font-semibold text-white">
               {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
             </div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">Instructor</div>
-            <div className="mt-2 font-semibold">{instructorName}</div>
+            <div className="mt-2 font-semibold text-white">{instructorName}</div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">Performance</div>
-            <div className="mt-2 font-semibold">
+            <div className="mt-2 font-semibold text-white">
               {rockClass.performanceTitle || "Not set"}
             </div>
             <div className="text-sm text-zinc-400">
@@ -79,39 +86,41 @@ export default function ClassDetailView({
             </div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">Students</div>
-            <div className="mt-2 text-2xl font-bold">
+            <div className="mt-2 text-2xl font-bold text-white">
               {rockClass.studentNames.length}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="text-xl font-semibold">Approved Songs</h3>
-        <div className="mt-4 text-zinc-300">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+        <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
+        <div className="mt-4 text-zinc-200">
           {rockClass.songs.length > 0
             ? rockClass.songs.join(", ")
             : "No songs assigned"}
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="text-xl font-semibold">Student Roster</h3>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+        <h3 className="text-xl font-semibold text-white">Student Roster</h3>
 
         {students.length === 0 ? (
-          <p className="mt-4 text-zinc-400">No students assigned to this class.</p>
+          <p className="mt-4 text-zinc-300">No students assigned to this class.</p>
         ) : (
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {students.map((student) => (
               <div
                 key={student.id ?? student.name}
-                className="rounded-lg border border-zinc-800 bg-black p-4"
+                className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm"
               >
-                <div className="text-lg font-semibold">{student.name}</div>
+                <div className="text-lg font-semibold text-white">
+                  {student.name}
+                </div>
 
-                <div className="mt-2 text-sm text-zinc-400">
+                <div className="mt-2 text-sm text-zinc-300">
                   Instrument: {student.instrument || "Not set"}
                 </div>
 

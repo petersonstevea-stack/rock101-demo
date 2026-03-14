@@ -1,6 +1,8 @@
+"use client";
+
 import { getGroupRehearsalSections } from "@/data/rock101Curriculum";
 import ChecklistSection from "@/components/ChecklistSection";
-import GroupBehaviorSection from "@/components/GroupBehaviorSection";
+import PageHero from "@/components/PageHero";
 
 type RehearsalStudent = {
   name: string;
@@ -35,14 +37,6 @@ type GroupRehearsalViewProps = {
   canSign: boolean;
 };
 
-const weeklyBehaviorItems = [
-  { id: "learnedSongs", label: "Learned Songs" },
-  { id: "practicedSongs", label: "Practiced Songs" },
-  { id: "noNoodling", label: "No Noodling" },
-  { id: "listenedToDirector", label: "Listened to Director" },
-  { id: "respectedBandmates", label: "Respected Bandmates" },
-];
-
 export default function GroupRehearsalView({
   student,
   onToggleDone,
@@ -54,25 +48,32 @@ export default function GroupRehearsalView({
   const sections = getGroupRehearsalSections(student.instrument);
 
   return (
-    <div className="mt-8 grid gap-6">
-      {sections.map((section) => (
-        <ChecklistSection
-          key={section.id}
-          title={section.title}
-          items={section.items}
-          curriculum={student.curriculum}
-          onToggleDone={onToggleDone}
-          onToggleSigned={onToggleSigned}
-          canEdit={canEdit}
-          canSign={canSign}
-        />
-      ))}
-
-      <GroupBehaviorSection
-        items={weeklyBehaviorItems}
-        curriculum={student.curriculum}
-        onAddFistBump={onAddFistBump}
+    <div className="mt-8 space-y-6">
+      <PageHero
+        title="Group Rehearsal"
+        subtitle={`Band chemistry, rehearsal habits, and live performance readiness for ${student.name}`}
+        imageSrc="/images/rock101-band.jpg"
       />
+
+      <div className="grid gap-6">
+        {sections.map((section) => (
+          <div
+            key={section.id}
+            className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm"
+          >
+            <ChecklistSection
+              title={section.title}
+              items={section.items}
+              curriculum={student.curriculum}
+              onToggleDone={onToggleDone}
+              onToggleSigned={onToggleSigned}
+              onAddFistBump={onAddFistBump}
+              canEdit={canEdit}
+              canSign={canSign}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

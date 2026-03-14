@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import type { Instrument, CurriculumItem } from "@/data/rock101Curriculum";
+import type { CurriculumItem } from "@/data/rock101Curriculum";
 import {
   getPrivateLessonSections,
   getGroupRehearsalSections,
@@ -12,6 +12,7 @@ import {
   type StudentLessonProgressMap,
 } from "@/data/studentProgress";
 import { getTotalFistBumps } from "@/lib/progress";
+import PageHero from "@/components/PageHero";
 
 type ParentStudent = {
   id?: string;
@@ -222,94 +223,102 @@ export default function ParentWeeklyReview({
   ];
 
   return (
-    <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <div className="mb-4 text-sm uppercase tracking-[0.2em] text-red-300">
-        Parent Weekly Review
-      </div>
+    <div className="mt-8">
+      <PageHero
+        title="Parent Weekly Review"
+        subtitle="Track lesson progress, rehearsal readiness, and instructor feedback."
+        imageSrc="/images/rock101-band.jpg"
+      />
 
-      <div className="grid gap-6">
-        <div className="flex items-center justify-between rounded-xl border border-zinc-800 p-4">
-          <div>
-            <div className="text-sm text-zinc-400">Overall Progress</div>
-            <div className="mt-1 text-2xl font-bold text-white">
-              {overallProgress}%
-            </div>
-          </div>
-
-          <div className="text-sm text-red-300">
-            Next Show: May 18 • Rock 101 Showcase
-          </div>
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
+        <div className="mb-4 text-sm uppercase tracking-[0.2em] text-red-300">
+          Parent Weekly Review
         </div>
 
-        <div className="rounded-2xl border border-red-500/30 bg-red-950/10 p-4">
-          <div className="mb-3 text-sm uppercase tracking-[0.2em] text-red-300">
-            Weekly Progress Email Preview
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-[0.95fr,1.05fr]">
-            <div className="grid gap-4">
-              <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 flex items-center justify-between text-sm text-white">
-                  <span>Overall Progress</span>
-                  <span>{overallProgress}%</span>
-                </div>
-
-                <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
-                  <div
-                    className="h-full bg-red-600"
-                    style={{ width: `${overallProgress}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-3 font-semibold text-white">
-                  Curriculum Progress
-                </div>
-
-                <div className="grid gap-3">
-                  {sectionRows.map((row) => (
-                    <div key={row.key} className="grid gap-2">
-                      <div className="flex items-center justify-between text-sm text-white">
-                        <span>{row.title}</span>
-                        <span>{row.progress}%</span>
-                      </div>
-
-                      <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
-                        <div
-                          className="h-full bg-red-600"
-                          style={{ width: `${row.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        <div className="grid gap-6">
+          <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+            <div>
+              <div className="text-sm text-zinc-400">Overall Progress</div>
+              <div className="mt-1 text-2xl font-bold text-white">
+                {overallProgress}%
               </div>
             </div>
 
-            <div className="grid gap-4">
-              <div className="rounded-xl border border-zinc-800 p-4 text-sm leading-7 text-white/95">
-                {summary}
+            <div className="text-sm text-red-300">
+              Next Show: May 18 • Rock 101 Showcase
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-red-500/30 bg-red-950/20 p-4 backdrop-blur-sm">
+            <div className="mb-3 text-sm uppercase tracking-[0.2em] text-red-300">
+              Weekly Progress Email Preview
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[0.95fr,1.05fr]">
+              <div className="grid gap-4">
+                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+                  <div className="mb-2 flex items-center justify-between text-sm text-white">
+                    <span>Overall Progress</span>
+                    <span>{overallProgress}%</span>
+                  </div>
+
+                  <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
+                    <div
+                      className="h-full bg-red-600"
+                      style={{ width: `${overallProgress}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+                  <div className="mb-3 font-semibold text-white">
+                    Curriculum Progress
+                  </div>
+
+                  <div className="grid gap-3">
+                    {sectionRows.map((row) => (
+                      <div key={row.key} className="grid gap-2">
+                        <div className="flex items-center justify-between text-sm text-white">
+                          <span>{row.title}</span>
+                          <span>{row.progress}%</span>
+                        </div>
+
+                        <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
+                          <div
+                            className="h-full bg-red-600"
+                            style={{ width: `${row.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 font-semibold text-white">
-                  Instructor Notes
+              <div className="grid gap-4">
+                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 text-sm leading-7 text-white/95 backdrop-blur-sm">
+                  {summary}
                 </div>
-                <div className="text-sm leading-6 text-zinc-200">
-                  {student.notes.instructor || "No instructor notes yet."}
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 font-semibold text-white">
-                  Rock 101 Director Notes
+                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+                  <div className="mb-2 font-semibold text-white">
+                    Instructor Notes
+                  </div>
+                  <div className="text-sm leading-6 text-zinc-200">
+                    {student.notes.instructor || "No instructor notes yet."}
+                  </div>
                 </div>
-                <div className="text-sm leading-6 text-zinc-200">
-                  {student.notes.director || "No director notes yet."}
-                </div>
-                <div className="mt-3 text-sm text-red-300">
-                  Weekly shout-outs: {totalFistBumps}
+
+                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+                  <div className="mb-2 font-semibold text-white">
+                    Rock 101 Director Notes
+                  </div>
+                  <div className="text-sm leading-6 text-zinc-200">
+                    {student.notes.director || "No director notes yet."}
+                  </div>
+                  <div className="mt-3 text-sm text-red-300">
+                    Weekly shout-outs: {totalFistBumps}
+                  </div>
                 </div>
               </div>
             </div>

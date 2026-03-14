@@ -22,6 +22,7 @@ type ChecklistSectionProps = {
   >;
   onToggleDone: (item: string) => void;
   onToggleSigned?: (item: string) => void;
+  onAddFistBump?: (item: string) => void;
   canEdit: boolean;
   canSign: boolean;
 };
@@ -32,6 +33,7 @@ export default function ChecklistSection({
   curriculum,
   onToggleDone,
   onToggleSigned,
+  onAddFistBump,
   canEdit,
   canSign,
 }: ChecklistSectionProps) {
@@ -60,6 +62,7 @@ export default function ChecklistSection({
         {items.map((item) => {
           const state = curriculum[item.id];
           const checked = state?.done || state?.signed;
+          const fistBumps = state?.fistBumps ?? 0;
 
           return (
             <div
@@ -82,19 +85,31 @@ export default function ChecklistSection({
                   </div>
                 </button>
 
-                {canSign && onToggleSigned && (
-                  <button
-                    type="button"
-                    onClick={() => onToggleSigned(item.id)}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                      state?.signed
-                        ? "bg-red-600 text-white"
-                        : "bg-zinc-800 text-white hover:bg-zinc-700"
-                    }`}
-                  >
-                    {state?.signed ? "Signed" : "Sign"}
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {onAddFistBump && (
+                    <button
+                      type="button"
+                      onClick={() => onAddFistBump(item.id)}
+                      className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+                    >
+                      🤜 {fistBumps}
+                    </button>
+                  )}
+
+                  {canSign && onToggleSigned && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleSigned(item.id)}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                        state?.signed
+                          ? "bg-red-600 text-white"
+                          : "bg-zinc-800 text-white hover:bg-zinc-700"
+                      }`}
+                    >
+                      {state?.signed ? "Signed" : "Sign"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {item.description && (

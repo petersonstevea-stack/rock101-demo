@@ -16,10 +16,10 @@ type BrandedBackgroundProps = {
 export default function BrandedBackground({
   children,
   imageSrc,
-  opacity = 0.08,
+  opacity = 0.18,
   grayscale = true,
   blur = 0,
-  overlayClassName = "bg-black/70",
+  overlayClassName = "bg-black/50",
   mode = "watermark",
   position = "center",
 }: BrandedBackgroundProps) {
@@ -27,8 +27,8 @@ export default function BrandedBackground({
     grayscale ? "grayscale(100%)" : "grayscale(0%)",
     blur ? `blur(${blur}px)` : "",
     mode === "watermark"
-      ? "brightness(85%) contrast(110%)"
-      : "brightness(75%) contrast(105%)",
+      ? "brightness(100%) contrast(115%)"
+      : "brightness(85%) contrast(105%)",
   ]
     .filter(Boolean)
     .join(" ");
@@ -42,25 +42,24 @@ export default function BrandedBackground({
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
-      <img
-        src={imageSrc}
-        alt=""
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 h-full w-full object-cover ${
-          mode === "full" ? "scale-105" : ""
-        }`}
-        style={{
-          objectPosition,
-          opacity,
-          filter: filterParts,
-        }}
-      />
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <img
+          src={imageSrc}
+          alt=""
+          aria-hidden="true"
+          className={`h-full w-full object-cover ${
+            mode === "full" ? "scale-105" : ""
+          }`}
+          style={{
+            objectPosition,
+            opacity,
+            filter: filterParts,
+          }}
+        />
+        <div className={`absolute inset-0 ${overlayClassName}`} />
+      </div>
 
-      <div
-        className={`pointer-events-none absolute inset-0 ${overlayClassName}`}
-      />
-
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 min-h-screen">{children}</div>
     </div>
   );
 }

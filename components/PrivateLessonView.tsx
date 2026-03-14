@@ -1,9 +1,10 @@
+"use client";
+
 import { getPrivateLessonSections } from "@/data/rock101Curriculum";
 import ChecklistSection from "@/components/ChecklistSection";
-import RequiredLessonsChecklist from "@/components/RequiredLessonsChecklist";
+import PageHero from "@/components/PageHero";
 
 type LessonStudent = {
-  id?: string;
   name: string;
   instrument: string;
   band: string;
@@ -44,44 +45,32 @@ export default function PrivateLessonView({
 }: PrivateLessonViewProps) {
   const sections = getPrivateLessonSections(student.instrument);
 
-  const graduationSections = sections.filter(
-    (section) => section.area === "graduation"
-  );
-
-  const requiredLessonSection = sections.find(
-    (section) => section.area === "requiredLessons"
-  );
-
-  const studentProgressId =
-    student.id ?? `${student.name}-${student.instrument}-${student.band}`;
-
   return (
-    <div className="mt-8 grid gap-6 xl:grid-cols-2">
-      {graduationSections.map((section) => (
-        <ChecklistSection
-          key={section.id}
-          title={section.title}
-          items={section.items}
-          curriculum={student.curriculum}
-          onToggleDone={onToggleDone}
-          onToggleSigned={onToggleSigned}
-          canEdit={canEdit}
-          canSign={canSign}
-        />
-      ))}
+    <div className="mt-8 space-y-6">
+      <PageHero
+        title="Private Lesson"
+        subtitle={`Focused skill-building for ${student.name} • ${student.instrument}`}
+        imageSrc="/images/rock101-drums.jpg"
+      />
 
-      {requiredLessonSection ? (
-        <RequiredLessonsChecklist
-          studentId={studentProgressId}
-          instrument={student.instrument as
-            | "guitar"
-            | "bass"
-            | "drums"
-            | "keys"
-            | "vocals"}
-          title={requiredLessonSection.title}
-        />
-      ) : null}
+      <div className="grid gap-6 xl:grid-cols-2">
+        {sections.map((section) => (
+          <div
+            key={section.id}
+            className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm"
+          >
+            <ChecklistSection
+              title={section.title}
+              items={section.items}
+              curriculum={student.curriculum}
+              onToggleDone={onToggleDone}
+              onToggleSigned={onToggleSigned}
+              canEdit={canEdit}
+              canSign={canSign}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
