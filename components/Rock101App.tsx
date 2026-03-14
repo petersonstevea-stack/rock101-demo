@@ -48,6 +48,20 @@ type Tab =
   | "accounts"
   | "admin";
 
+type CurriculumState = {
+  done: boolean;
+  signed: boolean;
+  date: string | null;
+  fistBumps: number;
+};
+
+const defaultCurriculumState: CurriculumState = {
+  done: false,
+  signed: false,
+  date: null,
+  fistBumps: 0,
+};
+
 export default function Rock101App() {
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [instructorStudentFilter, setInstructorStudentFilter] = useState<
@@ -77,6 +91,7 @@ export default function Rock101App() {
   const canManageRock101 =
     role === "director" || role === "generalManager";
   const isGeneralManager = role === "generalManager";
+  const canSeeManagementTabs = canManageRock101;
 
   const savedClasses = getSavedClasses();
 
@@ -127,6 +142,10 @@ export default function Rock101App() {
     );
   }, [visibleStudents, selectedStudentName]);
 
+  const canSeeStudentTabs =
+    !!selectedStudent &&
+    (!canManageRock101 || (!!selectedClass && !!selectedStudentName));
+
   useEffect(() => {
     if (
       currentUser?.role === "instructor" &&
@@ -169,7 +188,7 @@ export default function Rock101App() {
 
   function handleToggleDone(item: string) {
     updateSelectedStudent((student) => {
-      const existing = student.curriculum[item];
+      const existing = student.curriculum[item] ?? defaultCurriculumState;
 
       return {
         ...student,
@@ -196,7 +215,7 @@ export default function Rock101App() {
 
   function handleToggleSigned(item: string) {
     updateSelectedStudent((student) => {
-      const existing = student.curriculum[item];
+      const existing = student.curriculum[item] ?? defaultCurriculumState;
       const nextSigned = !existing.signed;
 
       return {
@@ -226,7 +245,7 @@ export default function Rock101App() {
 
   function handleAddFistBump(item: string) {
     updateSelectedStudent((student) => {
-      const existing = student.curriculum[item];
+      const existing = student.curriculum[item] ?? defaultCurriculumState;
 
       return {
         ...student,
@@ -426,14 +445,35 @@ export default function Rock101App() {
           )}
 
         {canManageRock101 && !selectedClass && (
-          <ClassSelectorView
-            classes={savedClasses}
-            users={getAllUsers()}
-            onSelectClass={(classId) => {
-              setSelectedClassId(classId);
-              setSelectedStudentName("");
-            }}
-          />
+          <>
+            {savedClasses.length === 0 ? (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                <h2 className="text-2xl font-bold text-white">
+                  No Rock 101 classes created yet
+                </h2>
+                <p className="mt-3 text-zinc-300">
+                  Create your first class to start assigning students and
+                  building out rehearsal groups.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleSetTab("classSetup")}
+                  className="mt-5 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+                >
+                  Create First Class
+                </button>
+              </div>
+            ) : (
+              <ClassSelectorView
+                classes={savedClasses}
+                users={getAllUsers()}
+                onSelectClass={(classId) => {
+                  setSelectedClassId(classId);
+                  setSelectedStudentName("");
+                }}
+              />
+            )}
+          </>
         )}
 
         {canManageRock101 && selectedClass && !selectedStudentName && (
@@ -451,182 +491,187 @@ export default function Rock101App() {
           />
         )}
 
-        {(!canManageRock101 || (selectedClass && selectedStudentName)) &&
-          selectedStudent && (
-            <>
-              {canManageRock101 && selectedClass && selectedStudentName && (
-                <div className="mb-4">
+        {(canSeeManagementTabs || canSeeStudentTabs) && (
+          <>
+            {canManageRock101 && selectedClass && selectedStudentName && (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStudentName("")}
+                  className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                >
+                  Back to Class Roster
+                </button>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              {canSeeStudentTabs && (
+                <>
                   <button
                     type="button"
-                    onClick={() => setSelectedStudentName("")}
-                    className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                    onClick={() => handleSetTab("privateLesson")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "privateLesson"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
                   >
-                    Back to Class Roster
+                    Private Lesson
                   </button>
-                </div>
-              )}
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleSetTab("privateLesson")}
-                  className={`rounded-lg px-4 py-2 ${
-                    tab === "privateLesson"
-                      ? "bg-red-600"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }`}
-                >
-                  Private Lesson
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("groupRehearsal")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "groupRehearsal"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Group Rehearsal
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSetTab("groupRehearsal")}
-                  className={`rounded-lg px-4 py-2 ${
-                    tab === "groupRehearsal"
-                      ? "bg-red-600"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }`}
-                >
-                  Group Rehearsal
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("badges")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "badges"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Badges
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSetTab("badges")}
-                  className={`rounded-lg px-4 py-2 ${
-                    tab === "badges"
-                      ? "bg-red-600"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }`}
-                >
-                  Badges
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("parent")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "parent"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Parent
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleSetTab("parent")}
-                  className={`rounded-lg px-4 py-2 ${
-                    tab === "parent"
-                      ? "bg-red-600"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }`}
-                >
-                  Parent
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSetTab("certificate")}
-                  className={`rounded-lg px-4 py-2 ${
-                    tab === "certificate"
-                      ? "bg-red-600"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }`}
-                >
-                  Certificate
-                </button>
-
-                {canManageRock101 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("classSetup")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "classSetup"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Class Setup
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("performanceDashboard")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "performanceDashboard"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Shows Overview
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("bandsDashboard")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "bandsDashboard"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Bands Dashboard
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("pipeline")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "pipeline"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Pipeline
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("accounts")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "accounts"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Accounts
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSetTab("admin")}
-                      className={`rounded-lg px-4 py-2 ${
-                        tab === "admin"
-                          ? "bg-red-600"
-                          : "bg-zinc-800 hover:bg-zinc-700"
-                      }`}
-                    >
-                      Admin
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {tab === "privateLesson" && (
-                <>
-                  <PrivateLessonView
-                    student={selectedStudent}
-                    onToggleDone={handleToggleDone}
-                    onToggleSigned={handleToggleSigned}
-                    canEdit={role === "instructor"}
-                    canSign={role === "instructor"}
-                  />
-
-                  {role === "instructor" && (
-                    <NotesPanel
-                      role="instructor"
-                      value={selectedStudent.notes.instructor}
-                      saved={selectedStudent.workflow.instructorSubmitted}
-                      onChange={(v) => handleNoteChange("instructor", v)}
-                      onSave={() => handleSaveFeedback("instructor")}
-                    />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("certificate")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "certificate"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Certificate
+                  </button>
                 </>
               )}
 
-              {tab === "groupRehearsal" && (
+              {canSeeManagementTabs && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("classSetup")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "classSetup"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Class Setup
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("performanceDashboard")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "performanceDashboard"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Shows Overview
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("bandsDashboard")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "bandsDashboard"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Bands Dashboard
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("pipeline")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "pipeline"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Pipeline
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("accounts")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "accounts"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Accounts
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetTab("admin")}
+                    className={`rounded-lg px-4 py-2 ${
+                      tab === "admin"
+                        ? "bg-red-600"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }`}
+                  >
+                    Admin
+                  </button>
+                </>
+              )}
+            </div>
+
+            {canSeeStudentTabs && tab === "privateLesson" && selectedStudent && (
+              <>
+                <PrivateLessonView
+                  student={selectedStudent}
+                  onToggleDone={handleToggleDone}
+                  onToggleSigned={handleToggleSigned}
+                  canEdit={role === "instructor" || canManageRock101}
+                  canSign={role === "instructor" || canManageRock101}
+                />
+
+                {role === "instructor" && (
+                  <NotesPanel
+                    role="instructor"
+                    value={selectedStudent.notes.instructor}
+                    saved={selectedStudent.workflow.instructorSubmitted}
+                    onChange={(v) => handleNoteChange("instructor", v)}
+                    onSave={() => handleSaveFeedback("instructor")}
+                  />
+                )}
+              </>
+            )}
+
+            {canSeeStudentTabs &&
+              tab === "groupRehearsal" &&
+              selectedStudent && (
                 <>
                   <GroupRehearsalView
                     student={selectedStudent}
@@ -649,65 +694,67 @@ export default function Rock101App() {
                 </>
               )}
 
-              {tab === "badges" && <BadgeGrid earnedBadges={earnedBadges} />}
+            {canSeeStudentTabs && tab === "badges" && selectedStudent && (
+              <BadgeGrid earnedBadges={earnedBadges} />
+            )}
 
-              {tab === "parent" && (
-                <ParentWeeklyReview student={selectedStudent} />
-              )}
+            {canSeeStudentTabs && tab === "parent" && selectedStudent && (
+              <ParentWeeklyReview student={selectedStudent} />
+            )}
 
-              {tab === "certificate" && (
-                <CertificateView student={selectedStudent} />
-              )}
+            {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
+              <CertificateView student={selectedStudent} />
+            )}
 
-              {tab === "classSetup" && canManageRock101 && (
-                <ClassSetupView students={students} users={getAllUsers()} />
-              )}
+            {tab === "classSetup" && canManageRock101 && (
+              <ClassSetupView students={students} users={getAllUsers()} />
+            )}
 
-              {tab === "performanceDashboard" && canManageRock101 && (
-                <PerformanceDashboard
-                  classes={savedClasses}
-                  users={getAllUsers()}
-                />
-              )}
+            {tab === "performanceDashboard" && canManageRock101 && (
+              <PerformanceDashboard
+                classes={savedClasses}
+                users={getAllUsers()}
+              />
+            )}
 
-              {tab === "bandsDashboard" && canManageRock101 && (
-                <BandsDashboard students={students} />
-              )}
+            {tab === "bandsDashboard" && canManageRock101 && (
+              <BandsDashboard students={students} />
+            )}
 
-              {tab === "pipeline" && canManageRock101 && (
-                <PipelineView students={students} />
-              )}
+            {tab === "pipeline" && canManageRock101 && (
+              <PipelineView students={students} />
+            )}
 
-              {tab === "accounts" && canManageRock101 && (
-                <DirectorAccountsView currentUserEmail={currentUser.email} />
-              )}
+            {tab === "accounts" && canManageRock101 && (
+              <DirectorAccountsView currentUserEmail={currentUser.email} />
+            )}
 
-              {tab === "admin" && canManageRock101 && (
-                <AdminView
-                  users={getAllUsers()}
-                  students={students}
-                  canManageUsers={isGeneralManager}
-                  onUpdateStudentParentEmail={(studentName, parentEmail) => {
-                    setStudents((prev) =>
-                      prev.map((student) =>
-                        student.name === studentName
-                          ? {
-                              ...student,
-                              parentEmail,
-                            }
-                          : student
-                      )
-                    );
-                  }}
-                  onDeleteStudent={(studentName) => {
-                    setStudents((prev) =>
-                      prev.filter((student) => student.name !== studentName)
-                    );
-                  }}
-                />
-              )}
-            </>
-          )}
+            {tab === "admin" && canManageRock101 && (
+              <AdminView
+                users={getAllUsers()}
+                students={students}
+                canManageUsers={isGeneralManager}
+                onUpdateStudentParentEmail={(studentName, parentEmail) => {
+                  setStudents((prev) =>
+                    prev.map((student) =>
+                      student.name === studentName
+                        ? {
+                            ...student,
+                            parentEmail,
+                          }
+                        : student
+                    )
+                  );
+                }}
+                onDeleteStudent={(studentName) => {
+                  setStudents((prev) =>
+                    prev.filter((student) => student.name !== studentName)
+                  );
+                }}
+              />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

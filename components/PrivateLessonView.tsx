@@ -1,7 +1,9 @@
-import { skillSections } from "@/data/curriculum";
+import { getPrivateLessonSections } from "@/data/rock101Curriculum";
 import ChecklistSection from "@/components/ChecklistSection";
+import RequiredLessonsChecklist from "@/components/RequiredLessonsChecklist";
 
 type LessonStudent = {
+  id?: string;
   name: string;
   instrument: string;
   band: string;
@@ -40,27 +42,46 @@ export default function PrivateLessonView({
   canEdit,
   canSign,
 }: PrivateLessonViewProps) {
+  const sections = getPrivateLessonSections(student.instrument);
+
+  const graduationSections = sections.filter(
+    (section) => section.area === "graduation"
+  );
+
+  const requiredLessonSection = sections.find(
+    (section) => section.area === "requiredLessons"
+  );
+
+  const studentProgressId =
+    student.id ?? `${student.name}-${student.instrument}-${student.band}`;
+
   return (
     <div className="mt-8 grid gap-6 xl:grid-cols-2">
-      <ChecklistSection
-        title={skillSections.instrument.title}
-        items={skillSections.instrument.items}
-        curriculum={student.curriculum}
-        onToggleDone={onToggleDone}
-        onToggleSigned={onToggleSigned}
-        canEdit={canEdit}
-        canSign={canSign}
-      />
+      {graduationSections.map((section) => (
+        <ChecklistSection
+          key={section.id}
+          title={section.title}
+          items={section.items}
+          curriculum={student.curriculum}
+          onToggleDone={onToggleDone}
+          onToggleSigned={onToggleSigned}
+          canEdit={canEdit}
+          canSign={canSign}
+        />
+      ))}
 
-      <ChecklistSection
-        title={skillSections.assignments.title}
-        items={skillSections.assignments.items}
-        curriculum={student.curriculum}
-        onToggleDone={onToggleDone}
-        onToggleSigned={onToggleSigned}
-        canEdit={canEdit}
-        canSign={canSign}
-      />
+      {requiredLessonSection ? (
+        <RequiredLessonsChecklist
+          studentId={studentProgressId}
+          instrument={student.instrument as
+            | "guitar"
+            | "bass"
+            | "drums"
+            | "keys"
+            | "vocals"}
+          title={requiredLessonSection.title}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,16 @@
+type ChecklistItem = {
+  id: string;
+  label: string;
+  description?: string;
+  area?: string;
+  location?: string;
+  allowedSigner?: string;
+  required?: boolean;
+};
+
 type ChecklistSectionProps = {
   title: string;
-  items: readonly string[];
+  items: readonly ChecklistItem[];
   curriculum: Record<
     string,
     {
@@ -26,10 +36,11 @@ export default function ChecklistSection({
   canSign,
 }: ChecklistSectionProps) {
   const completedCount = items.filter(
-    (item) => curriculum[item]?.done || curriculum[item]?.signed
+    (item) => curriculum[item.id]?.done || curriculum[item.id]?.signed
   ).length;
 
-  const percent = Math.round((completedCount / items.length) * 100);
+  const percent =
+    items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
@@ -47,12 +58,12 @@ export default function ChecklistSection({
 
       <div className="grid gap-2">
         {items.map((item) => {
-          const state = curriculum[item];
+          const state = curriculum[item.id];
           const checked = state?.done || state?.signed;
 
           return (
             <div
-              key={item}
+              key={item.id}
               className={`rounded-lg border px-4 py-3 ${
                 checked
                   ? "border-red-500 bg-red-950/20"
@@ -62,11 +73,11 @@ export default function ChecklistSection({
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
-                  onClick={() => canEdit && onToggleDone(item)}
+                  onClick={() => canEdit && onToggleDone(item.id)}
                   className="flex-1 text-left"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span>{item}</span>
+                    <span>{item.label}</span>
                     <span className="ml-4 text-sm">{checked ? "✓" : "○"}</span>
                   </div>
                 </button>
@@ -74,7 +85,7 @@ export default function ChecklistSection({
                 {canSign && onToggleSigned && (
                   <button
                     type="button"
-                    onClick={() => onToggleSigned(item)}
+                    onClick={() => onToggleSigned(item.id)}
                     className={`rounded-lg px-3 py-2 text-sm font-medium ${
                       state?.signed
                         ? "bg-red-600 text-white"
@@ -85,6 +96,12 @@ export default function ChecklistSection({
                   </button>
                 )}
               </div>
+
+              {item.description && (
+                <div className="mt-2 text-xs text-zinc-400">
+                  {item.description}
+                </div>
+              )}
 
               {state?.signed && state?.date && (
                 <div className="mt-2 text-xs text-red-300">
