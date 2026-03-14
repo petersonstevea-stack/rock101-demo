@@ -22,6 +22,7 @@ import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 
 import { students as initialStudents } from "@/data/students";
+import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import { getSavedClasses } from "@/lib/classes";
 import {
@@ -62,6 +63,8 @@ const defaultCurriculumState: CurriculumState = {
   fistBumps: 0,
 };
 
+type SchoolFilter = "all" | SchoolId;
+
 export default function Rock101App() {
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [instructorStudentFilter, setInstructorStudentFilter] = useState<
@@ -73,6 +76,8 @@ export default function Rock101App() {
   const [selectedStudentName, setSelectedStudentName] = useState(
     initialStudents[0]?.name ?? ""
   );
+  const [selectedSchoolId, setSelectedSchoolId] =
+    useState<SchoolFilter>("all");
 
   useEffect(() => {
     const savedUser = getSavedSession();
@@ -88,18 +93,56 @@ export default function Rock101App() {
   }, []);
 
   const role = currentUser?.role ?? null;
+  const isOwner = role === "owner";
   const canManageRock101 =
-    role === "director" || role === "generalManager";
+    role === "director" || role === "generalManager" || role === "owner";
   const isGeneralManager = role === "generalManager";
   const canSeeManagementTabs = canManageRock101;
 
+  const allUsers = useMemo(() => getAllUsers(), []);
   const savedClasses = getSavedClasses();
 
+  const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
+    if (isOwner) return selectedSchoolId;
+
+    if (currentUser && "schoolId" in currentUser && currentUser.schoolId) {
+      return currentUser.schoolId as SchoolId;
+    }
+
+    return "all";
+  }, [isOwner, selectedSchoolId, currentUser]);
+
+  const filteredStudentsBySchool = useMemo(() => {
+    if (effectiveSchoolFilter === "all") return students;
+
+    return students.filter(
+      (student) => student.schoolId === effectiveSchoolFilter
+    );
+  }, [students, effectiveSchoolFilter]);
+
+  const filteredUsersBySchool = useMemo(() => {
+    if (effectiveSchoolFilter === "all") return allUsers;
+
+    return allUsers.filter((user) => {
+      if (user.role === "owner") return true;
+      return user.schoolId === effectiveSchoolFilter;
+    });
+  }, [allUsers, effectiveSchoolFilter]);
+
+  const filteredClassesBySchool = useMemo(() => {
+    if (effectiveSchoolFilter === "all") return savedClasses;
+
+    return savedClasses.filter(
+      (rockClass) => rockClass.schoolId === effectiveSchoolFilter
+    );
+  }, [savedClasses, effectiveSchoolFilter]);
+
   const selectedClass =
-    savedClasses.find((rockClass) => rockClass.id === selectedClassId) ?? null;
+    filteredClassesBySchool.find((rockClass) => rockClass.id === selectedClassId) ??
+    null;
 
   const studentsInSelectedClass = selectedClass
-    ? students.filter((student) =>
+    ? filteredStudentsBySchool.filter((student) =>
         selectedClass.studentNames.includes(student.name)
       )
     : [];
@@ -108,14 +151,24 @@ export default function Rock101App() {
     if (!currentUser) return [];
 
     if (currentUser.role === "parent") {
-      return students.filter(
+      return filteredStudentsBySchool.filter(
         (student) =>
           student.parentEmail?.toLowerCase() === currentUser.email.toLowerCase()
       );
     }
 
     if (currentUser.role === "instructor") {
-      return students;
+      const schoolScopedStudents = filteredStudentsBySchool;
+
+      if (instructorStudentFilter === "allStudents") {
+        return schoolScopedStudents;
+      }
+
+      return schoolScopedStudents.filter(
+        (student) =>
+          student.primaryInstructorEmail?.toLowerCase() ===
+          currentUser.email.toLowerCase()
+      );
     }
 
     if (canManageRock101) {
@@ -126,13 +179,14 @@ export default function Rock101App() {
       return [];
     }
 
-    return students;
+    return filteredStudentsBySchool;
   }, [
     currentUser,
-    students,
+    filteredStudentsBySchool,
     canManageRock101,
     selectedClass,
     studentsInSelectedClass,
+    instructorStudentFilter,
   ]);
 
   const selectedStudent = useMemo(() => {
@@ -155,6 +209,11 @@ export default function Rock101App() {
       setSelectedStudentName(visibleStudents[0].name);
     }
   }, [currentUser, selectedStudent, visibleStudents]);
+
+  useEffect(() => {
+    setSelectedClassId(null);
+    setSelectedStudentName("");
+  }, [effectiveSchoolFilter]);
 
   const earnedBadges: Set<string> = selectedStudent
     ? getEarnedBadges(selectedStudent)
@@ -324,6 +383,7 @@ export default function Rock101App() {
     setSelectedClassId(null);
     setSelectedStudentName(initialStudents[0]?.name ?? "");
     setInstructorStudentFilter("myStudents");
+    setSelectedSchoolId("all");
     setTab("privateLesson");
   }
 
@@ -353,6 +413,28 @@ export default function Rock101App() {
         />
 
         <div className="p-6">
+          {isOwner && (
+            <div className="mb-4 max-w-sm">
+              <label className="mb-2 block text-sm text-zinc-400">
+                School Filter
+              </label>
+              <select
+                value={selectedSchoolId}
+                onChange={(e) =>
+                  setSelectedSchoolId(e.target.value as SchoolFilter)
+                }
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
+              >
+                <option value="all">All Schools</option>
+                {schools.map((school) => (
+                  <option key={school.id} value={school.id}>
+                    {school.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
             <h2 className="text-xl font-bold">No student found</h2>
             {role === "instructor" ? (
@@ -389,6 +471,28 @@ export default function Rock101App() {
       />
 
       <div className="p-6">
+        {isOwner && (
+          <div className="mb-6 max-w-sm">
+            <label className="mb-2 block text-sm text-zinc-400">
+              School Filter
+            </label>
+            <select
+              value={selectedSchoolId}
+              onChange={(e) =>
+                setSelectedSchoolId(e.target.value as SchoolFilter)
+              }
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
+            >
+              <option value="all">All Schools</option>
+              {schools.map((school) => (
+                <option key={school.id} value={school.id}>
+                  {school.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {role === "instructor" && (
           <div className="mb-4 flex gap-3">
             <button
@@ -446,7 +550,7 @@ export default function Rock101App() {
 
         {canManageRock101 && !selectedClass && (
           <>
-            {savedClasses.length === 0 ? (
+            {filteredClassesBySchool.length === 0 ? (
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-2xl font-bold text-white">
                   No Rock 101 classes created yet
@@ -465,8 +569,8 @@ export default function Rock101App() {
               </div>
             ) : (
               <ClassSelectorView
-                classes={savedClasses}
-                users={getAllUsers()}
+                classes={filteredClassesBySchool}
+                users={filteredUsersBySchool}
                 onSelectClass={(classId) => {
                   setSelectedClassId(classId);
                   setSelectedStudentName("");
@@ -480,7 +584,7 @@ export default function Rock101App() {
           <ClassDetailView
             rockClass={selectedClass}
             students={studentsInSelectedClass}
-            users={getAllUsers()}
+            users={filteredUsersBySchool}
             onBackToClasses={() => {
               setSelectedClassId(null);
               setSelectedStudentName("");
@@ -707,22 +811,25 @@ export default function Rock101App() {
             )}
 
             {tab === "classSetup" && canManageRock101 && (
-              <ClassSetupView students={students} users={getAllUsers()} />
+              <ClassSetupView
+                students={filteredStudentsBySchool}
+                users={filteredUsersBySchool}
+              />
             )}
 
             {tab === "performanceDashboard" && canManageRock101 && (
               <PerformanceDashboard
-                classes={savedClasses}
-                users={getAllUsers()}
+                classes={filteredClassesBySchool}
+                users={filteredUsersBySchool}
               />
             )}
 
             {tab === "bandsDashboard" && canManageRock101 && (
-              <BandsDashboard students={students} />
+              <BandsDashboard students={filteredStudentsBySchool} />
             )}
 
             {tab === "pipeline" && canManageRock101 && (
-              <PipelineView students={students} />
+              <PipelineView students={filteredStudentsBySchool} />
             )}
 
             {tab === "accounts" && canManageRock101 && (
@@ -731,9 +838,9 @@ export default function Rock101App() {
 
             {tab === "admin" && canManageRock101 && (
               <AdminView
-                users={getAllUsers()}
-                students={students}
-                canManageUsers={isGeneralManager}
+                users={filteredUsersBySchool}
+                students={filteredStudentsBySchool}
+                canManageUsers={isGeneralManager || isOwner}
                 onUpdateStudentParentEmail={(studentName, parentEmail) => {
                   setStudents((prev) =>
                     prev.map((student) =>

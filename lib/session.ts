@@ -3,8 +3,9 @@ import { AppUser } from "@/types/user";
 
 const SESSION_KEY = "rock101-session";
 const CREATED_USERS_KEY = "rock101-created-users";
+const TAB_KEY = "rock101-tab";
 
-export type SessionUser = Pick<AppUser, "email" | "name" | "role">;
+export type SessionUser = Pick<AppUser, "email" | "name" | "role" | "schoolId">;
 
 export function saveSession(user: SessionUser) {
   if (typeof window === "undefined") return;
@@ -71,9 +72,9 @@ export function findUserByEmail(email: string): SessionUser | null {
     email: matchedUser.email,
     name: matchedUser.name,
     role: matchedUser.role,
+    schoolId: matchedUser.schoolId,
   };
 }
-const TAB_KEY = "rock101-tab";
 
 export function saveSelectedTab(tab: string) {
   if (typeof window === "undefined") return;

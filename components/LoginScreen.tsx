@@ -82,20 +82,33 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           <div className="grid gap-3 md:grid-cols-2">
             <button
               type="button"
-              onClick={() => handleDemoLogin("gm@rock101.com")}
-              className="rounded-lg bg-zinc-800 px-4 py-3 text-left transition hover:bg-zinc-700"
+              onClick={() => handleDemoLogin("steve@rock101.com")}
+              className="rounded-lg border border-red-500/30 bg-red-950/20 px-4 py-3 text-left transition hover:bg-red-900/30 md:col-span-2"
             >
-              <div className="text-sm font-semibold">General Manager</div>
-              <div className="text-xs text-zinc-400">gm@rock101.com</div>
+              <div className="text-sm font-semibold text-red-300">Owner</div>
+              <div className="text-xs text-zinc-400">steve@rock101.com</div>
             </button>
 
             <button
               type="button"
-              onClick={() => handleDemoLogin("steve@rock101.com")}
+              onClick={() => handleDemoLogin("gm.delmar@rock101.com")}
+              className="rounded-lg bg-zinc-800 px-4 py-3 text-left transition hover:bg-zinc-700"
+            >
+              <div className="text-sm font-semibold">General Manager</div>
+              <div className="text-xs text-zinc-400">
+                gm.delmar@rock101.com
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("director.delmar@rock101.com")}
               className="rounded-lg bg-zinc-800 px-4 py-3 text-left transition hover:bg-zinc-700"
             >
               <div className="text-sm font-semibold">Rock 101 Director</div>
-              <div className="text-xs text-zinc-400">steve@rock101.com</div>
+              <div className="text-xs text-zinc-400">
+                director.delmar@rock101.com
+              </div>
             </button>
 
             <button

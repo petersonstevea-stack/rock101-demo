@@ -1,12 +1,12 @@
 import { AppUser } from "@/types/user";
 
 export const users: AppUser[] = [
-  {
-    email: "owner@rock101.com",
-    name: "Steve",
-    role: "owner",
-    status: "active",
-  },
+{
+  email: "speterson@schoolofrock.com",
+  name: "Steve",
+  role: "owner",
+  status: "active",
+},
   {
     email: "gm.delmar@rock101.com",
     name: "Del Mar GM",
