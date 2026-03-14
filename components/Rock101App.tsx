@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
+import BrandedBackground from "@/components/BrandedBackground";
 import LoginScreen from "@/components/LoginScreen";
 import AppHeader from "@/components/AppHeader";
 import StudentSelector from "@/components/StudentSelector";
@@ -138,8 +138,9 @@ export default function Rock101App() {
   }, [savedClasses, effectiveSchoolFilter]);
 
   const selectedClass =
-    filteredClassesBySchool.find((rockClass) => rockClass.id === selectedClassId) ??
-    null;
+    filteredClassesBySchool.find(
+      (rockClass) => rockClass.id === selectedClassId
+    ) ?? null;
 
   const studentsInSelectedClass = selectedClass
     ? filteredStudentsBySchool.filter((student) =>
@@ -403,7 +404,15 @@ export default function Rock101App() {
     visibleStudents.length === 0
   ) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <BrandedBackground
+        imageSrc="/images/rock101-drums.jpg"
+        mode="watermark"
+        opacity={0.3}
+        grayscale={false}
+        blur={0}
+        overlayClassName="bg-black/55"
+        position="center"
+      >
         <AppHeader
           role={role}
           studentName="No student assigned"
@@ -453,12 +462,20 @@ export default function Rock101App() {
             )}
           </div>
         </div>
-      </div>
+      </BrandedBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <BrandedBackground
+      imageSrc="/images/rock101-drums.jpg"
+      mode="watermark"
+      opacity={0.3}
+      grayscale={false}
+      blur={0}
+      overlayClassName="bg-black/55"
+      position="center"
+    >
       <AppHeader
         role={role}
         studentName={
@@ -863,6 +880,6 @@ export default function Rock101App() {
           </>
         )}
       </div>
-    </div>
+    </BrandedBackground>
   );
 }
