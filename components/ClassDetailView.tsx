@@ -2,11 +2,14 @@
 
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
+import { schools } from "@/data/schools";
 
 type Student = {
+  id?: string;
   name: string;
   instrument?: string;
   band?: string;
+  schoolId?: string;
 };
 
 type ClassDetailViewProps = {
@@ -29,6 +32,10 @@ export default function ClassDetailView({
     rockClass.instructorEmail ||
     "Not assigned";
 
+  const schoolName =
+    schools.find((school) => school.id === rockClass.schoolId)?.name ||
+    rockClass.schoolId;
+
   return (
     <div className="mt-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -44,7 +51,12 @@ export default function ClassDetailView({
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-2xl font-bold">{rockClass.name}</h2>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-lg border border-zinc-800 bg-black p-4">
+            <div className="text-sm text-zinc-400">School</div>
+            <div className="mt-2 font-semibold">{schoolName}</div>
+          </div>
+
           <div className="rounded-lg border border-zinc-800 bg-black p-4">
             <div className="text-sm text-zinc-400">Schedule</div>
             <div className="mt-2 font-semibold">
@@ -94,12 +106,17 @@ export default function ClassDetailView({
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {students.map((student) => (
               <div
-                key={student.name}
+                key={student.id ?? student.name}
                 className="rounded-lg border border-zinc-800 bg-black p-4"
               >
                 <div className="text-lg font-semibold">{student.name}</div>
+
                 <div className="mt-2 text-sm text-zinc-400">
                   Instrument: {student.instrument || "Not set"}
+                </div>
+
+                <div className="mt-1 text-sm text-zinc-400">
+                  Band: {student.band || "Not set"}
                 </div>
 
                 <button

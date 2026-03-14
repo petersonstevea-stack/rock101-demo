@@ -2,6 +2,7 @@
 
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
+import { schools } from "@/data/schools";
 
 type ClassSelectorViewProps = {
   classes: RockClass[];
@@ -20,12 +21,17 @@ export default function ClassSelectorView({
       .map((user) => [user.email, user.name])
   );
 
+  const schoolMap = Object.fromEntries(
+    schools.map((school) => [school.id, school.name])
+  );
+
   return (
     <div className="mt-8 space-y-6">
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-2xl font-bold">Select a Rock 101 Class</h2>
         <p className="mt-2 text-zinc-400">
-          Choose a class to view songs, performance info, and student roster.
+          Choose a class to view school, songs, performance info, and student
+          roster.
         </p>
       </div>
 
@@ -41,6 +47,9 @@ export default function ClassSelectorView({
               rockClass.instructorEmail ||
               "Not assigned";
 
+            const schoolName =
+              schoolMap[rockClass.schoolId] || rockClass.schoolId;
+
             return (
               <button
                 key={rockClass.id}
@@ -51,6 +60,7 @@ export default function ClassSelectorView({
                 <div className="text-xl font-semibold">{rockClass.name}</div>
 
                 <div className="mt-3 space-y-1 text-sm text-zinc-400">
+                  <div>School: {schoolName}</div>
                   <div>
                     {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
                   </div>

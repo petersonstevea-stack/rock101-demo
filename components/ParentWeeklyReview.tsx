@@ -1,11 +1,20 @@
-import { skillSections } from "@/data/curriculum";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+import type { Instrument, CurriculumItem } from "@/data/rock101Curriculum";
 import {
-  getOverallProgress,
-  getSectionProgress,
-  getTotalFistBumps,
-} from "@/lib/progress";
+  getPrivateLessonSections,
+  getGroupRehearsalSections,
+} from "@/data/rock101Curriculum";
+import {
+  getStudentLessonProgress,
+  type StudentLessonProgressMap,
+} from "@/data/studentProgress";
+import { getTotalFistBumps } from "@/lib/progress";
 
 type ParentStudent = {
+  id?: string;
   name: string;
   instrument: string;
   band: string;
@@ -33,49 +42,184 @@ type ParentWeeklyReviewProps = {
   student: ParentStudent;
 };
 
-function buildRockSummary(student: ParentStudent) {
-  const progress = getOverallProgress(student);
+type ProgressRow = {
+  key: string;
+  title: string;
+  progress: number;
+};
 
-  const completedCount = Object.values(student.curriculum).filter(
-    (item) => item.done || item.signed
-  ).length;
+function percent(completed: number, total: number) {
+  if (!total) return 0;
+  return Math.round((completed / total) * 100);
+}
 
-  const signedCount = Object.values(student.curriculum).filter(
-    (item) => item.signed
-  ).length;
+function isCurriculumItemComplete(
+  student: ParentStudent,
+  item: CurriculumItem
+): boolean {
+  const value = student.curriculum[item.id];
+  return !!(value?.done || value?.signed);
+}
 
+function countCompletedCurriculumItems(
+  student: ParentStudent,
+  items: CurriculumItem[]
+) {
+  return items.filter((item) => isCurriculumItemComplete(student, item)).length;
+}
+
+function countCompletedRequiredLessons(
+  items: CurriculumItem[],
+  lessonProgress: StudentLessonProgressMap
+) {
+  return items.filter((item) => !!lessonProgress[item.id]).length;
+}
+
+function buildRockSummary(
+  student: ParentStudent,
+  overallProgress: number,
+  completedCount: number,
+  signedCount: number
+) {
   const instructorNote =
     student.notes.instructor?.trim() || "No instructor notes yet.";
   const directorNote =
     student.notes.director?.trim() || "No director notes yet.";
 
-  if (progress < 20) {
-    return `${student.name} is just getting rolling in Rock 101 and is currently at ${progress}% completion. That is completely normal at this stage. Right now the focus is on getting comfortable, building confidence, and learning how to play with the band from day one. So far ${student.name.toLowerCase()} has completed ${completedCount} total skills, with ${signedCount} officially signed off. In lessons and rehearsal, the goal is to keep showing up, stacking reps, and starting to build the foundation that will make everything click later on. Instructor note: ${instructorNote} Director note: ${directorNote}`;
+  if (overallProgress < 20) {
+    return `${student.name} is just getting rolling in Rock 101 and is currently at ${overallProgress}% completion. That is completely normal at this stage. Right now the focus is on getting comfortable, building confidence, and learning how to play with the band from day one. So far ${student.name.toLowerCase()} has completed ${completedCount} total checklist items, with ${signedCount} officially signed off in private lessons and rehearsal. In lessons and rehearsal, the goal is to keep showing up, stacking reps, and starting to build the foundation that will make everything click later on. Instructor note: ${instructorNote} Director note: ${directorNote}`;
   }
 
-  if (progress < 60) {
-    return `${student.name} is starting to find a real groove in Rock 101 and is currently at ${progress}% completion. You can see the reps beginning to add up in timing, consistency, and overall comfort playing with the band. So far ${student.name.toLowerCase()} has completed ${completedCount} total skills, with ${signedCount} officially signed off. The next step is taking those early wins and turning them into habits that feel natural in both lessons and rehearsal. Instructor note: ${instructorNote} Director note: ${directorNote}`;
+  if (overallProgress < 60) {
+    return `${student.name} is starting to find a real groove in Rock 101 and is currently at ${overallProgress}% completion. You can see the reps beginning to add up in timing, consistency, and overall comfort playing with the band. So far ${student.name.toLowerCase()} has completed ${completedCount} total checklist items, with ${signedCount} officially signed off in private lessons and rehearsal. The next step is taking those early wins and turning them into habits that feel natural in both lessons and rehearsal. Instructor note: ${instructorNote} Director note: ${directorNote}`;
   }
 
-  if (progress < 90) {
-    return `${student.name} is really starting to lock things in and is now at ${progress}% completion in Rock 101. At this point students usually begin to sound more confident with the band, recover from mistakes faster, and play their parts with more consistency. ${student.name} has completed ${completedCount} total skills, with ${signedCount} officially signed off. The mission now is to keep tightening everything up so those developing chops feel reliable on stage. Instructor note: ${instructorNote} Director note: ${directorNote}`;
+  if (overallProgress < 90) {
+    return `${student.name} is really starting to lock things in and is now at ${overallProgress}% completion in Rock 101. At this point students usually begin to sound more confident with the band, recover from mistakes faster, and play their parts with more consistency. ${student.name} has completed ${completedCount} total checklist items, with ${signedCount} officially signed off in private lessons and rehearsal. The mission now is to keep tightening everything up so those developing chops feel reliable on stage. Instructor note: ${instructorNote} Director note: ${directorNote}`;
   }
 
-  return `${student.name} is in the home stretch at ${progress}% completion and is getting seriously close to the Performance Program. The confidence, awareness, and band skills are all starting to come together. ${student.name} has completed ${completedCount} total skills, with ${signedCount} officially signed off. A few more strong reps and we’ll be looking at a student who is ready to step up and own the stage. Instructor note: ${instructorNote} Director note: ${directorNote}`;
+  return `${student.name} is in the home stretch at ${overallProgress}% completion and is getting seriously close to the Performance Program. The confidence, awareness, and band skills are all starting to come together. ${student.name} has completed ${completedCount} total checklist items, with ${signedCount} officially signed off in private lessons and rehearsal. A few more strong reps and we’ll be looking at a student who is ready to step up and own the stage. Instructor note: ${instructorNote} Director note: ${directorNote}`;
 }
 
 export default function ParentWeeklyReview({
   student,
 }: ParentWeeklyReviewProps) {
-  const overallProgress = getOverallProgress(student);
-  const totalFistBumps = getTotalFistBumps(student);
-  const summary = buildRockSummary(student);
+  const [lessonProgress, setLessonProgress] = useState<StudentLessonProgressMap>(
+    {}
+  );
 
-  const sectionRows = Object.entries(skillSections).map(([key, section]) => ({
-    key,
-    title: section.title,
-    progress: getSectionProgress(student, key as keyof typeof skillSections),
-  }));
+  const studentProgressId =
+    student.id ?? `${student.name}-${student.instrument}-${student.band}`;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProgress() {
+      const stored = await getStudentLessonProgress(studentProgressId);
+      if (isMounted) {
+        setLessonProgress(stored.lessons ?? {});
+      }
+    }
+
+    loadProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [studentProgressId]);
+
+  const privateSections = useMemo(
+    () => getPrivateLessonSections(student.instrument),
+    [student.instrument]
+  );
+
+  const groupSections = useMemo(
+    () => getGroupRehearsalSections(student.instrument),
+    [student.instrument]
+  );
+
+  const graduationItems = useMemo(
+    () =>
+      privateSections
+        .filter((section) => section.area === "graduation")
+        .flatMap((section) => section.items),
+    [privateSections]
+  );
+
+  const requiredLessonItems = useMemo(
+    () =>
+      privateSections
+        .filter((section) => section.area === "requiredLessons")
+        .flatMap((section) => section.items),
+    [privateSections]
+  );
+
+  const rehearsalItems = useMemo(
+    () => groupSections.flatMap((section) => section.items),
+    [groupSections]
+  );
+
+  const graduationCompleted = useMemo(
+    () => countCompletedCurriculumItems(student, graduationItems),
+    [student, graduationItems]
+  );
+
+  const requiredLessonsCompleted = useMemo(
+    () => countCompletedRequiredLessons(requiredLessonItems, lessonProgress),
+    [requiredLessonItems, lessonProgress]
+  );
+
+  const rehearsalCompleted = useMemo(
+    () => countCompletedCurriculumItems(student, rehearsalItems),
+    [student, rehearsalItems]
+  );
+
+  const graduationProgress = percent(
+    graduationCompleted,
+    graduationItems.length
+  );
+  const requiredLessonsProgress = percent(
+    requiredLessonsCompleted,
+    requiredLessonItems.length
+  );
+  const rehearsalProgress = percent(rehearsalCompleted, rehearsalItems.length);
+
+  const overallCompleted =
+    graduationCompleted + requiredLessonsCompleted + rehearsalCompleted;
+  const overallTotal =
+    graduationItems.length + requiredLessonItems.length + rehearsalItems.length;
+  const overallProgress = percent(overallCompleted, overallTotal);
+
+  const signedCount = Object.values(student.curriculum).filter(
+    (item) => item.signed
+  ).length;
+
+  const totalFistBumps = getTotalFistBumps(student);
+
+  const summary = buildRockSummary(
+    student,
+    overallProgress,
+    overallCompleted,
+    signedCount
+  );
+
+  const sectionRows: ProgressRow[] = [
+    {
+      key: "graduation",
+      title: "Private Lessons: Graduation Requirements",
+      progress: graduationProgress,
+    },
+    {
+      key: "requiredLessons",
+      title: "Private Lessons: Method App Required Lessons",
+      progress: requiredLessonsProgress,
+    },
+    {
+      key: "rehearsalReadiness",
+      title: "Group Rehearsal: Rehearsal Readiness",
+      progress: rehearsalProgress,
+    },
+  ];
 
   return (
     <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
@@ -87,7 +231,9 @@ export default function ParentWeeklyReview({
         <div className="flex items-center justify-between rounded-xl border border-zinc-800 p-4">
           <div>
             <div className="text-sm text-zinc-400">Overall Progress</div>
-            <div className="mt-1 text-2xl font-bold">{overallProgress}%</div>
+            <div className="mt-1 text-2xl font-bold text-white">
+              {overallProgress}%
+            </div>
           </div>
 
           <div className="text-sm text-red-300">
@@ -103,7 +249,7 @@ export default function ParentWeeklyReview({
           <div className="grid gap-5 lg:grid-cols-[0.95fr,1.05fr]">
             <div className="grid gap-4">
               <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 flex items-center justify-between text-sm">
+                <div className="mb-2 flex items-center justify-between text-sm text-white">
                   <span>Overall Progress</span>
                   <span>{overallProgress}%</span>
                 </div>
@@ -117,12 +263,14 @@ export default function ParentWeeklyReview({
               </div>
 
               <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-3 font-semibold">Curriculum Progress</div>
+                <div className="mb-3 font-semibold text-white">
+                  Curriculum Progress
+                </div>
 
                 <div className="grid gap-3">
                   {sectionRows.map((row) => (
                     <div key={row.key} className="grid gap-2">
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-sm text-white">
                         <span>{row.title}</span>
                         <span>{row.progress}%</span>
                       </div>
@@ -145,15 +293,19 @@ export default function ParentWeeklyReview({
               </div>
 
               <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 font-semibold">Instructor Notes</div>
-                <div className="text-sm leading-6">
+                <div className="mb-2 font-semibold text-white">
+                  Instructor Notes
+                </div>
+                <div className="text-sm leading-6 text-zinc-200">
                   {student.notes.instructor || "No instructor notes yet."}
                 </div>
               </div>
 
               <div className="rounded-xl border border-zinc-800 p-4">
-                <div className="mb-2 font-semibold">Rock 101 Director Notes</div>
-                <div className="text-sm leading-6">
+                <div className="mb-2 font-semibold text-white">
+                  Rock 101 Director Notes
+                </div>
+                <div className="text-sm leading-6 text-zinc-200">
                   {student.notes.director || "No director notes yet."}
                 </div>
                 <div className="mt-3 text-sm text-red-300">

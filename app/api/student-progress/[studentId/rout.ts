@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 
-const redis = Redis.fromEnv();
-
 type StudentLessonProgressMap = Record<string, boolean>;
 
 type StudentLessonProgressRecord = {
@@ -15,36 +13,80 @@ function getKey(studentId: string) {
   return `student-progress:${studentId}`;
 }
 
+function getRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    return null;
+  }
+
+  return new Redis({
+    url,
+    token,
+  });
+}
+
 export async function GET(
   _request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
-  const existing = await redis.get<StudentLessonProgressRecord>(
-    getKey(params.studentId)
-  );
+  try {
+    const { studentId } = await params;
+    const redis = getRedis();
 
-  return NextResponse.json(
-    existing ?? {
-      studentId: params.studentId,
-      lessons: {},
-      updatedAt: new Date().toISOString(),
+    if (!redis) {
+      return NextResponse.json({
+        studentId,
+        lessons: {},
+        updatedAt: new Date().toISOString(),
+      });
     }
-  );
+
+    const existing = await redis.get<StudentLessonProgressRecord>(getKey(studentId));
+
+    return NextResponse.json(
+      existing ?? {
+        studentId,
+        lessons: {},
+        updatedAt: new Date().toISOString(),
+      }
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to load progress" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
-  const body = await request.json();
+  try {
+    const { studentId } = await params;
+    const body = await request.json();
 
-  const payload: StudentLessonProgressRecord = {
-    studentId: params.studentId,
-    lessons: body.lessons ?? {},
-    updatedAt: new Date().toISOString(),
-  };
+    const payload: StudentLessonProgressRecord = {
+      studentId,
+      lessons: body.lessons ?? {},
+      updatedAt: new Date().toISOString(),
+    };
 
-  await redis.set(getKey(params.studentId), payload);
+    const redis = getRedis();
 
-  return NextResponse.json(payload);
+    if (!redis) {
+      return NextResponse.json(payload);
+    }
+
+    await redis.set(getKey(studentId), payload);
+
+    return NextResponse.json(payload);
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to save progress" },
+      { status: 500 }
+    );
+  }
 }

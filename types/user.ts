@@ -1,16 +1,18 @@
-export type UserRole =
-  | "parent"
-  | "instructor"
-  | "director"
-  | "generalManager";
+import type { SchoolId } from "@/data/schools";
 
-export type UserStatus = "active" | "invited" | "disabled";
+export type UserRole =
+  | "owner"
+  | "generalManager"
+  | "director"
+  | "instructor"
+  | "parent";
+
+export type UserStatus = "active" | "inactive";
 
 export type AppUser = {
   email: string;
   name: string;
   role: UserRole;
   status: UserStatus;
-  invitedAt?: string;
-  invitedBy?: string;
+  schoolId?: SchoolId;
 };

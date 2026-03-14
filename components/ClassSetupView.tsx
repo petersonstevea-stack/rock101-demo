@@ -5,9 +5,12 @@ import { RockClass } from "@/types/class";
 import { getSavedClasses, saveClasses } from "@/lib/classes";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
+import { schools, type SchoolId } from "@/data/schools";
 
 type Student = {
+  id: string;
   name: string;
+  schoolId: SchoolId;
 };
 
 type ClassSetupViewProps = {
@@ -22,11 +25,12 @@ export default function ClassSetupView({
   const [classes, setClasses] = useState<RockClass[]>([]);
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
 
+  const [schoolId, setSchoolId] = useState<SchoolId>("del-mar");
   const [className, setClassName] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("Monday");
   const [time, setTime] = useState("");
   const [instructorEmail, setInstructorEmail] = useState("");
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
   const [performanceTitle, setPerformanceTitle] = useState("");
   const [performanceDate, setPerformanceDate] = useState("");
@@ -35,27 +39,36 @@ export default function ClassSetupView({
     setClasses(getSavedClasses());
   }, []);
 
+  const schoolUsers = useMemo(() => {
+    return users.filter((user) => user.schoolId === schoolId);
+  }, [users, schoolId]);
+
   const instructorUsers = useMemo(() => {
-    return users.filter((user) => user.role === "instructor");
-  }, [users]);
+    return schoolUsers.filter((user) => user.role === "instructor");
+  }, [schoolUsers]);
+
+  const schoolStudents = useMemo(() => {
+    return students.filter((student) => student.schoolId === schoolId);
+  }, [students, schoolId]);
 
   function resetForm() {
     setEditingClassId(null);
+    setSchoolId("del-mar");
     setClassName("");
     setDayOfWeek("Monday");
     setTime("");
     setInstructorEmail("");
-    setSelectedStudents([]);
+    setSelectedStudentIds([]);
     setSelectedSongs([]);
     setPerformanceTitle("");
     setPerformanceDate("");
   }
 
-  function toggleStudent(studentName: string) {
-    setSelectedStudents((prev) =>
-      prev.includes(studentName)
-        ? prev.filter((name) => name !== studentName)
-        : [...prev, studentName]
+  function toggleStudent(studentId: string) {
+    setSelectedStudentIds((prev) =>
+      prev.includes(studentId)
+        ? prev.filter((id) => id !== studentId)
+        : [...prev, studentId]
     );
   }
 
@@ -80,13 +93,19 @@ export default function ClassSetupView({
       return;
     }
 
+    const selectedStudentRecords = students.filter((student) =>
+      selectedStudentIds.includes(student.id)
+    );
+
     const classData: RockClass = {
       id: editingClassId ?? crypto.randomUUID(),
+      schoolId,
       name: className.trim(),
       dayOfWeek,
       time: time.trim(),
       instructorEmail: instructorEmail.trim().toLowerCase(),
-      studentNames: selectedStudents,
+      studentIds: selectedStudentRecords.map((student) => student.id),
+      studentNames: selectedStudentRecords.map((student) => student.name),
       songs: selectedSongs,
       performanceTitle: performanceTitle.trim(),
       performanceDate,
@@ -109,11 +128,12 @@ export default function ClassSetupView({
 
   function handleEditClass(rockClass: RockClass) {
     setEditingClassId(rockClass.id);
+    setSchoolId(rockClass.schoolId);
     setClassName(rockClass.name);
     setDayOfWeek(rockClass.dayOfWeek);
     setTime(rockClass.time);
     setInstructorEmail(rockClass.instructorEmail);
-    setSelectedStudents(rockClass.studentNames);
+    setSelectedStudentIds(rockClass.studentIds ?? []);
     setSelectedSongs(rockClass.songs);
     setPerformanceTitle(rockClass.performanceTitle);
     setPerformanceDate(rockClass.performanceDate);
@@ -141,8 +161,8 @@ export default function ClassSetupView({
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-2xl font-bold">Class Builder</h2>
         <p className="mt-2 text-zinc-400">
-          Create and manage Rock 101 classes with schedule, roster, approved songs,
-          and performance information.
+          Create and manage Rock 101 classes with school, schedule, roster,
+          approved songs, and performance information.
         </p>
       </div>
 
@@ -164,6 +184,26 @@ export default function ClassSetupView({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">School</label>
+            <select
+              value={schoolId}
+              onChange={(e) => {
+                const nextSchoolId = e.target.value as SchoolId;
+                setSchoolId(nextSchoolId);
+                setInstructorEmail("");
+                setSelectedStudentIds([]);
+              }}
+              className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+            >
+              {schools.map((school) => (
+                <option key={school.id} value={school.id}>
+                  {school.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="mb-2 block text-sm text-zinc-400">Class Name</label>
             <input
@@ -245,15 +285,15 @@ export default function ClassSetupView({
         <div>
           <label className="mb-2 block text-sm text-zinc-400">Select Students</label>
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-            {students.map((student) => (
+            {schoolStudents.map((student) => (
               <label
-                key={student.name}
+                key={student.id}
                 className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
               >
                 <input
                   type="checkbox"
-                  checked={selectedStudents.includes(student.name)}
-                  onChange={() => toggleStudent(student.name)}
+                  checked={selectedStudentIds.includes(student.id)}
+                  onChange={() => toggleStudent(student.id)}
                 />
                 <span>{student.name}</span>
               </label>
@@ -304,9 +344,12 @@ export default function ClassSetupView({
           <div className="mt-4 space-y-4">
             {classes.map((rockClass) => {
               const instructorName =
-                instructorUsers.find(
-                  (user) => user.email === rockClass.instructorEmail
-                )?.name ?? rockClass.instructorEmail;
+                users.find((user) => user.email === rockClass.instructorEmail)
+                  ?.name ?? rockClass.instructorEmail;
+
+              const schoolName =
+                schools.find((school) => school.id === rockClass.schoolId)?.name ??
+                rockClass.schoolId;
 
               return (
                 <div
@@ -316,6 +359,9 @@ export default function ClassSetupView({
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="text-lg font-bold">{rockClass.name}</div>
+                      <div className="mt-2 text-sm text-zinc-400">
+                        School: {schoolName}
+                      </div>
                       <div className="mt-2 text-sm text-zinc-400">
                         {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
                       </div>

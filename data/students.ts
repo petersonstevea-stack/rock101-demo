@@ -1,21 +1,24 @@
-import { allCurriculumItems } from "@/data/curriculum";
+import type { SchoolId } from "@/data/schools";
+import { getAllCurriculumItems, type Instrument } from "@/data/rock101Curriculum";
 
-type SeedStudentRecord = {
+export type StudentCurriculumStatus = {
+  done: boolean;
+  signed: boolean;
+  date: string | null;
+  fistBumps: number;
+};
+
+export type StudentRecord = {
+  id: string;
+  schoolId: SchoolId;
   name: string;
   firstName: string;
   lastInitial: string;
   parentEmail: string;
-  instrument: string;
+  primaryInstructorEmail?: string;
+  instrument: Instrument;
   band: string;
-  curriculum: Record<
-    string,
-    {
-      done: boolean;
-      signed: boolean;
-      date: string | null;
-      fistBumps: number;
-    }
-  >;
+  curriculum: Record<string, StudentCurriculumStatus>;
   notes: {
     instructor: string;
     director: string;
@@ -27,56 +30,72 @@ type SeedStudentRecord = {
   };
 };
 
-const baseStudents = [
+type BaseStudent = Omit<
+  StudentRecord,
+  "curriculum" | "notes" | "workflow"
+>;
+
+const baseStudents: BaseStudent[] = [
   {
+    id: "avery-p-del-mar",
+    schoolId: "del-mar",
     name: "Avery P",
     firstName: "Avery",
     lastInitial: "P",
     parentEmail: "averyparent@example.com",
     primaryInstructorEmail: "jennifer@gmail.com",
-    instrument: "Guitar",
+    instrument: "guitar",
     band: "Tuesday 5pm Rock 101",
   },
   {
+    id: "zoe-m-del-mar",
+    schoolId: "del-mar",
     name: "Zoe M",
     firstName: "Zoe",
     lastInitial: "M",
     parentEmail: "zoeparent@example.com",
     primaryInstructorEmail: "jennifer@gmail.com",
-    instrument: "Voice",
+    instrument: "vocals",
     band: "Tuesday 5pm Rock 101",
   },
   {
+    id: "milo-r-del-mar",
+    schoolId: "del-mar",
     name: "Milo R",
     firstName: "Milo",
     lastInitial: "R",
     parentEmail: "miloparent@example.com",
     primaryInstructorEmail: "jennifer@gmail.com",
-    instrument: "Drums",
+    instrument: "drums",
     band: "Tuesday 5pm Rock 101",
   },
   {
+    id: "leo-t-encinitas",
+    schoolId: "encinitas",
     name: "Leo T",
     firstName: "Leo",
     lastInitial: "T",
     parentEmail: "leoparent@example.com",
-    instrument: "Bass",
-    band: "Tuesday 5pm Rock 101",
+    primaryInstructorEmail: "mike@yahoo.com",
+    instrument: "bass",
+    band: "Wednesday 5pm Rock 101",
   },
   {
+    id: "emma-s-scripps-ranch",
+    schoolId: "scripps-ranch",
     name: "Emma S",
     firstName: "Emma",
     lastInitial: "S",
     parentEmail: "emmaparent@example.com",
-    instrument: "Keys",
-    band: "Tuesday 5pm Rock 101",
+    instrument: "keys",
+    band: "Thursday 5pm Rock 101",
   },
 ];
 
-function createEmptyCurriculum() {
+function createEmptyCurriculum(instrument: Instrument) {
   return Object.fromEntries(
-    allCurriculumItems.map((item) => [
-      item,
+    getAllCurriculumItems(instrument).map((item) => [
+      item.id,
       {
         done: false,
         signed: false,
@@ -87,9 +106,9 @@ function createEmptyCurriculum() {
   );
 }
 
-export const students: SeedStudentRecord[] = baseStudents.map((student) => ({
+export const students: StudentRecord[] = baseStudents.map((student) => ({
   ...student,
-  curriculum: createEmptyCurriculum(),
+  curriculum: createEmptyCurriculum(student.instrument),
   notes: {
     instructor: "",
     director: "",
@@ -100,3 +119,17 @@ export const students: SeedStudentRecord[] = baseStudents.map((student) => ({
     parentSubmitted: false,
   },
 }));
+
+export function getStudentsBySchool(schoolId: SchoolId) {
+  return students.filter((student) => student.schoolId === schoolId);
+}
+
+export function getStudentsByBand(schoolId: SchoolId, band: string) {
+  return students.filter(
+    (student) => student.schoolId === schoolId && student.band === band
+  );
+}
+
+export function getStudentById(studentId: string) {
+  return students.find((student) => student.id === studentId);
+}
