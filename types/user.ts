@@ -7,7 +7,7 @@ export type UserRole =
   | "instructor"
   | "parent";
 
-export type UserStatus = "active" | "inactive";
+export type UserStatus = "active" | "inactive" | "invited";
 
 export type AppUser = {
   email: string;
@@ -15,4 +15,6 @@ export type AppUser = {
   role: UserRole;
   status: UserStatus;
   schoolId?: SchoolId;
+  invitedAt?: string;
+  invitedBy?: string;
 };
