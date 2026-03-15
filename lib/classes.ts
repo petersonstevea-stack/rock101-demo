@@ -6,49 +6,48 @@ const CLASSES_KEY = "rock101-classes";
  * Ensures older saved classes are upgraded to the current schema
  */
 function normalizeClass(rockClass: any): RockClass {
-  return {
-    id: rockClass.id ?? crypto.randomUUID(),
+    return {
+        id: rockClass.id ?? crypto.randomUUID(),
 
-    schoolId: rockClass.schoolId ?? "del-mar",
+        schoolId: rockClass.schoolId ?? "del-mar",
 
-    name: rockClass.name ?? "Unnamed Class",
-    dayOfWeek: rockClass.dayOfWeek ?? "Monday",
-    time: rockClass.time ?? "",
+        name: rockClass.name ?? "Unnamed Class",
+        dayOfWeek: rockClass.dayOfWeek ?? "Monday",
+        time: rockClass.time ?? "",
+        directorEmail: rockClass.directorEmail ?? "",
+        instructorEmail: rockClass.instructorEmail ?? "",
+        studentIds: Array.isArray(rockClass.studentIds) ? rockClass.studentIds : [],
 
-    instructorEmail: rockClass.instructorEmail ?? "",
+        studentNames: rockClass.studentNames ?? [],
 
-    studentIds: rockClass.studentIds ?? [],
+        songs: rockClass.songs ?? [],
 
-    studentNames: rockClass.studentNames ?? [],
-
-    songs: rockClass.songs ?? [],
-
-    performanceTitle: rockClass.performanceTitle ?? "",
-    performanceDate: rockClass.performanceDate ?? "",
-  };
+        performanceTitle: rockClass.performanceTitle ?? "",
+        performanceDate: rockClass.performanceDate ?? "",
+    };
 }
 
 export function getSavedClasses(): RockClass[] {
-  if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return [];
 
-  const raw = localStorage.getItem(CLASSES_KEY);
-  if (!raw) return [];
+    const raw = localStorage.getItem(CLASSES_KEY);
+    if (!raw) return [];
 
-  try {
-    const parsed = JSON.parse(raw);
+    try {
+        const parsed = JSON.parse(raw);
 
-    if (!Array.isArray(parsed)) return [];
+        if (!Array.isArray(parsed)) return [];
 
-    return parsed.map(normalizeClass);
-  } catch {
-    return [];
-  }
+        return parsed.map(normalizeClass);
+    } catch {
+        return [];
+    }
 }
 
 export function saveClasses(classes: RockClass[]) {
-  if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
 
-  const normalized = classes.map(normalizeClass);
+    const normalized = classes.map(normalizeClass);
 
-  localStorage.setItem(CLASSES_KEY, JSON.stringify(normalized));
+    localStorage.setItem(CLASSES_KEY, JSON.stringify(normalized));
 }

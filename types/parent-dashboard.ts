@@ -1,14 +1,17 @@
 export type ActivityItem = {
   id: string;
-  type:
-    | "privateLesson"
-    | "groupRehearsal"
-    | "badge"
-    | "certificate"
-    | "milestone";
+  type: "privateLesson" | "groupRehearsal" | "badge";
   title: string;
-  description?: string;
+  description: string;
   dateLabel: string;
+};
+
+export type WhatsNextItem = {
+  id: string;
+  label: string;
+  description?: string;
+  area: "privateLesson" | "groupRehearsal";
+  priority: "high" | "medium" | "low";
 };
 
 export type DashboardStat = {
@@ -17,19 +20,12 @@ export type DashboardStat = {
   sublabel?: string;
 };
 
-export type ProgressBlock = {
+export type ProgressCard = {
   label: string;
   completed: number;
   total: number;
   percent: number;
-};
-
-export type WhatsNextItem = {
-  id: string;
-  label: string;
-  area: "privateLesson" | "groupRehearsal" | "certificate" | "general";
-  description?: string;
-  priority: "high" | "medium" | "low";
+  targetTab: "privateLesson" | "groupRehearsal" | "certificate";
 };
 
 export type ParentDashboardData = {
@@ -39,7 +35,7 @@ export type ParentDashboardData = {
     instrument: string;
     className: string;
     schoolName: string;
-    nextPerformanceDate?: string | null;
+    nextPerformanceDate: string | null;
   };
   overallProgressPercent: number;
   stats: {
@@ -49,8 +45,10 @@ export type ParentDashboardData = {
     fistBumps: DashboardStat;
   };
   progress: {
-    privateLessons: ProgressBlock;
-    groupRehearsal: ProgressBlock;
+    graduationRequirements: ProgressCard;
+    methodAppLessons: ProgressCard;
+    rehearsalReadiness: ProgressCard;
+    certificate: ProgressCard;
   };
   rehearsalReady: {
     ready: boolean;
@@ -61,6 +59,7 @@ export type ParentDashboardData = {
     earned: boolean;
     completedRequired: number;
     totalRequired: number;
+    percent: number;
     label: string;
     description: string;
   };
@@ -71,4 +70,12 @@ export type ParentDashboardData = {
   };
   recentActivity: ActivityItem[];
   whatsNext: WhatsNextItem[];
+  notesMeta: {
+    lessonLastUpdated: string | null;
+    rehearsalLastUpdated: string | null;
+  };
+  summary: {
+    title: string;
+    text: string;
+  };
 };
