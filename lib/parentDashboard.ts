@@ -45,77 +45,77 @@ type BuildParentDashboardArgs = {
 };
 
 function clampPercent(value: number) {
-  if (Number.isNaN(value) || !Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(100, Math.round(value)));
+    if (Number.isNaN(value) || !Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 const FIST_BUMPS_TO_EARN = 10;
 
 function isItemEarned(
-  item: CurriculumItem,
-  progress?: {
-    done: boolean;
-    signed: boolean;
-    date: string | null;
-    fistBumps: number;
-  }
+    item: CurriculumItem,
+    progress?: {
+        done: boolean;
+        signed: boolean;
+        date: string | null;
+        fistBumps: number;
+    }
 ) {
-  if (!progress) return false;
+    if (!progress) return false;
 
-  if (
-    item.location === "groupRehearsal" &&
-    progress.fistBumps >= FIST_BUMPS_TO_EARN
-  ) {
-    return true;
-  }
+    if (
+        item.location === "groupRehearsal" &&
+        progress.fistBumps >= FIST_BUMPS_TO_EARN
+    ) {
+        return true;
+    }
 
-  return Boolean(progress.done || progress.signed);
+    return Boolean(progress.done || progress.signed);
 }
 
 function countCompleted(
-  items: CurriculumItem[],
-  curriculum: CurriculumProgressRecord
+    items: CurriculumItem[],
+    curriculum: CurriculumProgressRecord
 ) {
-  const completed = items.filter((item) =>
-    isItemEarned(item, curriculum[item.id])
-  ).length;
+    const completed = items.filter((item) =>
+        isItemEarned(item, curriculum[item.id])
+    ).length;
 
-  return {
-    completed,
-    total: items.length,
-    percent: items.length
-      ? clampPercent((completed / items.length) * 100)
-      : 0,
-  };
+    return {
+        completed,
+        total: items.length,
+        percent: items.length
+            ? clampPercent((completed / items.length) * 100)
+            : 0,
+    };
 }
 
 function getCertificateStatus(
-  privateLessonItems: CurriculumItem[],
-  groupRehearsalItems: CurriculumItem[],
-  curriculum: CurriculumProgressRecord
+    privateLessonItems: CurriculumItem[],
+    groupRehearsalItems: CurriculumItem[],
+    curriculum: CurriculumProgressRecord
 ) {
-  const allRequiredItems = [
-    ...privateLessonItems,
-    ...groupRehearsalItems,
-  ].filter((item) => item.required);
+    const allRequiredItems = [
+        ...privateLessonItems,
+        ...groupRehearsalItems,
+    ].filter((item) => item.required);
 
-  const totalRequired = allRequiredItems.length;
+    const totalRequired = allRequiredItems.length;
 
-  const completedRequired = allRequiredItems.filter((item) =>
-    isItemEarned(item, curriculum[item.id])
-  ).length;
+    const completedRequired = allRequiredItems.filter((item) =>
+        isItemEarned(item, curriculum[item.id])
+    ).length;
 
-  const earned = totalRequired > 0 && completedRequired === totalRequired;
+    const earned = totalRequired > 0 && completedRequired === totalRequired;
 
-  return {
-    earned,
-    completedRequired,
-    totalRequired,
-    label: earned ? "Certificate Earned" : "Certificate In Progress",
-    description: earned
-      ? "Your student has completed all graduation requirements, Rock 101 Method App lessons, and rehearsal readiness items."
-      : "The certificate is earned once all graduation requirements, Rock 101 Method App lessons, and rehearsal readiness items are checked off.",
-  };
+    return {
+        earned,
+        completedRequired,
+        totalRequired,
+        label: earned ? "Certificate Earned" : "Certificate In Progress",
+        description: earned
+            ? "Your student has completed all graduation requirements, Rock 101 Method App lessons, and rehearsal readiness items."
+            : "The certificate is earned once all graduation requirements, Rock 101 Method App lessons, and rehearsal readiness items are checked off.",
+    };
 }
 
 function getFistBumps(curriculum: CurriculumProgressRecord) {
@@ -324,8 +324,14 @@ export function buildParentDashboardData({
             },
         },
         progress: {
-            privateLessons,
-            groupRehearsal,
+            privateLessons: {
+                label: "Private Lessons",
+                ...privateLessons,
+            },
+            groupRehearsal: {
+                label: "Group Rehearsal",
+                ...groupRehearsal,
+            },
         },
         rehearsalReady,
         certificate,
