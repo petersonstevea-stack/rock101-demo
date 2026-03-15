@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+:root {
+  --sor-red: #dc2626;
+  --sor-black: #000000;
+  --sor-dark: #18181b;
+  --sor-light: #a1a1aa;
+}
+
+html,
+body {
+  font-family: var(--font-roboto), Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+.sor-heading {
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

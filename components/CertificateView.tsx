@@ -1,5 +1,9 @@
 import PageHero from "@/components/PageHero";
-import { getOverallProgress, getStageLabel } from "@/lib/progress";
+import {
+  getPrivateLessonSections,
+  getGroupRehearsalSections,
+} from "@/data/rock101Curriculum";
+import { getStageLabel } from "@/lib/progress";
 
 type CertificateStudent = {
   name: string;
@@ -29,6 +33,8 @@ type CertificateViewProps = {
   student: CertificateStudent;
 };
 
+const FIST_BUMPS_TO_EARN = 10;
+
 function formatInstrumentLabel(instrument: string) {
   const normalized = instrument.toLowerCase();
 
@@ -38,8 +44,54 @@ function formatInstrumentLabel(instrument: string) {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
+function isItemEarned(
+  item: {
+    id: string;
+    location?: string;
+  },
+  progress?: {
+    done: boolean;
+    signed: boolean;
+    date: string | null;
+    fistBumps: number;
+  }
+) {
+  if (!progress) return false;
+
+  if (
+    item.location === "groupRehearsal" &&
+    progress.fistBumps >= FIST_BUMPS_TO_EARN
+  ) {
+    return true;
+  }
+
+  return Boolean(progress.done || progress.signed);
+}
+
+function getCertificateProgress(student: CertificateStudent) {
+  const privateLessonItems = getPrivateLessonSections(student.instrument).flatMap(
+    (section) => section.items
+  );
+
+  const groupRehearsalItems = getGroupRehearsalSections(student.instrument).flatMap(
+    (section) => section.items
+  );
+
+  const allTrackedItems = [...privateLessonItems, ...groupRehearsalItems];
+
+  const completed = allTrackedItems.filter((item) =>
+    isItemEarned(item, student.curriculum[item.id])
+  ).length;
+
+  const total = allTrackedItems.length;
+
+  if (total === 0) return 0;
+
+  return Math.max(0, Math.min(100, Math.round((completed / total) * 100)));
+}
+
 export default function CertificateView({ student }: CertificateViewProps) {
-  const progress = getOverallProgress(student);
+  const progress = getCertificateProgress(student);
   const stage = getStageLabel(progress);
   const unlocked = progress >= 100;
   const instrumentLabel = formatInstrumentLabel(student.instrument);

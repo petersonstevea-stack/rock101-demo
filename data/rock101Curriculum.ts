@@ -256,7 +256,7 @@ export const rock101Curriculum: Record<Instrument, InstrumentCurriculum> = {
     requiredLessons: [
       {
         id: "guitar-required-lessons-core",
-        title: "Required Lessons",
+        title: "Rock 101 Method App Lessons",
         area: "requiredLessons",
         location: "privateLesson",
         allowedSigner: "instructor",
@@ -364,7 +364,7 @@ export const rock101Curriculum: Record<Instrument, InstrumentCurriculum> = {
     requiredLessons: [
       {
         id: "bass-required-lessons-core",
-        title: "Required Lessons",
+        title: "Rock 101 Method App Lessons",
         area: "requiredLessons",
         location: "privateLesson",
         allowedSigner: "instructor",
@@ -481,7 +481,7 @@ export const rock101Curriculum: Record<Instrument, InstrumentCurriculum> = {
     requiredLessons: [
       {
         id: "drums-required-lessons-core",
-        title: "Required Lessons",
+        title: "Rock 101 Method App Lessons",
         area: "requiredLessons",
         location: "privateLesson",
         allowedSigner: "instructor",
@@ -580,7 +580,7 @@ export const rock101Curriculum: Record<Instrument, InstrumentCurriculum> = {
     requiredLessons: [
       {
         id: "keys-required-lessons-core",
-        title: "Required Lessons",
+        title: "Rock 101 Method App Lessons",
         area: "requiredLessons",
         location: "privateLesson",
         allowedSigner: "instructor",
@@ -679,7 +679,7 @@ export const rock101Curriculum: Record<Instrument, InstrumentCurriculum> = {
     requiredLessons: [
       {
         id: "vocals-required-lessons-core",
-        title: "Required Lessons",
+        title: "Rock 101 Method App Lessons",
         area: "requiredLessons",
         location: "privateLesson",
         allowedSigner: "instructor",
