@@ -3,13 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --sor-red: #d21f2b;
+  --sor-black: #000000;
+  --sor-dark: #18181b;
+  --sor-light: #a1a1aa;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,20 +16,10 @@
   }
 }
 
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-:root {
-  --sor-red: #dc2626;
-  --sor-black: #000000;
-  --sor-dark: #18181b;
-  --sor-light: #a1a1aa;
-}
-
-html,
-body {
   font-family: var(--font-roboto), Arial, Helvetica, sans-serif;
 }
 
@@ -44,4 +31,102 @@ h4,
   font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.sor-display {
+  font-family: var(--font-oswald), Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.sor-display-red {
+  color: var(--sor-red);
+  text-shadow: 0 0 6px rgba(210, 31, 43, 0.35);
+}
+
+.sor-divider {
+  height: 4px;
+  width: 90px;
+  background: var(--sor-red);
+  border-radius: 999px;
+  margin-top: 6px;
+}
+
+/* -------------------------------
+   SOR Guitar Finish Card Effect
+--------------------------------*/
+
+.sor-finish-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  background:
+    linear-gradient(180deg, rgba(28, 28, 32, 0.98) 0%, rgba(8, 8, 10, 0.98) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 28%);
+
+  border: 1px solid rgba(90, 90, 100, 0.9);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 30px rgba(0, 0, 0, 0.4);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.sor-finish-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.07) 12%,
+      rgba(255, 255, 255, 0.02) 18%,
+      rgba(255, 255, 255, 0) 34%
+    );
+
+  opacity: 0.9;
+}
+
+.sor-finish-card::after {
+  content: "";
+  position: absolute;
+  right: -12%;
+  bottom: -45%;
+  width: 72%;
+  height: 155%;
+  z-index: 0;
+  pointer-events: none;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(210, 31, 43, 0.34) 0%,
+    rgba(210, 31, 43, 0.16) 28%,
+    rgba(210, 31, 43, 0.06) 48%,
+    rgba(210, 31, 43, 0) 72%
+  );
+
+  transform: rotate(-14deg);
+  opacity: 0.95;
+}
+
+.sor-finish-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(210, 31, 43, 0.45);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(210, 31, 43, 0.22);
 }

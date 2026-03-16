@@ -1,5 +1,6 @@
 import type { SchoolId } from "@/data/schools";
 import { getAllCurriculumItems, type Instrument } from "@/data/rock101Curriculum";
+import type { SongReadinessEntry } from "@/types/songReadiness";
 
 export type StudentCurriculumStatus = {
   done: boolean;
@@ -19,6 +20,7 @@ export type StudentRecord = {
   instrument: Instrument;
   band: string;
   curriculum: Record<string, StudentCurriculumStatus>;
+  songReadiness?: Record<string, Record<string, SongReadinessEntry>>;
   notes: {
     instructor: string;
     director: string;
@@ -32,7 +34,7 @@ export type StudentRecord = {
 
 type BaseStudent = Omit<
   StudentRecord,
-  "curriculum" | "notes" | "workflow"
+  "curriculum" | "songReadiness" | "notes" | "workflow"
 >;
 
 const baseStudents: BaseStudent[] = [
@@ -109,6 +111,7 @@ function createEmptyCurriculum(instrument: Instrument) {
 export const students: StudentRecord[] = baseStudents.map((student) => ({
   ...student,
   curriculum: createEmptyCurriculum(student.instrument),
+  songReadiness: {},
   notes: {
     instructor: "",
     director: "",

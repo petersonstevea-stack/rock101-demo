@@ -28,6 +28,13 @@ export type ProgressCard = {
   targetTab: "privateLesson" | "groupRehearsal" | "certificate";
 };
 
+export type SongProgressCard = {
+  song: string;
+  readiness: 1 | 2 | 3 | 4 | 5;
+  label: string;
+  targetTab: "groupRehearsal";
+};
+
 export type ParentDashboardData = {
   student: {
     id: string;
@@ -49,6 +56,7 @@ export type ParentDashboardData = {
     methodAppLessons: ProgressCard;
     rehearsalReadiness: ProgressCard;
     certificate: ProgressCard;
+    songs: SongProgressCard[];
   };
   rehearsalReady: {
     ready: boolean;

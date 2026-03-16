@@ -1,4 +1,5 @@
 import type { SchoolId } from "@/data/schools";
+import type { SongReadinessEntry } from "@/types/songReadiness";
 
 export type RockClass = {
   id: string;
@@ -15,6 +16,7 @@ export type RockClass = {
   studentNames: string[];
 
   songs: string[];
+  songProgress?: Record<string, SongReadinessEntry>;
 
   performanceTitle: string;
   performanceDate: string;

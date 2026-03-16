@@ -50,7 +50,25 @@ const badges: Badge[] = [
   },
 ];
 
+function splitBadgeTitle(title: string) {
+  const words = title.split(" ");
+
+  if (words.length <= 1) {
+    return {
+      firstPart: title,
+      secondPart: "",
+    };
+  }
+
+  return {
+    firstPart: words.slice(0, 1).join(" "),
+    secondPart: words.slice(1).join(" "),
+  };
+}
+
 export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
+  const earnedCount = badges.filter((badge) => earnedBadges.has(badge.name)).length;
+
   return (
     <div className="mt-8 space-y-6">
       <PageHero
@@ -59,83 +77,113 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
         imageSrc="/images/rock101-band.jpg"
       />
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
-        <div className="mb-4 text-sm uppercase tracking-[0.2em] text-red-300">
-          Badges
+      <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
+        <div className="sor-finish-card rounded-2xl p-5">
+          <div>
+            <h2 className="sor-display text-4xl md:text-5xl leading-none">
+              <span className="sor-display-red">BADGES</span>
+              <span className="ml-2 text-white italic opacity-80">
+                & Milestones
+              </span>
+            </h2>
+
+            <div className="sor-divider" />
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+              <div className="rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-red-200">
+                {earnedCount} of {badges.length} earned
+              </div>
+              <div className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-zinc-300">
+                Rock 101 Progress Rewards
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {badges.map((badge) => {
-            const earned = earnedBadges.has(badge.name);
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {badges.map((badge) => {
+              const earned = earnedBadges.has(badge.name);
+              const { firstPart, secondPart } = splitBadgeTitle(badge.name);
 
-            return (
-              <div
-                key={badge.name}
-                className={`overflow-hidden rounded-2xl border p-6 ${
-                  earned
-                    ? `bg-gradient-to-br ${badge.accent} border-red-500/50 shadow-[0_0_30px_rgba(255,0,0,0.14)]`
-                    : "border-zinc-800 bg-zinc-900/75 opacity-60 grayscale"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-3xl ${
-                      earned
-                        ? "border-red-500/40 bg-red-600/10"
-                        : "border-zinc-700 bg-zinc-800/90"
-                    }`}
-                  >
-                    {badge.emoji}
+              return (
+                <div
+                  key={badge.name}
+                  className={`overflow-hidden rounded-2xl border p-6 transition ${
+                    earned
+                      ? `bg-gradient-to-br ${badge.accent} border-red-500/50 shadow-[0_0_30px_rgba(255,0,0,0.14)]`
+                      : "border-zinc-800 bg-zinc-900/75 opacity-60 grayscale"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-3xl ${
+                        earned
+                          ? "border-red-500/40 bg-red-600/10"
+                          : "border-zinc-700 bg-zinc-800/90"
+                      }`}
+                    >
+                      {badge.emoji}
+                    </div>
+
+                    <div
+                      className={`rounded-full border px-3 py-1 text-sm font-semibold ${
+                        earned
+                          ? "border-red-500/40 text-red-300"
+                          : "border-zinc-700 text-zinc-400"
+                      }`}
+                    >
+                      {earned ? "Earned" : "Locked"}
+                    </div>
                   </div>
 
-                  <div
-                    className={`rounded-full border px-3 py-1 text-sm font-semibold ${
-                      earned
-                        ? "border-red-500/40 text-red-300"
-                        : "border-zinc-700 text-zinc-400"
-                    }`}
-                  >
-                    {earned ? "Earned" : "Locked"}
+                  <div className="mt-8 flex justify-center">
+                    <div
+                      className={`flex h-24 w-24 items-center justify-center rounded-full border text-5xl ${
+                        earned
+                          ? "border-red-500/40 bg-black/30 shadow-[0_0_24px_rgba(255,0,0,0.16)]"
+                          : "border-zinc-700 bg-zinc-800/90"
+                      }`}
+                    >
+                      {badge.emoji}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <div className="sor-display text-2xl leading-none">
+                      <span className={earned ? "sor-display-red" : "text-white"}>
+                        {firstPart.toUpperCase()}
+                      </span>
+                      {secondPart && (
+                        <span className="ml-2 text-white italic opacity-80 normal-case">
+                          {secondPart}
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      className={`mt-2 text-xs uppercase tracking-[0.25em] ${
+                        earned ? "text-red-300" : "text-zinc-400"
+                      }`}
+                    >
+                      {badge.subtitle}
+                    </div>
+
+                    <div className="mt-3 text-sm leading-6 text-white/90">
+                      {badge.description}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-xs uppercase tracking-[0.25em] text-white/80">
+                      School of Rock
+                    </div>
+                    <div className="text-xs text-zinc-300">Rock 101</div>
                   </div>
                 </div>
-
-                <div className="mt-8 flex justify-center">
-                  <div
-                    className={`flex h-24 w-24 items-center justify-center rounded-full border text-5xl ${
-                      earned
-                        ? "border-red-500/40 bg-black/30 shadow-[0_0_24px_rgba(255,0,0,0.16)]"
-                        : "border-zinc-700 bg-zinc-800/90"
-                    }`}
-                  >
-                    {badge.emoji}
-                  </div>
-                </div>
-
-                <div className="mt-6 text-center">
-                  <div className="text-xl font-black text-white">
-                    {badge.name}
-                  </div>
-                  <div
-                    className={`mt-1 text-xs uppercase tracking-[0.25em] ${
-                      earned ? "text-red-300" : "text-zinc-400"
-                    }`}
-                  >
-                    {badge.subtitle}
-                  </div>
-                  <div className="mt-3 text-sm leading-6 text-white/90">
-                    {badge.description}
-                  </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-[0.25em] text-white/80">
-                    School of Rock
-                  </div>
-                  <div className="text-xs text-zinc-300">Rock 101</div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import "./globals.css";
 
 const oswald = Oswald({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["500", "600", "700"],
   variable: "--font-oswald",
 });
 
@@ -21,12 +21,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className={`${oswald.variable} ${roboto.variable}`}>
+      <body className={`${oswald.variable} ${roboto.variable} bg-black text-white`}>
         {children}
       </body>
     </html>

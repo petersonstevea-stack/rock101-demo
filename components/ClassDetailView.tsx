@@ -4,6 +4,10 @@ import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
 import { schools } from "@/data/schools";
 import PageHero from "@/components/PageHero";
+import {
+  SONG_READINESS_LEVELS,
+  type SongReadinessValue,
+} from "@/types/songReadiness";
 
 type Student = {
   id?: string;
@@ -22,7 +26,16 @@ type ClassDetailViewProps = {
   onSelectStudent: (studentName: string) => void;
   onAddStudentToClass: (studentId: string) => void;
   onRemoveStudentFromClass: (studentId: string) => void;
+  onUpdateSongProgress: (song: string, readiness: SongReadinessValue) => void;
 };
+
+function getSongReadinessLabel(readiness?: number) {
+  if (!readiness || readiness < 1 || readiness > SONG_READINESS_LEVELS.length) {
+    return SONG_READINESS_LEVELS[0];
+  }
+
+  return SONG_READINESS_LEVELS[readiness - 1];
+}
 
 export default function ClassDetailView({
   rockClass,
@@ -33,6 +46,7 @@ export default function ClassDetailView({
   onSelectStudent,
   onAddStudentToClass,
   onRemoveStudentFromClass,
+  onUpdateSongProgress,
 }: ClassDetailViewProps) {
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
@@ -120,17 +134,60 @@ export default function ClassDetailView({
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
-        <div className="mt-4 text-zinc-200">
-          {rockClass.songs.length > 0
-            ? rockClass.songs.join(", ")
-            : "No songs assigned"}
-        </div>
+
+        {rockClass.songs.length > 0 ? (
+          <div className="mt-4 space-y-4">
+            {rockClass.songs.map((song) => {
+              const readiness =
+                rockClass.songProgress?.[song]?.readiness ?? 1;
+
+              return (
+                <div
+                  key={song}
+                  className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="font-semibold text-white">{song}</div>
+                      <div className="mt-1 text-sm text-zinc-400">
+                        Class readiness: {getSongReadinessLabel(readiness)}
+                      </div>
+                    </div>
+
+                    <div className="w-full md:max-w-md">
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={readiness}
+                        onChange={(e) =>
+                          onUpdateSongProgress(
+                            song,
+                            Number(e.target.value) as SongReadinessValue
+                          )
+                        }
+                        className="w-full accent-red-600"
+                      />
+                      <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
+                        <span>Just Starting</span>
+                        <span>Show Ready</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-4 text-zinc-200">No songs assigned</div>
+        )}
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
         <h3 className="text-xl font-semibold text-white">Student Roster</h3>
 
-        <div className="mt-4 mb-6">
+        <div className="mb-6 mt-4">
           <div className="mb-2 text-sm text-zinc-400">Add Student to Class</div>
 
           {availableStudents.length === 0 ? (

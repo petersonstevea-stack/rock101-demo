@@ -5,6 +5,7 @@ import {
     getPrivateLessonSections,
     getGroupRehearsalSections,
 } from "@/data/rock101Curriculum";
+import GraduationRequirementsView from "@/components/GraduationRequirementsView";
 import ParentDashboardOverview from "@/components/ParentDashboardOverview";
 import { buildParentDashboardData } from "@/lib/parentDashboard";
 import LoginScreen from "@/components/LoginScreen";
@@ -42,6 +43,7 @@ import {
 
 type Tab =
     | "privateLesson"
+    | "graduationRequirements"
     | "groupRehearsal"
     | "badges"
     | "parent"
@@ -72,7 +74,7 @@ type ManagementLandingView = "classes" | "students";
 
 export default function Rock101App() {
     const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
-    const [instructorStudentFilter, setInstructorStudentFilter] = useState<
+    const [studentViewFilter, setStudentViewFilter] = useState<
         "myStudents" | "allStudents"
     >("myStudents");
     const [tab, setTab] = useState<Tab>("privateLesson");
@@ -151,9 +153,23 @@ export default function Rock101App() {
 
     const studentsInSelectedClass = selectedClass
         ? filteredStudentsBySchool.filter((student) =>
-              selectedClass.studentNames.includes(student.name)
-          )
+            selectedClass.studentNames.includes(student.name)
+        )
         : [];
+
+    const directedStudentNames = useMemo(() => {
+        if (!currentUser || role !== "director") return new Set<string>();
+
+        return new Set(
+            filteredClassesBySchool
+                .filter(
+                    (rockClass) =>
+                        rockClass.directorEmail?.toLowerCase() ===
+                        currentUser.email.toLowerCase()
+                )
+                .flatMap((rockClass) => rockClass.studentNames)
+        );
+    }, [currentUser, role, filteredClassesBySchool]);
 
     const visibleStudents = useMemo(() => {
         if (!currentUser) return [];
@@ -167,13 +183,11 @@ export default function Rock101App() {
         }
 
         if (currentUser.role === "instructor") {
-            const schoolScopedStudents = filteredStudentsBySchool;
-
-            if (instructorStudentFilter === "allStudents") {
-                return schoolScopedStudents;
+            if (studentViewFilter === "allStudents") {
+                return filteredStudentsBySchool;
             }
 
-            return schoolScopedStudents.filter(
+            return filteredStudentsBySchool.filter(
                 (student) =>
                     student.primaryInstructorEmail?.toLowerCase() ===
                     currentUser.email.toLowerCase()
@@ -186,6 +200,18 @@ export default function Rock101App() {
             }
 
             if (managementLandingView === "students") {
+                if (role === "director" && studentViewFilter === "myStudents") {
+                    return filteredStudentsBySchool.filter((student) => {
+                        const assignedAsInstructor =
+                            student.primaryInstructorEmail?.toLowerCase() ===
+                            currentUser.email.toLowerCase();
+
+                        const assignedAsDirector = directedStudentNames.has(student.name);
+
+                        return assignedAsInstructor || assignedAsDirector;
+                    });
+                }
+
                 return filteredStudentsBySchool;
             }
 
@@ -199,8 +225,10 @@ export default function Rock101App() {
         canManageRock101,
         selectedClass,
         studentsInSelectedClass,
-        instructorStudentFilter,
         managementLandingView,
+        studentViewFilter,
+        role,
+        directedStudentNames,
     ]);
 
     const selectedStudent = useMemo(() => {
@@ -215,7 +243,30 @@ export default function Rock101App() {
             visibleStudents[0]
         );
     }, [visibleStudents, selectedStudentName, canManageRock101]);
+    const activeClassForSelectedStudent = useMemo(() => {
+        if (selectedClass) return selectedClass;
+        if (!selectedStudent) return null;
 
+        return (
+            filteredClassesBySchool.find(
+                (rockClass) =>
+                    rockClass.studentNames.includes(selectedStudent.name) ||
+                    rockClass.name === selectedStudent.band
+            ) ?? null
+        );
+        const activeClassForSelectedStudent = useMemo(() => {
+            if (selectedClass) return selectedClass;
+            if (!selectedStudent) return null;
+
+            return (
+                filteredClassesBySchool.find(
+                    (rockClass) =>
+                        rockClass.studentNames.includes(selectedStudent.name) ||
+                        rockClass.name === selectedStudent.band
+                ) ?? null
+            );
+        }, [selectedClass, selectedStudent, filteredClassesBySchool]);
+    }, [selectedClass, selectedStudent, filteredClassesBySchool]);
     const canSeeStudentTabs =
         !!selectedStudent &&
         (!canManageRock101 || !!selectedStudentName);
@@ -267,26 +318,52 @@ export default function Rock101App() {
             selectedStudent.instrument
         ).flatMap((section) => section.items);
 
+        const dashboardClass =
+            activeClassForSelectedStudent ?? selectedClass ?? null;
+
+        const dashboardSongProgress = dashboardClass
+            ? dashboardClass.songs.map((song) => {
+                const readiness =
+                    selectedStudent.songReadiness?.[dashboardClass.id]?.[song]
+                        ?.readiness ?? 1;
+
+                const labelMap = {
+                    1: "Just Starting",
+                    2: "Getting There",
+                    3: "Mostly There",
+                    4: "Performance Ready",
+                    5: "Show Ready",
+                } as const;
+
+                return {
+                    song,
+                    readiness,
+                    label: labelMap[readiness as 1 | 2 | 3 | 4 | 5],
+                };
+            })
+            : [];
+
         return buildParentDashboardData({
             student: {
                 id: selectedStudent.name,
                 name: selectedStudent.name,
                 instrument: selectedStudent.instrument,
-                className: selectedClass?.name ?? "Rock 101",
+                className: dashboardClass?.name ?? "Rock 101",
                 schoolName: matchedSchool?.name ?? "School of Rock",
                 nextPerformanceDate: null,
             },
             curriculum: selectedStudent.curriculum,
             privateLessonItems,
             groupRehearsalItems,
+            songProgress: dashboardSongProgress,
             badges: [],
         });
     }, [selectedStudent, selectedClass]);
 
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
-          selectedStudent.workflow.directorSubmitted &&
-          !selectedStudent.workflow.parentSubmitted
+        selectedStudent.workflow.directorSubmitted &&
+        !selectedStudent.workflow.parentSubmitted
         : false;
 
     function handleSetTab(nextTab: Tab) {
@@ -350,7 +427,31 @@ export default function Rock101App() {
         setClassesVersion((prev) => prev + 1);
         setSelectedClassId(selectedClass.id);
     }
+    function handleUpdateClassSongProgress(
+        song: string,
+        readiness: 1 | 2 | 3 | 4 | 5
+    ) {
+        if (!selectedClass) return;
 
+        const updatedClasses = filteredClassesBySchool.map((rockClass) => {
+            if (rockClass.id !== selectedClass.id) return rockClass;
+
+            return {
+                ...rockClass,
+                songProgress: {
+                    ...(rockClass.songProgress ?? {}),
+                    [song]: {
+                        readiness,
+                        updatedAt: new Date().toISOString(),
+                    },
+                },
+            };
+        });
+
+        saveClasses(updatedClasses);
+        setClassesVersion((prev) => prev + 1);
+        setSelectedClassId(selectedClass.id);
+    }
     function updateSelectedStudent(
         updater: (student: (typeof students)[number]) => (typeof students)[number]
     ) {
@@ -457,7 +558,30 @@ export default function Rock101App() {
             };
         });
     }
-
+    function handleUpdateStudentSongReadiness(
+        classId: string,
+        song: string,
+        readiness: 1 | 2 | 3 | 4 | 5
+    ) {
+        updateSelectedStudent((student) => ({
+            ...student,
+            songReadiness: {
+                ...(student.songReadiness ?? {}),
+                [classId]: {
+                    ...(student.songReadiness?.[classId] ?? {}),
+                    [song]: {
+                        readiness,
+                        updatedAt: new Date().toISOString(),
+                    },
+                },
+            },
+            workflow: {
+                ...student.workflow,
+                directorSubmitted: false,
+                parentSubmitted: false,
+            },
+        }));
+    }
     function handleNoteChange(
         roleType: "instructor" | "director",
         value: string
@@ -544,7 +668,7 @@ export default function Rock101App() {
         setCurrentUser(null);
         setSelectedClassId(null);
         setSelectedStudentName(initialStudents[0]?.name ?? "");
-        setInstructorStudentFilter("myStudents");
+        setStudentViewFilter("myStudents");
         setSelectedSchoolId("all");
         setManagementLandingView("classes");
         setTab("privateLesson");
@@ -685,24 +809,22 @@ export default function Rock101App() {
                     <div className="mb-4 flex gap-3">
                         <button
                             type="button"
-                            onClick={() => setInstructorStudentFilter("myStudents")}
-                            className={`rounded-lg px-4 py-2 ${
-                                instructorStudentFilter === "myStudents"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                            }`}
+                            onClick={() => setStudentViewFilter("myStudents")}
+                            className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
+                                }`}
                         >
                             My Students
                         </button>
 
                         <button
                             type="button"
-                            onClick={() => setInstructorStudentFilter("allStudents")}
-                            className={`rounded-lg px-4 py-2 ${
-                                instructorStudentFilter === "allStudents"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                            }`}
+                            onClick={() => setStudentViewFilter("allStudents")}
+                            className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
+                                }`}
                         >
                             All Students
                         </button>
@@ -710,7 +832,7 @@ export default function Rock101App() {
                 )}
 
                 {role === "instructor" &&
-                    instructorStudentFilter === "myStudents" &&
+                    studentViewFilter === "myStudents" &&
                     visibleStudents.length === 0 && (
                         <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-300">
                             No students are currently assigned to you. Switch to All
@@ -741,11 +863,10 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementClasses}
-                            className={`rounded-lg px-4 py-2 ${
-                                managementLandingView === "classes"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                            }`}
+                            className={`rounded-lg px-4 py-2 ${managementLandingView === "classes"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
+                                }`}
                         >
                             Classes
                         </button>
@@ -753,11 +874,10 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementStudents}
-                            className={`rounded-lg px-4 py-2 ${
-                                managementLandingView === "students"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                            }`}
+                            className={`rounded-lg px-4 py-2 ${managementLandingView === "students"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
+                                }`}
                         >
                             View Students
                         </button>
@@ -820,9 +940,35 @@ export default function Rock101App() {
                                 </div>
                             </div>
 
+                            {role === "director" && (
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStudentViewFilter("myStudents")}
+                                        className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
+                                    >
+                                        My Students
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setStudentViewFilter("allStudents")}
+                                        className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
+                                    >
+                                        All Students
+                                    </button>
+                                </div>
+                            )}
+
                             {filteredStudentsBySchool.length ? (
                                 <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                    {filteredStudentsBySchool.map((student) => (
+                                    {visibleStudents.map((student) => (
                                         <button
                                             key={student.name}
                                             type="button"
@@ -837,8 +983,7 @@ export default function Rock101App() {
                                             </div>
                                             <div className="mt-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
                                                 {schools.find(
-                                                    (school) =>
-                                                        school.id === student.schoolId
+                                                    (school) => school.id === student.schoolId
                                                 )?.name ?? "School of Rock"}
                                             </div>
                                         </button>
@@ -860,6 +1005,7 @@ export default function Rock101App() {
                         allStudents={filteredStudentsBySchool}
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
+                        onUpdateSongProgress={handleUpdateClassSongProgress}
                         onBackToClasses={() => {
                             setSelectedClassId(null);
                             setSelectedStudentName("");
@@ -905,23 +1051,32 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("privateLesson")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "privateLesson"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Private Lesson
                                     </button>
-
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleSetTab("graduationRequirements")
+                                        }
+                                        className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
+                                    >
+                                        Graduation Requirements
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("groupRehearsal")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "groupRehearsal"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Group Rehearsal
                                     </button>
@@ -929,11 +1084,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("badges")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "badges"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "badges"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Badges
                                     </button>
@@ -941,11 +1095,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("parent")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "parent"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "parent"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Parent
                                     </button>
@@ -953,11 +1106,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("certificate")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "certificate"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "certificate"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Certificate
                                     </button>
@@ -969,23 +1121,23 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("classSetup")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "classSetup"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "classSetup"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Class Setup
                                     </button>
 
                                     <button
                                         type="button"
-                                        onClick={() => handleSetTab("performanceDashboard")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "performanceDashboard"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        onClick={() =>
+                                            handleSetTab("performanceDashboard")
+                                        }
+                                        className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Shows Overview
                                     </button>
@@ -993,11 +1145,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("bandsDashboard")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "bandsDashboard"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Bands Dashboard
                                     </button>
@@ -1005,11 +1156,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("pipeline")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "pipeline"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "pipeline"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Pipeline
                                     </button>
@@ -1017,11 +1167,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("accounts")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "accounts"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "accounts"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Accounts
                                     </button>
@@ -1029,11 +1178,10 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("admin")}
-                                        className={`rounded-lg px-4 py-2 ${
-                                            tab === "admin"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
-                                        }`}
+                                        className={`rounded-lg px-4 py-2 ${tab === "admin"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                            }`}
                                     >
                                         Admin
                                     </button>
@@ -1065,16 +1213,38 @@ export default function Rock101App() {
                                     role === "director" ||
                                     role === "generalManager" ||
                                     role === "owner") && (
-                                    <NotesPanel
-                                        role="instructor"
-                                        value={selectedStudent.notes.instructor}
-                                        saved={selectedStudent.workflow.instructorSubmitted}
-                                        onChange={(v) => handleNoteChange("instructor", v)}
-                                        onSave={() => handleSaveFeedback("instructor")}
-                                    />
-                                )}
+                                        <NotesPanel
+                                            role="instructor"
+                                            value={selectedStudent.notes.instructor}
+                                            saved={selectedStudent.workflow.instructorSubmitted}
+                                            onChange={(v) => handleNoteChange("instructor", v)}
+                                            onSave={() => handleSaveFeedback("instructor")}
+                                        />
+                                    )}
                             </>
                         )}
+
+                        {canSeeStudentTabs &&
+                            tab === "graduationRequirements" &&
+                            selectedStudent && (
+                                <GraduationRequirementsView
+                                    student={selectedStudent}
+                                    onToggleDone={handleToggleDone}
+                                    onToggleSigned={handleToggleSigned}
+                                    canEdit={
+                                        role === "instructor" ||
+                                        role === "director" ||
+                                        role === "generalManager" ||
+                                        role === "owner"
+                                    }
+                                    canSign={
+                                        role === "instructor" ||
+                                        role === "director" ||
+                                        role === "generalManager" ||
+                                        role === "owner"
+                                    }
+                                />
+                            )}
 
                         {canSeeStudentTabs &&
                             tab === "groupRehearsal" &&
@@ -1082,9 +1252,12 @@ export default function Rock101App() {
                                 <>
                                     <GroupRehearsalView
                                         student={selectedStudent}
+                                        classId={activeClassForSelectedStudent?.id ?? null}
+                                        classSongs={activeClassForSelectedStudent?.songs ?? []}
                                         onToggleDone={handleToggleDone}
                                         onToggleSigned={handleToggleSigned}
                                         onAddFistBump={handleAddFistBump}
+                                        onUpdateSongReadiness={handleUpdateStudentSongReadiness}
                                         canEdit={
                                             role === "director" ||
                                             role === "generalManager" ||
@@ -1100,14 +1273,14 @@ export default function Rock101App() {
                                     {(role === "director" ||
                                         role === "generalManager" ||
                                         role === "owner") && (
-                                        <NotesPanel
-                                            role="director"
-                                            value={selectedStudent.notes.director}
-                                            saved={selectedStudent.workflow.directorSubmitted}
-                                            onChange={(v) => handleNoteChange("director", v)}
-                                            onSave={() => handleSaveFeedback("director")}
-                                        />
-                                    )}
+                                            <NotesPanel
+                                                role="director"
+                                                value={selectedStudent.notes.director}
+                                                saved={selectedStudent.workflow.directorSubmitted}
+                                                onChange={(v) => handleNoteChange("director", v)}
+                                                onSave={() => handleSaveFeedback("director")}
+                                            />
+                                        )}
                                 </>
                             )}
 
@@ -1185,9 +1358,9 @@ export default function Rock101App() {
                                         prev.map((student) =>
                                             student.name === studentName
                                                 ? {
-                                                      ...student,
-                                                      parentEmail,
-                                                  }
+                                                    ...student,
+                                                    parentEmail,
+                                                }
                                                 : student
                                         )
                                     );
