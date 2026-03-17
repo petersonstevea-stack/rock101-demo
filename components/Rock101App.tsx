@@ -720,6 +720,7 @@ export default function Rock101App() {
 
     async function handleSubmitToParents() {
         alert("handleSubmitToParents is running");
+
         if (!selectedStudent) {
             alert("No student selected.");
             return;
@@ -928,8 +929,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={() => setStudentViewFilter("myStudents")}
                             className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             My Students
@@ -939,8 +940,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={() => setStudentViewFilter("allStudents")}
                             className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             All Students
@@ -981,8 +982,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={handleShowManagementClasses}
                             className={`rounded-lg px-4 py-2 ${managementLandingView === "classes"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             Classes
@@ -992,8 +993,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={handleShowManagementStudents}
                             className={`rounded-lg px-4 py-2 ${managementLandingView === "students"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                ? "bg-red-600"
+                                : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             View Students
@@ -1062,8 +1063,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => setStudentViewFilter("myStudents")}
                                         className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         My Students
@@ -1073,8 +1074,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => setStudentViewFilter("allStudents")}
                                         className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         All Students
@@ -1168,8 +1169,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("privateLesson")}
                                         className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Private Lesson
@@ -1178,8 +1179,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("graduationRequirements")}
                                         className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Graduation Requirements
@@ -1188,8 +1189,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("groupRehearsal")}
                                         className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Group Rehearsal
@@ -1199,8 +1200,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("badges")}
                                         className={`rounded-lg px-4 py-2 ${tab === "badges"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Badges
@@ -1210,8 +1211,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("parent")}
                                         className={`rounded-lg px-4 py-2 ${tab === "parent"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Parent
@@ -1221,8 +1222,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("certificate")}
                                         className={`rounded-lg px-4 py-2 ${tab === "certificate"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Certificate
@@ -1236,8 +1237,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("classSetup")}
                                         className={`rounded-lg px-4 py-2 ${tab === "classSetup"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Class Setup
@@ -1247,8 +1248,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("performanceDashboard")}
                                         className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Shows Overview
@@ -1258,8 +1259,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("bandsDashboard")}
                                         className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Bands Dashboard
@@ -1269,8 +1270,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("pipeline")}
                                         className={`rounded-lg px-4 py-2 ${tab === "pipeline"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Pipeline
@@ -1280,8 +1281,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("accounts")}
                                         className={`rounded-lg px-4 py-2 ${tab === "accounts"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Accounts
@@ -1291,8 +1292,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("admin")}
                                         className={`rounded-lg px-4 py-2 ${tab === "admin"
-                                                ? "bg-red-600"
-                                                : "bg-zinc-800 hover:bg-zinc-700"
+                                            ? "bg-red-600"
+                                            : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Admin
