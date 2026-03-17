@@ -26,10 +26,10 @@ import PerformanceDashboard from "@/components/PerformanceDashboard";
 import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 
-import { students as initialStudents } from "@/data/students";
+import { supabase } from "@/lib/supabaseClient";
 import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
-import { getSavedClasses, saveClasses } from "@/lib/classes";
+import { saveClasses } from "@/lib/classes";
 import {
     saveSession,
     getSavedSession,
@@ -72,22 +72,31 @@ const defaultCurriculumState: CurriculumState = {
 type SchoolFilter = "all" | SchoolId;
 type ManagementLandingView = "classes" | "students";
 
+function mapSchoolNameToId(schoolName?: string | null): SchoolId {
+    const normalized = (schoolName ?? "").toLowerCase();
+
+    if (normalized.includes("del mar")) return "del-mar";
+    if (normalized.includes("encinitas")) return "encinitas";
+    if (normalized.includes("scripps")) return "scripps-ranch";
+
+    return "del-mar";
+}
+
 export default function Rock101App() {
     const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
     const [studentViewFilter, setStudentViewFilter] = useState<
         "myStudents" | "allStudents"
     >("myStudents");
     const [tab, setTab] = useState<Tab>("privateLesson");
-    const [students, setStudents] = useState(initialStudents);
+    const [students, setStudents] = useState<any[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-    const [selectedStudentName, setSelectedStudentName] = useState(
-        initialStudents[0]?.name ?? ""
-    );
+    const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
     const [managementLandingView, setManagementLandingView] =
         useState<ManagementLandingView>("classes");
     const [classesVersion, setClassesVersion] = useState(0);
+    const [savedClasses, setSavedClasses] = useState<any[]>([]);
 
     useEffect(() => {
         const savedUser = getSavedSession();
@@ -102,6 +111,91 @@ export default function Rock101App() {
         }
     }, []);
 
+    useEffect(() => {
+        async function loadStudents() {
+            const { data, error } = await supabase.from("students").select("*");
+
+            if (error) {
+                console.error("Error loading students from Supabase:", error);
+                return;
+            }
+
+            if (!data) return;
+
+            const formatted = data.map((s: any) => {
+                const schoolId = mapSchoolNameToId(s.school);
+
+                return {
+                    id: s.id,
+                    name: `${s.first_name} ${s.last_initial ?? ""}`.trim(),
+                    firstName: s.first_name,
+                    lastInitial: s.last_initial ?? "",
+                    parentEmail: s.parent_email,
+                    instrument: s.instrument ?? "guitar",
+                    school: s.school ?? "Del Mar",
+                    schoolId,
+                    className: s.class_name ?? "Rock 101",
+                    band: s.class_name ?? "Rock 101",
+                    primaryInstructorEmail: null,
+                    curriculum: {},
+                    notes: {
+                        instructor: "",
+                        director: "",
+                        instructorUpdatedAt: null,
+                        directorUpdatedAt: null,
+                    },
+                    workflow: {
+                        instructorSubmitted: false,
+                        directorSubmitted: false,
+                        parentSubmitted: false,
+                    },
+                    songReadiness: {},
+                };
+            });
+
+            setStudents(formatted);
+            console.log("FORMATTED STUDENTS:", formatted);
+
+            if (currentUser?.role === "parent") {
+                const matchedStudent = formatted.find(
+                    (student: any) =>
+                        student.parentEmail?.toLowerCase() === currentUser.email.toLowerCase()
+                );
+
+                setSelectedStudentName(matchedStudent?.name ?? "");
+            }
+        }
+
+        loadStudents();
+    }, [currentUser]);
+
+    useEffect(() => {
+        async function loadClasses() {
+            const { data, error } = await supabase.from("rock_classes").select("*");
+
+            if (error) {
+                console.error("Error loading classes:", error);
+                return;
+            }
+
+            if (data) {
+                const formatted = data.map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    schoolId: c.school_id,
+                    directorEmail: c.director_email,
+                    songs: c.songs ?? [],
+                    studentIds: c.student_ids ?? [],
+                    studentNames: c.student_names ?? [],
+                }));
+
+                setSavedClasses(formatted);
+            }
+        }
+
+        loadClasses();
+    }, [classesVersion]);
+
     const role = currentUser?.role ?? null;
     const isOwner = role === "owner";
     const canManageRock101 =
@@ -110,7 +204,6 @@ export default function Rock101App() {
     const canSeeManagementTabs = canManageRock101;
 
     const allUsers = useMemo(() => getAllUsers(), []);
-    const savedClasses = useMemo(() => getSavedClasses(), [classesVersion]);
 
     const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
         if (isOwner) return selectedSchoolId;
@@ -177,8 +270,7 @@ export default function Rock101App() {
         if (currentUser.role === "parent") {
             return filteredStudentsBySchool.filter(
                 (student) =>
-                    student.parentEmail?.toLowerCase() ===
-                    currentUser.email.toLowerCase()
+                    student.parentEmail?.toLowerCase() === currentUser.email.toLowerCase()
             );
         }
 
@@ -243,6 +335,7 @@ export default function Rock101App() {
             visibleStudents[0]
         );
     }, [visibleStudents, selectedStudentName, canManageRock101]);
+
     const activeClassForSelectedStudent = useMemo(() => {
         if (selectedClass) return selectedClass;
         if (!selectedStudent) return null;
@@ -254,22 +347,10 @@ export default function Rock101App() {
                     rockClass.name === selectedStudent.band
             ) ?? null
         );
-        const activeClassForSelectedStudent = useMemo(() => {
-            if (selectedClass) return selectedClass;
-            if (!selectedStudent) return null;
-
-            return (
-                filteredClassesBySchool.find(
-                    (rockClass) =>
-                        rockClass.studentNames.includes(selectedStudent.name) ||
-                        rockClass.name === selectedStudent.band
-                ) ?? null
-            );
-        }, [selectedClass, selectedStudent, filteredClassesBySchool]);
     }, [selectedClass, selectedStudent, filteredClassesBySchool]);
+
     const canSeeStudentTabs =
-        !!selectedStudent &&
-        (!canManageRock101 || !!selectedStudentName);
+        !!selectedStudent && (!canManageRock101 || !!selectedStudentName);
 
     useEffect(() => {
         if (visibleStudents.length === 0) return;
@@ -322,7 +403,7 @@ export default function Rock101App() {
             activeClassForSelectedStudent ?? selectedClass ?? null;
 
         const dashboardSongProgress = dashboardClass
-            ? dashboardClass.songs.map((song) => {
+            ? dashboardClass.songs.map((song: string) => {
                 const readiness =
                     selectedStudent.songReadiness?.[dashboardClass.id]?.[song]
                         ?.readiness ?? 1;
@@ -348,7 +429,7 @@ export default function Rock101App() {
                 id: selectedStudent.name,
                 name: selectedStudent.name,
                 instrument: selectedStudent.instrument,
-                className: dashboardClass?.name ?? "Rock 101",
+                className: dashboardClass?.name ?? selectedStudent.className ?? "Rock 101",
                 schoolName: matchedSchool?.name ?? "School of Rock",
                 nextPerformanceDate: null,
             },
@@ -358,7 +439,7 @@ export default function Rock101App() {
             songProgress: dashboardSongProgress,
             badges: [],
         });
-    }, [selectedStudent, selectedClass]);
+    }, [selectedStudent, selectedClass, activeClassForSelectedStudent]);
 
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
@@ -375,28 +456,21 @@ export default function Rock101App() {
         setSelectedStudentName(studentName);
     }
 
-    function handleAddStudentToClass(studentId: string) {
+    async function handleAddStudentToClass(studentId: string) {
         if (!selectedClass) return;
 
         const student = students.find((s) => s.id === studentId);
         if (!student) return;
 
-        const updatedClasses = filteredClassesBySchool.map((rockClass) => {
-            if (rockClass.id !== selectedClass.id) return rockClass;
+        await supabase
+            .from("rock_classes")
+            .update({
+                student_ids: [...selectedClass.studentIds, studentId],
+                student_names: [...selectedClass.studentNames, student.name],
+            })
+            .eq("id", selectedClass.id);
 
-            const alreadyInClass = rockClass.studentIds.includes(studentId);
-            if (alreadyInClass) return rockClass;
-
-            return {
-                ...rockClass,
-                studentIds: [...rockClass.studentIds, studentId],
-                studentNames: [...rockClass.studentNames, student.name],
-            };
-        });
-
-        saveClasses(updatedClasses);
         setClassesVersion((prev) => prev + 1);
-        setSelectedClassId(selectedClass.id);
     }
 
     function handleRemoveStudentFromClass(studentId: string) {
@@ -406,10 +480,10 @@ export default function Rock101App() {
             if (rockClass.id !== selectedClass.id) return rockClass;
 
             const nextStudentIds = rockClass.studentIds.filter(
-                (id) => id !== studentId
+                (id: string) => id !== studentId
             );
 
-            const nextStudentNames = rockClass.studentNames.filter((name) => {
+            const nextStudentNames = rockClass.studentNames.filter((name: string) => {
                 const matchingStudent = students.find(
                     (student) => student.name === name
                 );
@@ -427,6 +501,7 @@ export default function Rock101App() {
         setClassesVersion((prev) => prev + 1);
         setSelectedClassId(selectedClass.id);
     }
+
     function handleUpdateClassSongProgress(
         song: string,
         readiness: 1 | 2 | 3 | 4 | 5
@@ -452,6 +527,7 @@ export default function Rock101App() {
         setClassesVersion((prev) => prev + 1);
         setSelectedClassId(selectedClass.id);
     }
+
     function updateSelectedStudent(
         updater: (student: (typeof students)[number]) => (typeof students)[number]
     ) {
@@ -558,6 +634,7 @@ export default function Rock101App() {
             };
         });
     }
+
     function handleUpdateStudentSongReadiness(
         classId: string,
         song: string,
@@ -582,6 +659,7 @@ export default function Rock101App() {
             },
         }));
     }
+
     function handleNoteChange(
         roleType: "instructor" | "director",
         value: string
@@ -640,14 +718,54 @@ export default function Rock101App() {
         });
     }
 
-    function handleSubmitToParents() {
-        updateSelectedStudent((student) => ({
-            ...student,
-            workflow: {
-                ...student.workflow,
-                parentSubmitted: true,
-            },
-        }));
+    async function handleSubmitToParents() {
+        alert("handleSubmitToParents is running");
+        if (!selectedStudent) {
+            alert("No student selected.");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-parent-update`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+                    },
+                    body: JSON.stringify({
+                        parentEmail: selectedStudent.parentEmail,
+                        studentName: selectedStudent.name,
+                        lessonNotes: selectedStudent.notes.instructor,
+                        rehearsalNotes: selectedStudent.notes.director,
+                    }),
+                }
+            );
+
+            const resultText = await response.text();
+            console.log("Parent update response status:", response.status);
+            console.log("Parent update response body:", resultText);
+
+            if (!response.ok) {
+                alert(`Parent email failed. Status: ${response.status}`);
+                return;
+            }
+
+            updateSelectedStudent((student) => ({
+                ...student,
+                workflow: {
+                    ...student.workflow,
+                    parentSubmitted: true,
+                },
+            }));
+
+            alert("Parent update sent.");
+        } catch (error) {
+            console.error("Error sending parent update email:", error);
+            alert("Parent email failed. Check browser console.");
+        }
     }
 
     function handleShowManagementStudents() {
@@ -667,7 +785,7 @@ export default function Rock101App() {
         clearSavedTab();
         setCurrentUser(null);
         setSelectedClassId(null);
-        setSelectedStudentName(initialStudents[0]?.name ?? "");
+        setSelectedStudentName("");
         setStudentViewFilter("myStudents");
         setSelectedSchoolId("all");
         setManagementLandingView("classes");
@@ -749,8 +867,7 @@ export default function Rock101App() {
                         <h2 className="text-xl font-bold">No student found</h2>
                         {role === "instructor" ? (
                             <p className="mt-3 text-zinc-300">
-                                No students are currently visible in this instructor
-                                view.
+                                No students are currently visible in this instructor view.
                             </p>
                         ) : (
                             <>
@@ -811,8 +928,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={() => setStudentViewFilter("myStudents")}
                             className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
-                                ? "bg-red-600"
-                                : "bg-zinc-800 hover:bg-zinc-700"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             My Students
@@ -822,8 +939,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={() => setStudentViewFilter("allStudents")}
                             className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
-                                ? "bg-red-600"
-                                : "bg-zinc-800 hover:bg-zinc-700"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             All Students
@@ -835,8 +952,8 @@ export default function Rock101App() {
                     studentViewFilter === "myStudents" &&
                     visibleStudents.length === 0 && (
                         <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-300">
-                            No students are currently assigned to you. Switch to All
-                            Students to view everyone.
+                            No students are currently assigned to you. Switch to All Students
+                            to view everyone.
                         </div>
                     )}
 
@@ -864,8 +981,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={handleShowManagementClasses}
                             className={`rounded-lg px-4 py-2 ${managementLandingView === "classes"
-                                ? "bg-red-600"
-                                : "bg-zinc-800 hover:bg-zinc-700"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             Classes
@@ -875,8 +992,8 @@ export default function Rock101App() {
                             type="button"
                             onClick={handleShowManagementStudents}
                             className={`rounded-lg px-4 py-2 ${managementLandingView === "students"
-                                ? "bg-red-600"
-                                : "bg-zinc-800 hover:bg-zinc-700"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
                         >
                             View Students
@@ -895,8 +1012,8 @@ export default function Rock101App() {
                                         No Rock 101 classes created yet
                                     </h2>
                                     <p className="mt-3 text-zinc-300">
-                                        Create your first class to start assigning
-                                        students and building out rehearsal groups.
+                                        Create your first class to start assigning students and
+                                        building out rehearsal groups.
                                     </p>
                                     <button
                                         type="button"
@@ -930,8 +1047,7 @@ export default function Rock101App() {
                                         School Students
                                     </h2>
                                     <p className="mt-2 text-zinc-300">
-                                        View and open any Rock 101 student profile for
-                                        this school.
+                                        View and open any Rock 101 student profile for this school.
                                     </p>
                                 </div>
                                 <div className="text-sm text-zinc-400">
@@ -946,8 +1062,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => setStudentViewFilter("myStudents")}
                                         className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         My Students
@@ -957,8 +1073,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => setStudentViewFilter("allStudents")}
                                         className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         All Students
@@ -1052,20 +1168,18 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("privateLesson")}
                                         className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Private Lesson
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            handleSetTab("graduationRequirements")
-                                        }
+                                        onClick={() => handleSetTab("graduationRequirements")}
                                         className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Graduation Requirements
@@ -1074,8 +1188,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("groupRehearsal")}
                                         className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Group Rehearsal
@@ -1085,8 +1199,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("badges")}
                                         className={`rounded-lg px-4 py-2 ${tab === "badges"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Badges
@@ -1096,8 +1210,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("parent")}
                                         className={`rounded-lg px-4 py-2 ${tab === "parent"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Parent
@@ -1107,8 +1221,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("certificate")}
                                         className={`rounded-lg px-4 py-2 ${tab === "certificate"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Certificate
@@ -1122,8 +1236,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("classSetup")}
                                         className={`rounded-lg px-4 py-2 ${tab === "classSetup"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Class Setup
@@ -1131,12 +1245,10 @@ export default function Rock101App() {
 
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            handleSetTab("performanceDashboard")
-                                        }
+                                        onClick={() => handleSetTab("performanceDashboard")}
                                         className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Shows Overview
@@ -1146,8 +1258,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("bandsDashboard")}
                                         className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Bands Dashboard
@@ -1157,8 +1269,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("pipeline")}
                                         className={`rounded-lg px-4 py-2 ${tab === "pipeline"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Pipeline
@@ -1168,8 +1280,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("accounts")}
                                         className={`rounded-lg px-4 py-2 ${tab === "accounts"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Accounts
@@ -1179,8 +1291,8 @@ export default function Rock101App() {
                                         type="button"
                                         onClick={() => handleSetTab("admin")}
                                         className={`rounded-lg px-4 py-2 ${tab === "admin"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
+                                                ? "bg-red-600"
+                                                : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
                                     >
                                         Admin
