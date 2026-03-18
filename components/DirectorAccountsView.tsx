@@ -159,8 +159,8 @@ export default function DirectorAccountsView({
               </tr>
             </thead>
             <tbody>
-              {allUsers.map((user) => (
-                <tr key={user.email} className="border-b border-zinc-800">
+              {allUsers.map((user, index) => (
+                <tr key={`${user.email}-${index}`} className="border-b border-zinc-800">
                   <td className="px-3 py-3">{user.name}</td>
                   <td className="px-3 py-3">{user.email}</td>
                   <td className="px-3 py-3 capitalize">{user.role}</td>

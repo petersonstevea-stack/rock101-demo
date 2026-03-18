@@ -35,29 +35,7 @@ export default function NotesPanel({
             <div className="mt-4 flex flex-wrap gap-3">
                 <button
                     type="button"
-                    onClick={async () => {
-                        onSave();
-
-                        await fetch(
-                            "https://qkshyyyydmewgfdplhfv.functions.supabase.co/send-parent-update",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                    parentEmail: "peterson.steve.a@gmail.com",
-                                    studentName: "Stage Ready Test",
-                                    lessonNotes:
-                                        role === "instructor" ? value : "See previous instructor notes",
-                                    rehearsalNotes:
-                                        role === "director" ? value : "See previous rehearsal notes",
-                                }),
-                            }
-                        );
-
-                        alert("Parent update sent 🚀");
-                    }}
+                    onClick={onSave}
                     disabled={!value.trim()}
                     className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >

@@ -97,6 +97,7 @@ export default function Rock101App() {
         useState<ManagementLandingView>("classes");
     const [classesVersion, setClassesVersion] = useState(0);
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
+    const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
 
     useEffect(() => {
         const savedUser = getSavedSession();
@@ -263,6 +264,7 @@ export default function Rock101App() {
                 .flatMap((rockClass) => rockClass.studentNames)
         );
     }, [currentUser, role, filteredClassesBySchool]);
+
     const visibleStudents = useMemo(() => {
         if (!currentUser) return [];
 
@@ -527,6 +529,20 @@ export default function Rock101App() {
         setSelectedClassId(selectedClass.id);
     }
 
+    function handleUpdateClassSongReadiness(
+        classId: string,
+        song: string,
+        readiness: 1 | 2 | 3 | 4 | 5
+    ) {
+        setClassSongReadiness((prev) => ({
+            ...prev,
+            [classId]: {
+                ...(prev[classId] ?? {}),
+                [song]: readiness,
+            },
+        }));
+    }
+
     function updateSelectedStudent(
         updater: (student: (typeof students)[number]) => (typeof students)[number]
     ) {
@@ -718,14 +734,15 @@ export default function Rock101App() {
     }
 
     async function handleSubmitToParents() {
-        alert("handleSubmitToParents is running");
-
         if (!selectedStudent) {
             alert("No student selected.");
             return;
         }
 
         try {
+            console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+            console.log("HAS ANON KEY:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+            
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-parent-update`,
                 {
@@ -733,7 +750,6 @@ export default function Rock101App() {
                     headers: {
                         "Content-Type": "application/json",
                         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
                     },
                     body: JSON.stringify({
                         parentEmail: selectedStudent.parentEmail,
@@ -1133,7 +1149,7 @@ export default function Rock101App() {
                 )}
 
                 {(canSeeManagementTabs || canSeeStudentTabs) && (
-                    <>
+                    <div>
                         {canManageRock101 && selectedClass && selectedStudentName && (
                             <div className="mb-4">
                                 <button
@@ -1145,348 +1161,398 @@ export default function Rock101App() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                )}
 
-                        {canManageRock101 &&
-                            managementLandingView === "students" &&
-                            !selectedClass &&
-                            selectedStudentName && (
-                                <div className="mb-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedStudentName("")}
-                                        className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
-                                    >
-                                        Back to Student List
-                                    </button>
-                                </div>
-                            )}
-
-                        <div className="mt-8 flex flex-wrap gap-3">
-                            {canSeeStudentTabs && (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("privateLesson")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Private Lesson
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("graduationRequirements")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Graduation Requirements
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("groupRehearsal")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Group Rehearsal
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("badges")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "badges"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Badges
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("parent")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "parent"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Parent
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("certificate")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "certificate"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Certificate
-                                    </button>
-                                </>
-                            )}
-
-                            {canSeeManagementTabs && (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("classSetup")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "classSetup"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Class Setup
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("performanceDashboard")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Shows Overview
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("bandsDashboard")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Bands Dashboard
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("pipeline")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "pipeline"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Pipeline
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("accounts")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "accounts"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Accounts
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSetTab("admin")}
-                                        className={`rounded-lg px-4 py-2 ${tab === "admin"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
-                                    >
-                                        Admin
-                                    </button>
-                                </>
-                            )}
+                {canManageRock101 &&
+                    managementLandingView === "students" &&
+                    !selectedClass &&
+                    selectedStudentName && (
+                        <div className="mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedStudentName("")}
+                                className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                            >
+                                Back to Student List
+                            </button>
                         </div>
+                    )}
 
-                        {canSeeStudentTabs && tab === "privateLesson" && selectedStudent && (
-                            <>
-                                <PrivateLessonView
-                                    student={selectedStudent}
-                                    onToggleDone={handleToggleDone}
-                                    onToggleSigned={handleToggleSigned}
-                                    canEdit={
-                                        role === "instructor" ||
-                                        role === "director" ||
-                                        role === "generalManager" ||
-                                        role === "owner"
-                                    }
-                                    canSign={
-                                        role === "instructor" ||
-                                        role === "director" ||
-                                        role === "generalManager" ||
-                                        role === "owner"
-                                    }
+                <div className="mt-8 flex flex-wrap gap-3">
+                    {canSeeStudentTabs && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("privateLesson")}
+                                className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Private Lesson
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("graduationRequirements")}
+                                className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Graduation Requirements
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("groupRehearsal")}
+                                className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Group Rehearsal
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("badges")}
+                                className={`rounded-lg px-4 py-2 ${tab === "badges"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Badges
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("parent")}
+                                className={`rounded-lg px-4 py-2 ${tab === "parent"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Parent
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("certificate")}
+                                className={`rounded-lg px-4 py-2 ${tab === "certificate"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Certificate
+                            </button>
+                        </>
+                    )}
+
+                    {canSeeManagementTabs && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("classSetup")}
+                                className={`rounded-lg px-4 py-2 ${tab === "classSetup"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Class Setup
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("performanceDashboard")}
+                                className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Shows Overview
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("bandsDashboard")}
+                                className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Bands Dashboard
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("pipeline")}
+                                className={`rounded-lg px-4 py-2 ${tab === "pipeline"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Pipeline
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("accounts")}
+                                className={`rounded-lg px-4 py-2 ${tab === "accounts"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Accounts
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleSetTab("admin")}
+                                className={`rounded-lg px-4 py-2 ${tab === "admin"
+                                    ? "bg-red-600"
+                                    : "bg-zinc-800 hover:bg-zinc-700"
+                                    }`}
+                            >
+                                Admin
+                            </button>
+                        </>
+                    )}
+                </div>
+
+                {canSeeStudentTabs && tab === "privateLesson" && selectedStudent && (
+                    <>
+                        <PrivateLessonView
+                            student={selectedStudent}
+                            onToggleDone={handleToggleDone}
+                            onToggleSigned={handleToggleSigned}
+                            canEdit={
+                                role === "instructor" ||
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                            canSign={
+                                role === "instructor" ||
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                        />
+
+                        {(role === "instructor" ||
+                            role === "director" ||
+                            role === "generalManager" ||
+                            role === "owner") && (
+                                <NotesPanel
+                                    role="instructor"
+                                    value={selectedStudent.notes.instructor}
+                                    saved={selectedStudent.workflow.instructorSubmitted}
+                                    onChange={(v) => handleNoteChange("instructor", v)}
+                                    onSave={() => handleSaveFeedback("instructor")}
                                 />
+                            )}
+                    </>
+                )}
 
-                                {(role === "instructor" ||
+                {canSeeStudentTabs &&
+                    tab === "graduationRequirements" &&
+                    selectedStudent && (
+                        <GraduationRequirementsView
+                            student={selectedStudent}
+                            onToggleDone={handleToggleDone}
+                            onToggleSigned={handleToggleSigned}
+                            canEdit={
+                                role === "instructor" ||
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                            canSign={
+                                role === "instructor" ||
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                        />
+                    )}
+
+                {canSeeStudentTabs &&
+                    tab === "groupRehearsal" &&
+                    !selectedStudent &&
+                    selectedClass && (
+                        <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+                            <h2 className="mb-4 text-xl font-bold text-white">
+                                Group Song Readiness
+                            </h2>
+
+                            <div className="space-y-4">
+                                {selectedClass.songs?.map((song: string) => {
+                                    const currentReadiness =
+                                        classSongReadiness[selectedClass.id]?.[song] ?? 0;
+
+                                    return (
+                                        <div
+                                            key={song}
+                                            className="flex items-center justify-between rounded-lg bg-zinc-800 p-4"
+                                        >
+                                            <div className="font-medium text-white">{song}</div>
+
+                                            <div className="flex gap-2">
+                                                {[1, 2, 3, 4, 5].map((level) => (
+                                                    <button
+                                                        key={level}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleUpdateClassSongReadiness(
+                                                                selectedClass.id,
+                                                                song,
+                                                                level as 1 | 2 | 3 | 4 | 5
+                                                            )
+                                                        }
+                                                        className={`rounded px-3 py-1 ${currentReadiness === level
+                                                            ? "bg-red-600 text-white"
+                                                            : "bg-zinc-700 text-zinc-300"
+                                                            }`}
+                                                    >
+                                                        {level}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                {canSeeStudentTabs &&
+                    tab === "groupRehearsal" &&
+                    selectedStudent && (
+                        <>
+                            <GroupRehearsalView
+                                student={selectedStudent}
+                                classId={activeClassForSelectedStudent?.id ?? null}
+                                classSongs={activeClassForSelectedStudent?.songs ?? []}
+                                onToggleDone={handleToggleDone}
+                                onToggleSigned={handleToggleSigned}
+                                onAddFistBump={handleAddFistBump}
+                                onUpdateSongReadiness={handleUpdateStudentSongReadiness}
+                                canEdit={
                                     role === "director" ||
                                     role === "generalManager" ||
-                                    role === "owner") && (
-                                        <NotesPanel
-                                            role="instructor"
-                                            value={selectedStudent.notes.instructor}
-                                            saved={selectedStudent.workflow.instructorSubmitted}
-                                            onChange={(v) => handleNoteChange("instructor", v)}
-                                            onSave={() => handleSaveFeedback("instructor")}
-                                        />
-                                    )}
-                            </>
-                        )}
+                                    role === "owner"
+                                }
+                                canSign={
+                                    role === "director" ||
+                                    role === "generalManager" ||
+                                    role === "owner"
+                                }
+                            />
 
-                        {canSeeStudentTabs &&
-                            tab === "graduationRequirements" &&
-                            selectedStudent && (
-                                <GraduationRequirementsView
-                                    student={selectedStudent}
-                                    onToggleDone={handleToggleDone}
-                                    onToggleSigned={handleToggleSigned}
-                                    canEdit={
-                                        role === "instructor" ||
-                                        role === "director" ||
-                                        role === "generalManager" ||
-                                        role === "owner"
-                                    }
-                                    canSign={
-                                        role === "instructor" ||
-                                        role === "director" ||
-                                        role === "generalManager" ||
-                                        role === "owner"
-                                    }
-                                />
-                            )}
-
-                        {canSeeStudentTabs &&
-                            tab === "groupRehearsal" &&
-                            selectedStudent && (
-                                <>
-                                    <GroupRehearsalView
-                                        student={selectedStudent}
-                                        classId={activeClassForSelectedStudent?.id ?? null}
-                                        classSongs={activeClassForSelectedStudent?.songs ?? []}
-                                        onToggleDone={handleToggleDone}
-                                        onToggleSigned={handleToggleSigned}
-                                        onAddFistBump={handleAddFistBump}
-                                        onUpdateSongReadiness={handleUpdateStudentSongReadiness}
-                                        canEdit={
-                                            role === "director" ||
-                                            role === "generalManager" ||
-                                            role === "owner"
-                                        }
-                                        canSign={
-                                            role === "director" ||
-                                            role === "generalManager" ||
-                                            role === "owner"
-                                        }
-                                    />
-
-                                    {(role === "director" ||
-                                        role === "generalManager" ||
-                                        role === "owner") && (
-                                            <NotesPanel
-                                                role="director"
-                                                value={selectedStudent.notes.director}
-                                                saved={selectedStudent.workflow.directorSubmitted}
-                                                onChange={(v) => handleNoteChange("director", v)}
-                                                onSave={() => handleSaveFeedback("director")}
-                                            />
-                                        )}
-                                </>
-                            )}
-
-                        {canSeeStudentTabs && tab === "badges" && selectedStudent && (
-                            <BadgeGrid earnedBadges={earnedBadges} />
-                        )}
-
-                        {canSeeStudentTabs && tab === "parent" && selectedStudent && (
-                            <div className="space-y-8">
-                                {parentDashboardData && (
-                                    <ParentDashboardOverview
-                                        data={parentDashboardData}
-                                        lessonNotes={selectedStudent.notes.instructor}
-                                        rehearsalNotes={selectedStudent.notes.director}
-                                        lessonLastUpdated={
-                                            (
-                                                selectedStudent.notes as typeof selectedStudent.notes & {
-                                                    instructorUpdatedAt?: string | null;
-                                                    directorUpdatedAt?: string | null;
-                                                }
-                                            ).instructorUpdatedAt ?? null
-                                        }
-                                        rehearsalLastUpdated={
-                                            (
-                                                selectedStudent.notes as typeof selectedStudent.notes & {
-                                                    instructorUpdatedAt?: string | null;
-                                                    directorUpdatedAt?: string | null;
-                                                }
-                                            ).directorUpdatedAt ?? null
-                                        }
-                                        onNavigate={(nextTab) => handleSetTab(nextTab)}
+                            {(role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner") && (
+                                    <NotesPanel
+                                        role="director"
+                                        value={selectedStudent.notes?.director ?? ""}
+                                        saved={selectedStudent.workflow?.directorSubmitted ?? false}
+                                        onChange={(v) => handleNoteChange("director", v)}
+                                        onSave={() => handleSaveFeedback("director")}
                                     />
                                 )}
-                            </div>
-                        )}
+                        </>
+                    )}
 
-                        {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
-                            <CertificateView student={selectedStudent} />
-                        )}
+                {canSeeStudentTabs && tab === "badges" && selectedStudent && (
+                    <BadgeGrid earnedBadges={earnedBadges} />
+                )}
 
-                        {tab === "classSetup" && canManageRock101 && (
-                            <ClassSetupView
-                                students={filteredStudentsBySchool}
-                                users={filteredUsersBySchool}
+                {canSeeStudentTabs && tab === "parent" && selectedStudent && (
+                    <div className="space-y-8">
+                        {parentDashboardData && (
+                            <ParentDashboardOverview
+                                data={parentDashboardData}
+                                lessonNotes={selectedStudent.notes.instructor}
+                                rehearsalNotes={selectedStudent.notes.director}
+                                lessonLastUpdated={
+                                    (
+                                        selectedStudent.notes as typeof selectedStudent.notes & {
+                                            instructorUpdatedAt?: string | null;
+                                            directorUpdatedAt?: string | null;
+                                        }
+                                    ).instructorUpdatedAt ?? null
+                                }
+                                rehearsalLastUpdated={
+                                    (
+                                        selectedStudent.notes as typeof selectedStudent.notes & {
+                                            instructorUpdatedAt?: string | null;
+                                            directorUpdatedAt?: string | null;
+                                        }
+                                    ).directorUpdatedAt ?? null
+                                }
+                                onNavigate={(nextTab) => handleSetTab(nextTab)}
                             />
                         )}
+                    </div>
+                )}
 
-                        {tab === "performanceDashboard" && canManageRock101 && (
-                            <PerformanceDashboard
-                                classes={filteredClassesBySchool}
-                                users={filteredUsersBySchool}
-                            />
-                        )}
+                {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
+                    <CertificateView student={selectedStudent} />
+                )}
 
-                        {tab === "bandsDashboard" && canManageRock101 && (
-                            <BandsDashboard students={filteredStudentsBySchool} />
-                        )}
+                {tab === "classSetup" && canManageRock101 && (
+                    <ClassSetupView
+                        students={filteredStudentsBySchool}
+                        users={filteredUsersBySchool}
+                    />
+                )}
 
-                        {tab === "pipeline" && canManageRock101 && (
-                            <PipelineView students={filteredStudentsBySchool} />
-                        )}
+                {tab === "performanceDashboard" && canManageRock101 && (
+                    <PerformanceDashboard
+                        classes={filteredClassesBySchool}
+                        users={filteredUsersBySchool}
+                    />
+                )}
 
-                        {tab === "accounts" && canManageRock101 && (
-                            <DirectorAccountsView currentUserEmail={currentUser.email} />
-                        )}
+                {tab === "bandsDashboard" && canManageRock101 && (
+                    <BandsDashboard students={filteredStudentsBySchool} />
+                )}
 
-                        {tab === "admin" && canManageRock101 && (
-                            <AdminView
-                                users={filteredUsersBySchool}
-                                students={filteredStudentsBySchool}
-                                canManageUsers={isGeneralManager || isOwner}
-                                onUpdateStudentInstructor={handleUpdateStudentInstructor}
-                                onUpdateStudentParentEmail={(studentName, parentEmail) => {
-                                    setStudents((prev) =>
-                                        prev.map((student) =>
-                                            student.name === studentName
-                                                ? {
-                                                    ...student,
-                                                    parentEmail,
-                                                }
-                                                : student
-                                        )
-                                    );
-                                }}
-                                onDeleteStudent={(studentName) => {
-                                    setStudents((prev) =>
-                                        prev.filter((student) => student.name !== studentName)
-                                    );
-                                }}
-                            />
-                        )}
-                    </>
+                {tab === "pipeline" && canManageRock101 && (
+                    <PipelineView students={filteredStudentsBySchool} />
+                )}
+
+                {tab === "accounts" && canManageRock101 && (
+                    <DirectorAccountsView currentUserEmail={currentUser.email} />
+                )}
+
+                {tab === "admin" && canManageRock101 && (
+                    <AdminView
+                        users={filteredUsersBySchool}
+                        students={filteredStudentsBySchool}
+                        canManageUsers={isGeneralManager || isOwner}
+                        onUpdateStudentInstructor={handleUpdateStudentInstructor}
+                        onUpdateStudentParentEmail={(studentName, parentEmail) => {
+                            setStudents((prev) =>
+                                prev.map((student) =>
+                                    student.name === studentName
+                                        ? {
+                                            ...student,
+                                            parentEmail,
+                                        }
+                                        : student
+                                )
+                            );
+                        }}
+                        onDeleteStudent={(studentName) => {
+                            setStudents((prev) =>
+                                prev.filter((student) => student.name !== studentName)
+                            );
+                        }}
+                    />
                 )}
             </div>
         </div>
+
     );
 }
