@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { findUserByEmail, SessionUser } from "@/lib/session";
 import BrandedBackground from "@/components/BrandedBackground";
+import { supabase } from "@/lib/supabaseClient";
 
 type LoginScreenProps = {
   onLogin: (user: SessionUser) => void;
@@ -12,7 +13,33 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
-  function handleLogin() {
+  async function handleLogin() {
+    setError("");
+
+    // Temporary real-auth test path for the Supabase user we created.
+    // This does NOT replace the app's current demo/session login yet.
+    if (email.toLowerCase() === "owner@rock101.com") {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: "test1234",
+      });
+
+      console.log("LOGIN RESULT:", { data, error });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // For now, do not call onLogin here yet because the app still expects
+      // a SessionUser from the demo/session system.
+      setError(
+        "Supabase login succeeded. Check the browser console. App routing is not wired to auth yet."
+      );
+      return;
+    }
+
+    // Existing demo login flow stays intact.
     const matchedUser = findUserByEmail(email);
 
     if (!matchedUser) {
@@ -20,7 +47,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       return;
     }
 
-    setError("");
     onLogin(matchedUser);
   }
 

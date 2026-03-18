@@ -98,7 +98,34 @@ export default function Rock101App() {
     const [classesVersion, setClassesVersion] = useState(0);
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data } = await supabase.auth.getUser();
+            console.log("FULL AUTH OBJECT:", data);
 
+            if (data?.user) {
+                console.log("User is logged in:", data.user.email);
+
+                console.log("AUTH EMAIL:", data.user.email);
+
+                const { data: dbUser } = await supabase
+                    .from("users")
+                    .select("id, email, name, role, school_id, auth_id")
+                    .eq("auth_id", data.user.id)
+                    .maybeSingle();
+
+                console.log("DB USER:", dbUser);
+
+                if (dbUser) {
+                    setCurrentUser(dbUser);
+                }
+            } else {
+                console.log("No user logged in");
+            }
+        };
+
+        checkUser();
+    }, []);
     useEffect(() => {
         const savedUser = getSavedSession();
         const savedTab = getSavedTab();
@@ -742,7 +769,7 @@ export default function Rock101App() {
         try {
             console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
             console.log("HAS ANON KEY:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-            
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-parent-update`,
                 {
