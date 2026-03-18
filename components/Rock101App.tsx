@@ -263,7 +263,6 @@ export default function Rock101App() {
                 .flatMap((rockClass) => rockClass.studentNames)
         );
     }, [currentUser, role, filteredClassesBySchool]);
-
     const visibleStudents = useMemo(() => {
         if (!currentUser) return [];
 
