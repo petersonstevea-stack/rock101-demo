@@ -34,7 +34,7 @@ export default function AppHeader({
 
             <div className="min-w-0">
               <div className="sor-heading truncate text-xl text-white">
-                Rock 101 Progress Tracker
+                STAGE READY
               </div>
 
               {role && (

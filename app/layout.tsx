@@ -15,7 +15,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Rock 101 Progress Tracker",
+  title: "STAGE READY",
   description: "School of Rock Rock 101 progress tracking app",
 };
 

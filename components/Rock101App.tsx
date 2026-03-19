@@ -139,8 +139,10 @@ export default function Rock101App() {
             setCurrentUser(savedUser);
         }
 
-        if (savedTab) {
-            setTab(savedTab as Tab);
+        if (role === "director") {
+            setTab("groupRehearsal");  // Directors always land on Group Rehearsal
+        } else if (savedTab) {
+            setTab(savedTab as Tab);  // For others, restore saved tab
         }
     }, []);
 
@@ -514,8 +516,15 @@ export default function Rock101App() {
 
     function handleSelectStudent(studentName: string) {
         setSelectedStudentName(studentName);
-    }
 
+        if (role === "director") {
+            setTab("groupRehearsal");
+            saveSelectedTab("groupRehearsal");
+        } else {
+            setTab("privateLesson");
+            saveSelectedTab("privateLesson");
+        }
+    }
     async function handleAddStudentToClass(studentId: string) {
         if (!selectedClass) return;
 
