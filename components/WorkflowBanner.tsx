@@ -3,6 +3,7 @@ type WorkflowBannerProps = {
   submitted: boolean;
   studentName: string;
   onSubmit: () => void;
+  canSubmit?: boolean;
 };
 
 export default function WorkflowBanner({
@@ -10,8 +11,14 @@ export default function WorkflowBanner({
   submitted,
   studentName,
   onSubmit,
+  canSubmit = true,
 }: WorkflowBannerProps) {
-  console.log("WorkflowBanner render:", { ready, submitted, studentName });
+  console.log("WorkflowBanner render:", {
+    ready,
+    submitted,
+    studentName,
+    canSubmit,
+  });
 
   if (submitted) {
     return (
@@ -41,17 +48,23 @@ export default function WorkflowBanner({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            console.log("🔥 Submit button clicked");
-            alert("BUTTON CLICKED");
-            onSubmit();
-          }}
-          className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500"
-        >
-          Submit to Parents TEST123
-        </button>
+        {canSubmit ? (
+          <button
+            type="button"
+            onClick={() => {
+              console.log("🔥 Submit button clicked");
+              alert("BUTTON CLICKED");
+              onSubmit();
+            }}
+            className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500"
+          >
+            Submit to Parents TEST123
+          </button>
+        ) : (
+          <div className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300">
+            You do not have permission to submit this update.
+          </div>
+        )}
       </div>
     </div>
   );

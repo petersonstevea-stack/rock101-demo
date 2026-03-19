@@ -135,15 +135,25 @@ export default function PrivateLessonView({
                 {monthGroups.map((group) => {
                     const columns = splitIntoTwoColumns(group.requiredLessonItems);
                     const { monthPart, descriptorPart } = splitMonthTitle(group.title);
+                    const completedCount = group.requiredLessonItems.filter(
+                        (item) =>
+                            student.curriculum[item.id]?.done ||
+                            student.curriculum[item.id]?.signed
+                    ).length;
 
+                    const percent =
+                        group.requiredLessonItems.length > 0
+                            ? Math.round(
+                                (completedCount / group.requiredLessonItems.length) * 100
+                            )
+                            : 0;
                     return (
                         <div
                             key={group.month}
-                            className={`space-y-5 ${
-                                group.month === currentMonth
-                                    ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
-                                    : ""
-                            }`}
+                            className={`space-y-5 ${group.month === currentMonth
+                                ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
+                                : ""
+                                }`}
                         >
                             <div className="sor-finish-card rounded-2xl p-5 backdrop-blur-sm">
                                 <div>

@@ -21,6 +21,11 @@ import PipelineView from "@/components/PipelineView";
 import CertificateView from "@/components/CertificateView";
 import ClassSetupView from "@/components/ClassSetupView";
 import DirectorAccountsView from "@/components/DirectorAccountsView";
+import {
+    canEditGroupRehearsal,
+    canSubmitParentUpdate,
+    type AppUser,
+} from "@/lib/access";
 import AdminView from "@/components/AdminView";
 import PerformanceDashboard from "@/components/PerformanceDashboard";
 import ClassSelectorView from "@/components/ClassSelectorView";
@@ -151,6 +156,7 @@ export default function Rock101App() {
             if (!data) return;
 
             const formatted = data.map((s: any) => {
+                console.log("SUPABASE STUDENT ROW", s);
                 const schoolId = mapSchoolNameToId(s.school);
 
                 return {
@@ -164,18 +170,18 @@ export default function Rock101App() {
                     schoolId,
                     className: s.class_name ?? "Rock 101",
                     band: s.class_name ?? "Rock 101",
-                    primaryInstructorEmail: null,
-                    curriculum: {},
+                    primaryInstructorEmail: s.primary_instructor_email ?? "jennifer@gmail.com",
+                    curriculum: s.curriculum ?? {},
                     notes: {
-                        instructor: "",
-                        director: "",
-                        instructorUpdatedAt: null,
-                        directorUpdatedAt: null,
+                        instructor: s.notes?.instructor ?? "",
+                        director: s.notes?.director ?? "",
+                        instructorUpdatedAt: s.notes?.instructorUpdatedAt ?? null,
+                        directorUpdatedAt: s.notes?.directorUpdatedAt ?? null,
                     },
                     workflow: {
-                        instructorSubmitted: false,
-                        directorSubmitted: false,
-                        parentSubmitted: false,
+                        instructorSubmitted: s.workflow?.instructorSubmitted ?? false,
+                        directorSubmitted: s.workflow?.directorSubmitted ?? false,
+                        parentSubmitted: s.workflow?.parentSubmitted ?? false,
                     },
                     songReadiness: {},
                 };
@@ -207,15 +213,23 @@ export default function Rock101App() {
             }
 
             if (data) {
-                const formatted = data.map((c: any) => ({
-                    id: c.id,
-                    name: c.name,
-                    schoolId: c.school_id,
-                    directorEmail: c.director_email,
-                    songs: c.songs ?? [],
-                    studentIds: c.student_ids ?? [],
-                    studentNames: c.student_names ?? [],
-                }));
+                const formatted = data.map((c: any) => {
+                    console.log("SUPABASE ROCK CLASS ROW", c);
+
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        schoolId: c.school_id,
+                        directorEmail:
+                            c.director_email === "director@delmar.com"
+                                ? "director.delmar@rock101.com"
+                                : c.director_email,
+                        songs: c.songs ?? [],
+                        studentIds: c.student_ids ?? [],
+                        studentNames: c.student_names ?? [],
+                        songProgress: c.song_progress ?? {},
+                    };
+                });
 
                 setSavedClasses(formatted);
             }
@@ -530,44 +544,46 @@ export default function Rock101App() {
         setSelectedClassId(selectedClass.id);
     }
 
-    function handleUpdateClassSongProgress(
+
+    async function handleUpdateClassSongProgress(
         song: string,
         readiness: 1 | 2 | 3 | 4 | 5
     ) {
         if (!selectedClass) return;
 
-        const updatedClasses = filteredClassesBySchool.map((rockClass) => {
-            if (rockClass.id !== selectedClass.id) return rockClass;
-
-            return {
-                ...rockClass,
-                songProgress: {
-                    ...(rockClass.songProgress ?? {}),
-                    [song]: {
-                        readiness,
-                        updatedAt: new Date().toISOString(),
-                    },
-                },
-            };
-        });
-
-        saveClasses(updatedClasses);
-        setClassesVersion((prev) => prev + 1);
-        setSelectedClassId(selectedClass.id);
-    }
-
-    function handleUpdateClassSongReadiness(
-        classId: string,
-        song: string,
-        readiness: 1 | 2 | 3 | 4 | 5
-    ) {
-        setClassSongReadiness((prev) => ({
-            ...prev,
-            [classId]: {
-                ...(prev[classId] ?? {}),
-                [song]: readiness,
+        const nextSongProgress = {
+            ...(selectedClass.songProgress ?? {}),
+            [song]: {
+                readiness,
+                updatedAt: new Date().toISOString(),
             },
-        }));
+        };
+
+        const { error } = await supabase
+            .from("rock_classes")
+            .update({
+                song_progress: nextSongProgress,
+            })
+            .eq("id", selectedClass.id);
+
+        if (error) {
+            alert(
+                `Save failed\nmessage: ${error?.message ?? "none"}\ndetails: ${error?.details ?? "none"
+                }\nhint: ${error?.hint ?? "none"}\ncode: ${error?.code ?? "none"}`
+            );
+            return;
+        }
+
+        setSavedClasses((prev) =>
+            prev.map((rockClass) =>
+                rockClass.id === selectedClass.id
+                    ? {
+                        ...rockClass,
+                        songProgress: nextSongProgress,
+                    }
+                    : rockClass
+            )
+        );
     }
 
     function updateSelectedStudent(
@@ -594,65 +610,105 @@ export default function Rock101App() {
         );
     }
 
-    function handleToggleDone(item: string) {
-        updateSelectedStudent((student) => {
-            const existing = student.curriculum[item] ?? defaultCurriculumState;
+    async function handleToggleDone(item: string) {
+        if (!selectedStudent) return;
 
-            return {
-                ...student,
-                curriculum: {
-                    ...student.curriculum,
-                    [item]: {
-                        ...existing,
-                        done: !existing.done,
-                    },
-                },
-                workflow: {
-                    ...student.workflow,
-                    instructorSubmitted:
-                        role === "instructor"
-                            ? false
-                            : student.workflow.instructorSubmitted,
-                    directorSubmitted:
-                        canManageRock101
-                            ? false
-                            : student.workflow.directorSubmitted,
-                    parentSubmitted: false,
-                },
-            };
-        });
+        const student = selectedStudent;
+
+        const existing = student.curriculum[item] ?? defaultCurriculumState;
+
+        const nextCurriculum = {
+            ...student.curriculum,
+            [item]: {
+                ...existing,
+                done: !existing.done,
+            },
+        };
+
+        const nextWorkflow = {
+            ...student.workflow,
+            instructorSubmitted:
+                role === "instructor"
+                    ? false
+                    : student.workflow.instructorSubmitted,
+            directorSubmitted:
+                canManageRock101
+                    ? false
+                    : student.workflow.directorSubmitted,
+            parentSubmitted: false,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                curriculum: nextCurriculum,
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase curriculum save failed:", error);
+            alert("Save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            curriculum: nextCurriculum,
+            workflow: nextWorkflow,
+        }));
     }
 
-    function handleToggleSigned(item: string) {
-        updateSelectedStudent((student) => {
-            const existing = student.curriculum[item] ?? defaultCurriculumState;
-            const nextSigned = !existing.signed;
+    async function handleToggleSigned(item: string) {
+        if (!selectedStudent) return;
 
-            return {
-                ...student,
-                curriculum: {
-                    ...student.curriculum,
-                    [item]: {
-                        ...existing,
-                        done: nextSigned ? true : existing.done,
-                        signed: nextSigned,
-                        date: nextSigned ? new Date().toLocaleDateString() : null,
-                    },
-                },
-                workflow: {
-                    ...student.workflow,
-                    instructorSubmitted:
-                        role === "instructor"
-                            ? false
-                            : student.workflow.instructorSubmitted,
-                    directorSubmitted:
-                        canManageRock101
-                            ? false
-                            : student.workflow.directorSubmitted,
-                    parentSubmitted: false,
-                },
-            };
-        });
+        const student = selectedStudent;
+
+        const existing = student.curriculum[item] ?? defaultCurriculumState;
+        const nextSigned = !existing.signed;
+
+        const nextCurriculum = {
+            ...student.curriculum,
+            [item]: {
+                ...existing,
+                done: nextSigned ? true : existing.done,
+                signed: nextSigned,
+                date: nextSigned ? new Date().toLocaleDateString() : null,
+            },
+        };
+
+        const nextWorkflow = {
+            ...student.workflow,
+            instructorSubmitted:
+                role === "instructor"
+                    ? false
+                    : student.workflow.instructorSubmitted,
+            directorSubmitted:
+                canManageRock101
+                    ? false
+                    : student.workflow.directorSubmitted,
+            parentSubmitted: false,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                curriculum: nextCurriculum,
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase curriculum sign save failed:", error);
+            alert("Save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            curriculum: nextCurriculum,
+            workflow: nextWorkflow,
+        }));
     }
 
     function handleAddFistBump(item: string) {
@@ -677,28 +733,50 @@ export default function Rock101App() {
         });
     }
 
-    function handleUpdateStudentSongReadiness(
+    async function handleUpdateStudentSongReadiness(
         classId: string,
         song: string,
         readiness: 1 | 2 | 3 | 4 | 5
     ) {
-        updateSelectedStudent((student) => ({
-            ...student,
-            songReadiness: {
-                ...(student.songReadiness ?? {}),
-                [classId]: {
-                    ...(student.songReadiness?.[classId] ?? {}),
-                    [song]: {
-                        readiness,
-                        updatedAt: new Date().toISOString(),
-                    },
+        if (!selectedStudent) return;
+
+        const student = selectedStudent;
+
+        const nextSongReadiness = {
+            ...(student.songReadiness ?? {}),
+            [classId]: {
+                ...(student.songReadiness?.[classId] ?? {}),
+                [song]: {
+                    readiness,
+                    updatedAt: new Date().toISOString(),
                 },
             },
-            workflow: {
-                ...student.workflow,
-                directorSubmitted: false,
-                parentSubmitted: false,
-            },
+        };
+
+        const nextWorkflow = {
+            ...student.workflow,
+            directorSubmitted: false,
+            parentSubmitted: false,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                song_readiness: nextSongReadiness,
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase song readiness save failed:", error);
+            alert("Save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            songReadiness: nextSongReadiness,
+            workflow: nextWorkflow,
         }));
     }
 
@@ -727,7 +805,49 @@ export default function Rock101App() {
         }));
     }
 
-    function handleSaveFeedback(roleType: "instructor" | "director") {
+    async function handleSaveFeedback(roleType: "instructor" | "director") {
+        console.log("handleSaveFeedback called", {
+            roleType,
+            selectedStudentName,
+        });
+        if (!selectedStudent) return;
+        const student = selectedStudent;
+
+        const timestampKey =
+            roleType === "instructor"
+                ? "instructorUpdatedAt"
+                : "directorUpdatedAt";
+
+        const nextNotes = {
+            ...student.notes,
+            [timestampKey]: new Date().toLocaleString(),
+        };
+
+        const nextWorkflow = {
+            ...student.workflow,
+            instructorSubmitted:
+                roleType === "instructor"
+                    ? true
+                    : student.workflow.instructorSubmitted,
+            directorSubmitted:
+                roleType === "director"
+                    ? true
+                    : student.workflow.directorSubmitted,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                notes: nextNotes,
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase save failed:", error);
+            alert("Save failed");
+            return;
+        }
         updateSelectedStudent((student) => {
             const timestampKey =
                 roleType === "instructor"
@@ -744,6 +864,7 @@ export default function Rock101App() {
 
             return {
                 ...student,
+                primaryInstructorEmail: student.primaryInstructorEmail,
                 notes: nextNotes,
                 workflow: {
                     ...student.workflow,
@@ -1009,13 +1130,24 @@ export default function Rock101App() {
                 )}
 
                 {selectedStudent &&
-                    (role === "instructor" || canManageRock101) && (
-                        <WorkflowBanner
-                            ready={workflowReady}
-                            submitted={selectedStudent.workflow.parentSubmitted}
-                            studentName={selectedStudent.name}
-                            onSubmit={handleSubmitToParents}
-                        />
+                    (role === "owner" ||
+                        role === "generalManager" ||
+                        role === "instructor" ||
+                        (role === "director" &&
+                            currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
+                        <>                        
+
+                            <WorkflowBanner
+                                ready={workflowReady}
+                                submitted={selectedStudent.workflow.parentSubmitted}
+                                studentName={selectedStudent.name}
+                                onSubmit={handleSubmitToParents}
+                                canSubmit={canSubmitParentUpdate({
+                                    id: "temp",
+                                    role: role as AppUser["role"],
+                                })}
+                            />
+                        </>
                     )}
 
                 {canManageRock101 && !selectedClass && !selectedStudentName && (
@@ -1164,7 +1296,9 @@ export default function Rock101App() {
                         allStudents={filteredStudentsBySchool}
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
-                        onUpdateSongProgress={handleUpdateClassSongProgress}
+                        onUpdateSongProgress={(song, readiness) => {
+                            handleUpdateClassSongProgress(song, readiness);
+                        }}
                         onBackToClasses={() => {
                             setSelectedClassId(null);
                             setSelectedStudentName("");
@@ -1353,10 +1487,10 @@ export default function Rock101App() {
                             onToggleDone={handleToggleDone}
                             onToggleSigned={handleToggleSigned}
                             canEdit={
-                                role === "instructor" ||
-                                role === "director" ||
+                                role === "owner" ||
                                 role === "generalManager" ||
-                                role === "owner"
+                                (role === "instructor" &&
+                                    currentUser?.email === selectedStudent.primaryInstructorEmail)
                             }
                             canSign={
                                 role === "instructor" ||
@@ -1366,16 +1500,22 @@ export default function Rock101App() {
                             }
                         />
 
-                        {(role === "instructor" ||
-                            role === "director" ||
+                        {(role === "owner" ||
                             role === "generalManager" ||
-                            role === "owner") && (
+                            (role === "instructor" &&
+                                currentUser?.email === selectedStudent.primaryInstructorEmail)) && (
                                 <NotesPanel
                                     role="instructor"
                                     value={selectedStudent.notes.instructor}
                                     saved={selectedStudent.workflow.instructorSubmitted}
                                     onChange={(v) => handleNoteChange("instructor", v)}
                                     onSave={() => handleSaveFeedback("instructor")}
+                                    canEdit={
+                                        role === "owner" ||
+                                        role === "generalManager" ||
+                                        (role === "instructor" &&
+                                            currentUser?.email === selectedStudent.primaryInstructorEmail)
+                                    }
                                 />
                             )}
                     </>
@@ -1430,8 +1570,7 @@ export default function Rock101App() {
                                                         key={level}
                                                         type="button"
                                                         onClick={() =>
-                                                            handleUpdateClassSongReadiness(
-                                                                selectedClass.id,
+                                                            handleUpdateClassSongProgress(
                                                                 song,
                                                                 level as 1 | 2 | 3 | 4 | 5
                                                             )
@@ -1456,6 +1595,8 @@ export default function Rock101App() {
                     tab === "groupRehearsal" &&
                     selectedStudent && (
                         <>
+
+
                             <GroupRehearsalView
                                 student={selectedStudent}
                                 classId={activeClassForSelectedStudent?.id ?? null}
@@ -1465,9 +1606,10 @@ export default function Rock101App() {
                                 onAddFistBump={handleAddFistBump}
                                 onUpdateSongReadiness={handleUpdateStudentSongReadiness}
                                 canEdit={
-                                    role === "director" ||
+                                    role === "owner" ||
                                     role === "generalManager" ||
-                                    role === "owner"
+                                    (role === "director" &&
+                                        currentUser?.email === activeClassForSelectedStudent?.directorEmail)
                                 }
                                 canSign={
                                     role === "director" ||
@@ -1476,15 +1618,22 @@ export default function Rock101App() {
                                 }
                             />
 
-                            {(role === "director" ||
+                            {(role === "owner" ||
                                 role === "generalManager" ||
-                                role === "owner") && (
+                                (role === "director" &&
+                                    currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
                                     <NotesPanel
                                         role="director"
                                         value={selectedStudent.notes?.director ?? ""}
                                         saved={selectedStudent.workflow?.directorSubmitted ?? false}
                                         onChange={(v) => handleNoteChange("director", v)}
                                         onSave={() => handleSaveFeedback("director")}
+                                        canEdit={
+                                            role === "owner" ||
+                                            role === "generalManager" ||
+                                            (role === "director" &&
+                                                currentUser?.email === activeClassForSelectedStudent?.directorEmail)
+                                        }
                                     />
                                 )}
                         </>
