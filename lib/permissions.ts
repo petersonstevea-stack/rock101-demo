@@ -76,7 +76,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "change_student_instructor",
     "change_class_director",
   ],
-  instructor: [
+    instructor: [
     "view_private_lesson",
     "edit_private_lesson",
     "view_group_rehearsal",
@@ -84,6 +84,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "edit_graduation_requirements",
     "click_instructor_signoff",
     "click_instructor_graduation_signoff",
+    "submit_parent_update",
   ],
   parent: [
     "view_parent_dashboard",

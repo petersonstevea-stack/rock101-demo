@@ -149,7 +149,8 @@ export default function Rock101App() {
             const { data, error } = await supabase.from("students").select("*");
 
             if (error) {
-                console.error("Error loading students from Supabase:", error);
+                console.log("SUPABASE LOAD STUDENTS ERROR RAW:", error);
+                console.log("SUPABASE LOAD STUDENTS ERROR JSON:", JSON.stringify(error, null, 2));
                 return;
             }
 
@@ -181,6 +182,10 @@ export default function Rock101App() {
                     workflow: {
                         instructorSubmitted: s.workflow?.instructorSubmitted ?? false,
                         directorSubmitted: s.workflow?.directorSubmitted ?? false,
+                        graduationInstructorSubmitted:
+                            s.workflow?.graduationInstructorSubmitted ?? false,
+                        graduationDirectorSubmitted:
+                            s.workflow?.graduationDirectorSubmitted ?? false,
                         parentSubmitted: s.workflow?.parentSubmitted ?? false,
                     },
                     songReadiness: {},
@@ -208,7 +213,8 @@ export default function Rock101App() {
             const { data, error } = await supabase.from("rock_classes").select("*");
 
             if (error) {
-                console.error("Error loading classes:", error);
+                console.log("SUPABASE LOAD CLASSES ERROR RAW:", error);
+                console.log("SUPABASE LOAD CLASSES ERROR JSON:", JSON.stringify(error, null, 2));
                 return;
             }
 
@@ -486,9 +492,21 @@ export default function Rock101App() {
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
         selectedStudent.workflow.directorSubmitted &&
+        selectedStudent.workflow.graduationDirectorSubmitted &&
+        selectedStudent.workflow.graduationInstructorSubmitted &&
         !selectedStudent.workflow.parentSubmitted
         : false;
-
+    const workflowMissingMessage = !selectedStudent
+        ? undefined
+        : selectedStudent.workflow.parentSubmitted
+            ? undefined
+            : !selectedStudent.workflow.instructorSubmitted
+                ? "Waiting on instructor weekly feedback."
+                : !selectedStudent.workflow.directorSubmitted
+                    ? "Waiting on director weekly feedback."
+                    : !selectedStudent.workflow.graduationDirectorSubmitted
+                        ? "Waiting on director graduation signoff."
+                        : undefined;
     function handleSetTab(nextTab: Tab) {
         setTab(nextTab);
         saveSelectedTab(nextTab);
@@ -614,7 +632,11 @@ export default function Rock101App() {
         if (!selectedStudent) return;
 
         const student = selectedStudent;
-
+        const privateSections = getPrivateLessonSections(student.instrument);
+        const allPrivateItems = privateSections.flatMap((section: any) => section.items ?? []);
+        const matchedItem = allPrivateItems.find((i: any) => i.id === item);
+        const itemArea = matchedItem?.area ?? null;
+        console.log("TOGGLE ITEM AREA:", item, itemArea);
         const existing = student.curriculum[item] ?? defaultCurriculumState;
 
         const nextCurriculum = {
@@ -627,14 +649,27 @@ export default function Rock101App() {
 
         const nextWorkflow = {
             ...student.workflow,
+
             instructorSubmitted:
                 role === "instructor"
                     ? false
                     : student.workflow.instructorSubmitted,
+
             directorSubmitted:
                 canManageRock101
                     ? false
                     : student.workflow.directorSubmitted,
+
+            graduationInstructorSubmitted:
+                itemArea === "graduation"
+                    ? false
+                    : student.workflow.graduationInstructorSubmitted,
+
+            graduationDirectorSubmitted:
+                itemArea === "graduation"
+                    ? false
+                    : student.workflow.graduationDirectorSubmitted,
+
             parentSubmitted: false,
         };
 
@@ -658,12 +693,79 @@ export default function Rock101App() {
             workflow: nextWorkflow,
         }));
     }
+    async function handleInstructorGraduationSubmit() {
+        if (!selectedStudent) return;
 
-    async function handleToggleSigned(item: string) {
+        if (
+            role !== "instructor" &&
+            role !== "generalManager" &&
+            role !== "owner"
+        ) {
+            alert("You do not have permission to submit instructor graduation signoff.");
+            return;
+        }
+
+        const student = selectedStudent;
+
+        const nextWorkflow = {
+            ...student.workflow,
+            graduationInstructorSubmitted: true,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase graduation instructor signoff save failed:", error);
+            alert("Graduation instructor signoff save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            workflow: nextWorkflow,
+        }));
+    }
+    async function handleDirectorGraduationSubmit() {
         if (!selectedStudent) return;
 
         const student = selectedStudent;
 
+        const nextWorkflow = {
+            ...student.workflow,
+            graduationDirectorSubmitted: true,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase graduation director signoff save failed:", error);
+            alert("Graduation director signoff save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            workflow: nextWorkflow,
+        }));
+    }
+    async function handleToggleSigned(item: string) {
+        if (!selectedStudent) return;
+
+        const student = selectedStudent;
+        const privateSections = getPrivateLessonSections(student.instrument);
+        const allPrivateItems = privateSections.flatMap((section: any) => section.items ?? []);
+        const matchedItem = allPrivateItems.find((i: any) => i.id === item);
+        const itemArea = matchedItem?.area ?? null;
         const existing = student.curriculum[item] ?? defaultCurriculumState;
         const nextSigned = !existing.signed;
 
@@ -679,14 +781,29 @@ export default function Rock101App() {
 
         const nextWorkflow = {
             ...student.workflow,
+
+            // WEEKLY WORKFLOW (unchanged behavior)
             instructorSubmitted:
                 role === "instructor"
                     ? false
                     : student.workflow.instructorSubmitted,
+
             directorSubmitted:
                 canManageRock101
                     ? false
                     : student.workflow.directorSubmitted,
+
+            // ✅ NEW: GRADUATION WORKFLOW RESET
+            graduationInstructorSubmitted:
+                itemArea === "graduation"
+                    ? false
+                    : student.workflow.graduationInstructorSubmitted,
+
+            graduationDirectorSubmitted:
+                itemArea === "graduation"
+                    ? false
+                    : student.workflow.graduationDirectorSubmitted,
+
             parentSubmitted: false,
         };
 
@@ -969,7 +1086,9 @@ export default function Rock101App() {
                             : "privateLesson";
 
                     setTab(defaultTab);
-                    saveSelectedTab(defaultTab);
+                    if (!getSavedTab()) {
+                        saveSelectedTab(defaultTab);
+                    }
 
                     setSelectedClassId(null);
                     setManagementLandingView("classes");
@@ -1135,11 +1254,12 @@ export default function Rock101App() {
                         role === "instructor" ||
                         (role === "director" &&
                             currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
-                        <>                        
+                        <>
 
                             <WorkflowBanner
                                 ready={workflowReady}
                                 submitted={selectedStudent.workflow.parentSubmitted}
+                                missingMessage={workflowMissingMessage}
                                 studentName={selectedStudent.name}
                                 onSubmit={handleSubmitToParents}
                                 canSubmit={canSubmitParentUpdate({
@@ -1526,8 +1646,26 @@ export default function Rock101App() {
                     selectedStudent && (
                         <GraduationRequirementsView
                             student={selectedStudent}
+                            workflow={{
+                                graduationInstructorSubmitted:
+                                    selectedStudent.workflow?.graduationInstructorSubmitted ?? false,
+                                graduationDirectorSubmitted:
+                                    selectedStudent.workflow?.graduationDirectorSubmitted ?? false,
+                            }}
                             onToggleDone={handleToggleDone}
                             onToggleSigned={handleToggleSigned}
+                            onInstructorGraduationSubmit={handleInstructorGraduationSubmit}
+                            onDirectorGraduationSubmit={handleDirectorGraduationSubmit}
+                            canInstructorGraduationSubmit={
+                                role === "instructor" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                            canDirectorGraduationSubmit={
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
                             canEdit={
                                 role === "instructor" ||
                                 role === "director" ||
