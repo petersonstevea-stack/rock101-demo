@@ -247,21 +247,6 @@ export default function ClassSetupView({
                         </select>
                     </div>
 
-                    <div>
-                        <label className="mb-2 block text-sm text-zinc-400">Instructor</label>
-                        <select
-                            value={instructorEmail}
-                            onChange={(e) => setInstructorEmail(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
-                        >
-                            <option value="">Select instructor</option>
-                            {instructorUsers.map((user) => (
-                                <option key={user.email} value={user.email}>
-                                    {user.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
 
                     <div>
                         <label className="mb-2 block text-sm text-zinc-400">Day of Week</label>
