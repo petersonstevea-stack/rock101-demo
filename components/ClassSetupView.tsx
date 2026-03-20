@@ -6,7 +6,7 @@ import { getSavedClasses, saveClasses } from "@/lib/classes";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
 import { schools, type SchoolId } from "@/data/schools";
-
+import { supabase } from "@/lib/supabaseClient";
 type Student = {
     id: string;
     name: string;
@@ -42,9 +42,11 @@ export default function ClassSetupView({
     const schoolUsers = useMemo(() => {
         return users.filter((user) => user.schoolId === schoolId);
     }, [users, schoolId]);
+
     const directorUsers = useMemo(() => {
         return schoolUsers.filter((user) => user.role === "director");
     }, [schoolUsers]);
+
     const instructorUsers = useMemo(() => {
         return schoolUsers.filter((user) => user.role === "instructor");
     }, [schoolUsers]);
@@ -55,6 +57,7 @@ export default function ClassSetupView({
 
     function resetForm() {
         setEditingClassId(null);
+        setDirectorEmail("");
         setSchoolId("del-mar");
         setClassName("");
         setDayOfWeek("Monday");
@@ -89,63 +92,63 @@ export default function ClassSetupView({
         });
     }
 
-    function handleCreateOrUpdateClass() {
-        if (!className.trim()) {
-            alert("Please enter a class name.");
-            return;
-        }
-
-        const selectedStudentRecords = students.filter((student) =>
-            selectedStudentIds.includes(student.id)
-        );
-
-        const classData: RockClass = {
-            id: editingClassId ?? crypto.randomUUID(),
-
-            schoolId,
-            name: className.trim(),
-
-            dayOfWeek,
-            time: time.trim(),
-
-            directorEmail: directorEmail.trim().toLowerCase(),
-            instructorEmail: instructorEmail.trim().toLowerCase(),
-
-            studentIds: selectedStudentRecords.map((student) => student.id),
-            studentNames: selectedStudentRecords.map((student) => student.name),
-
-            songs: selectedSongs,
-
-            performanceTitle: performanceTitle.trim(),
-            performanceDate,
-        };
-
-        let updatedClasses: RockClass[];
-
-        if (editingClassId) {
-            updatedClasses = classes.map((rockClass) =>
-                rockClass.id === editingClassId ? classData : rockClass
-            );
-        } else {
-            updatedClasses = [...classes, classData];
-        }
-
-        setClasses(updatedClasses);
-        saveClasses(updatedClasses);
-        resetForm();
+    async function handleCreateOrUpdateClass() {
+    if (!className.trim()) {
+        alert("Please enter a class name.");
+        return;
     }
+
+    const selectedStudentRecords = students.filter((student) =>
+        selectedStudentIds.includes(student.id)
+    );
+
+    const classData = {
+        id: editingClassId ?? crypto.randomUUID(),
+        name: className.trim(),
+        school_id: schoolId,
+        director_email: directorEmail.trim().toLowerCase(),
+        instructor_email: instructorEmail.trim().toLowerCase(),
+        day_of_week: dayOfWeek,
+        time: time.trim(),
+        songs: selectedSongs,
+        student_ids: selectedStudentRecords.map((s) => s.id),
+        student_names: selectedStudentRecords.map((s) => s.name),
+        song_progress: {},
+        performance_title: performanceTitle.trim(),
+        performance_date: performanceDate,
+    };
+
+    const { error } = await supabase
+        .from("rock_classes")
+        .upsert(classData);
+
+    if (error) {
+        console.error("SUPABASE SAVE ERROR:", error);
+        alert("Error saving class");
+        return;
+    }
+
+    // Optional: keep local copy in sync (safe)
+    const updatedClasses = getSavedClasses();
+    saveClasses(updatedClasses);
+
+    alert("Class saved!");
+
+    resetForm();
+}
 
     function handleEditClass(rockClass: RockClass) {
         setEditingClassId(rockClass.id);
+        setDirectorEmail(rockClass.directorEmail ?? "");
         setSchoolId(rockClass.schoolId);
         setClassName(rockClass.name);
         setDayOfWeek(rockClass.dayOfWeek);
         setTime(rockClass.time);
-        setInstructorEmail(rockClass.instructorEmail);
+        setInstructorEmail(rockClass.instructorEmail ?? "");
         setSelectedStudentIds(rockClass.studentIds ?? []);
-        setSelectedSongs(rockClass.songs);
-        setPerformanceTitle(rockClass.performanceTitle);
-        setPerformanceDate(rockClass.performanceDate);
+        setSelectedSongs(rockClass.songs ?? []);
+        setPerformanceTitle(rockClass.performanceTitle ?? "");
+        setPerformanceDate(rockClass.performanceDate ?? "");
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -200,6 +203,7 @@ export default function ClassSetupView({
                             onChange={(e) => {
                                 const nextSchoolId = e.target.value as SchoolId;
                                 setSchoolId(nextSchoolId);
+                                setDirectorEmail("");
                                 setInstructorEmail("");
                                 setSelectedStudentIds([]);
                             }}
@@ -222,6 +226,7 @@ export default function ClassSetupView({
                             placeholder="Tuesday 5pm Rock 101"
                         />
                     </div>
+
                     <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                             Class Director
@@ -241,6 +246,7 @@ export default function ClassSetupView({
                             ))}
                         </select>
                     </div>
+
                     <div>
                         <label className="mb-2 block text-sm text-zinc-400">Instructor</label>
                         <select
@@ -381,7 +387,8 @@ export default function ClassSetupView({
                             return (
                                 <div
                                     key={rockClass.id}
-                                    className="rounded-lg border border-zinc-800 bg-black p-4"
+                                    onClick={() => handleEditClass(rockClass)}
+                                    className="cursor-pointer rounded-lg border border-zinc-800 bg-black p-4 transition hover:border-red-500"
                                 >
                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                         <div>
@@ -406,7 +413,10 @@ export default function ClassSetupView({
                                         <div className="flex gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => handleEditClass(rockClass)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditClass(rockClass);
+                                                }}
                                                 className="rounded-lg bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                                             >
                                                 Edit
@@ -414,7 +424,10 @@ export default function ClassSetupView({
 
                                             <button
                                                 type="button"
-                                                onClick={() => handleDeleteClass(rockClass.id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClass(rockClass.id);
+                                                }}
                                                 className="rounded-lg bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-600"
                                             >
                                                 Delete

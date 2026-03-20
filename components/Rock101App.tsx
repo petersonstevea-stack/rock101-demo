@@ -32,6 +32,7 @@ import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 
 import { supabase } from "@/lib/supabaseClient";
+import { getSavedClasses } from "@/lib/classes";
 import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import { saveClasses } from "@/lib/classes";
@@ -95,6 +96,7 @@ export default function Rock101App() {
     const [tab, setTab] = useState<Tab>("privateLesson");
     const [students, setStudents] = useState<any[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+    const [editingClassId, setEditingClassId] = useState<string | null>(null);
     const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
@@ -214,33 +216,45 @@ export default function Rock101App() {
         async function loadClasses() {
             const { data, error } = await supabase.from("rock_classes").select("*");
 
+            const localClasses = getSavedClasses();
+
             if (error) {
                 console.log("SUPABASE LOAD CLASSES ERROR RAW:", error);
                 console.log("SUPABASE LOAD CLASSES ERROR JSON:", JSON.stringify(error, null, 2));
+                setSavedClasses(localClasses);
                 return;
             }
 
-            if (data) {
-                const formatted = data.map((c: any) => {
-                    console.log("SUPABASE ROCK CLASS ROW", c);
+            const supabaseClasses = (data ?? []).map((c: any) => {
+                console.log("SUPABASE ROCK CLASS ROW", c);
 
-                    return {
-                        id: c.id,
-                        name: c.name,
-                        schoolId: c.school_id,
-                        directorEmail:
-                            c.director_email === "director@delmar.com"
-                                ? "director.delmar@rock101.com"
-                                : c.director_email,
-                        songs: c.songs ?? [],
-                        studentIds: c.student_ids ?? [],
-                        studentNames: c.student_names ?? [],
-                        songProgress: c.song_progress ?? {},
-                    };
-                });
+                return {
+                    id: c.id,
+                    name: c.name,
+                    schoolId: c.school_id,
+                    directorEmail:
+                        c.director_email === "director@delmar.com"
+                            ? "director.delmar@rock101.com"
+                            : c.director_email,
+                    instructorEmail: c.instructor_email ?? "",
+                    dayOfWeek: c.day_of_week ?? "Monday",
+                    time: c.time ?? "",
+                    songs: c.songs ?? [],
+                    studentIds: c.student_ids ?? [],
+                    studentNames: c.student_names ?? [],
+                    songProgress: c.song_progress ?? {},
+                    performanceTitle: c.performance_title ?? "",
+                    performanceDate: c.performance_date ?? "",
+                };
+            });
 
-                setSavedClasses(formatted);
-            }
+            const mergedById = new Map<string, any>();
+
+            [...supabaseClasses, ...localClasses].forEach((rockClass) => {
+                mergedById.set(rockClass.id, rockClass);
+            });
+
+            setSavedClasses(Array.from(mergedById.values()));
         }
 
         loadClasses();
@@ -1455,6 +1469,10 @@ export default function Rock101App() {
                         allStudents={filteredStudentsBySchool}
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
+                        onEditClass={() => {
+                            setSelectedClassId(null);
+                            setTab("classSetup");
+                        }}
                         onUpdateSongProgress={(song, readiness) => {
                             handleUpdateClassSongProgress(song, readiness);
                         }}

@@ -119,7 +119,9 @@ export default function ChecklistSection({
                                         }`}
                                 >
                                     <div className="flex items-center justify-between gap-3">
-                                        <span className="font-medium text-white">{item.label}</span>
+                                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold tracking-[0.02em] text-white">
+                                            {item.label}
+                                        </span>
                                         <span className="ml-4 text-sm text-zinc-300">
                                             {earned ? "🏆" : "○"}
                                         </span>

@@ -23,6 +23,7 @@ type ClassDetailViewProps = {
   users: AppUser[];
   allStudents: Student[];
   onBackToClasses: () => void;
+  onEditClass: () => void;
   onSelectStudent: (studentName: string) => void;
   onAddStudentToClass: (studentId: string) => void;
   onRemoveStudentFromClass: (studentId: string) => void;
@@ -43,6 +44,7 @@ export default function ClassDetailView({
   users,
   allStudents,
   onBackToClasses,
+  onEditClass, // ✅ ADD THIS LINE
   onSelectStudent,
   onAddStudentToClass,
   onRemoveStudentFromClass,
@@ -73,9 +75,8 @@ export default function ClassDetailView({
     <div className="mt-8 space-y-6">
       <PageHero
         title={rockClass.name}
-        subtitle={`${schoolName} • ${rockClass.dayOfWeek} • ${
-          rockClass.time || "Time not set"
-        }`}
+        subtitle={`${schoolName} • ${rockClass.dayOfWeek} • ${rockClass.time || "Time not set"
+          }`}
         imageSrc="/images/rock101-drums.jpg"
       />
 
@@ -86,6 +87,14 @@ export default function ClassDetailView({
           className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
         >
           Back to Classes
+        </button>
+
+        <button
+          type="button"
+          onClick={onEditClass}
+          className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+        >
+          Edit Class
         </button>
       </div>
 

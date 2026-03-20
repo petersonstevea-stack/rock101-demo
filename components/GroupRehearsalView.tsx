@@ -4,209 +4,210 @@ import { getGroupRehearsalSections } from "@/data/rock101Curriculum";
 import ChecklistSection from "@/components/ChecklistSection";
 import PageHero from "@/components/PageHero";
 import {
-  SONG_READINESS_LEVELS,
-  type SongReadinessEntry,
-  type SongReadinessValue,
+    SONG_READINESS_LEVELS,
+    type SongReadinessEntry,
+    type SongReadinessValue,
 } from "@/types/songReadiness";
 
 type RehearsalStudent = {
-  name: string;
-  instrument: string;
-  band: string;
-  curriculum: Record<
-    string,
-    {
-      done: boolean;
-      signed: boolean;
-      date: string | null;
-      fistBumps: number;
-    }
-  >;
-  songReadiness?: Record<string, Record<string, SongReadinessEntry>>;
-  notes: {
-    instructor: string;
-    director: string;
-  };
-  workflow: {
-    instructorSubmitted: boolean;
-    directorSubmitted: boolean;
-    parentSubmitted: boolean;
-  };
+    name: string;
+    instrument: string;
+    band: string;
+    curriculum: Record<
+        string,
+        {
+            done: boolean;
+            signed: boolean;
+            date: string | null;
+            fistBumps: number;
+        }
+    >;
+    songReadiness?: Record<string, Record<string, SongReadinessEntry>>;
+    notes: {
+        instructor: string;
+        director: string;
+    };
+    workflow: {
+        instructorSubmitted: boolean;
+        directorSubmitted: boolean;
+        parentSubmitted: boolean;
+    };
 };
 
 type GroupRehearsalViewProps = {
-  student: RehearsalStudent;
-  classId: string | null;
-  classSongs: string[];
-  onToggleDone: (item: string) => void;
-  onToggleSigned: (item: string) => void;
-  onAddFistBump: (item: string) => void;
-  onUpdateSongReadiness: (
-    classId: string,
-    song: string,
-    readiness: SongReadinessValue
-  ) => void;
-  canEdit: boolean;
-  canSign: boolean;
+    student: RehearsalStudent;
+    classId: string | null;
+    classSongs: string[];
+    onToggleDone: (item: string) => void;
+    onToggleSigned: (item: string) => void;
+    onAddFistBump: (item: string) => void;
+    onUpdateSongReadiness: (
+        classId: string,
+        song: string,
+        readiness: SongReadinessValue
+    ) => void;
+    canEdit: boolean;
+    canSign: boolean;
 };
 
 function splitRehearsalTitle(title: string) {
-  if (title.includes(" ")) {
-    const words = title.split(" ");
-    return {
-      firstPart: words.slice(0, 1).join(" "),
-      secondPart: words.slice(1).join(" "),
-    };
-  }
+    if (title.includes(" ")) {
+        const words = title.split(" ");
+        return {
+            firstPart: words.slice(0, 1).join(" "),
+            secondPart: words.slice(1).join(" "),
+        };
+    }
 
-  return {
-    firstPart: title,
-    secondPart: "",
-  };
+    return {
+        firstPart: title,
+        secondPart: "",
+    };
 }
 
 function getSongReadinessLabel(readiness?: number) {
-  if (!readiness || readiness < 1 || readiness > SONG_READINESS_LEVELS.length) {
-    return SONG_READINESS_LEVELS[0];
-  }
+    if (!readiness || readiness < 1 || readiness > SONG_READINESS_LEVELS.length) {
+        return SONG_READINESS_LEVELS[0];
+    }
 
-  return SONG_READINESS_LEVELS[readiness - 1];
+    return SONG_READINESS_LEVELS[readiness - 1];
 }
 
 export default function GroupRehearsalView({
-  student,
-  classId,
-  classSongs,
-  onToggleDone,
-  onToggleSigned,
-  onAddFistBump,
-  onUpdateSongReadiness,
-  canEdit,
-  canSign,
+    student,
+    classId,
+    classSongs,
+    onToggleDone,
+    onToggleSigned,
+    onAddFistBump,
+    onUpdateSongReadiness,
+    canEdit,
+    canSign,
 }: GroupRehearsalViewProps) {
-  const sections = getGroupRehearsalSections(student.instrument);
-  const section = sections[0] ?? null;
+    const sections = getGroupRehearsalSections(student.instrument);
+    const section = sections[0] ?? null;
 
-  const activeSongReadiness = classId
-    ? (student.songReadiness?.[classId] ?? {})
-    : {};
+    const activeSongReadiness = classId
+        ? (student.songReadiness?.[classId] ?? {})
+        : {};
 
-  const songHeader = splitRehearsalTitle("Song Readiness");
-  const rehearsalHeader = splitRehearsalTitle(
-    section?.title ?? "Rehearsal Readiness"
-  );
+    const songHeader = splitRehearsalTitle("Song Readiness");
+    const rehearsalHeader = splitRehearsalTitle(
+        section?.title ?? "Rehearsal Readiness"
+    );
 
-  return (
-    <div className="mt-8 space-y-6">
-      <PageHero
-        title="Group Rehearsal"
-        subtitle={`Band chemistry, rehearsal habits, and live performance readiness for ${student.name}`}
-        imageSrc="/images/rock101-band.jpg"
-      />
+    return (
+        <div className="mt-8 space-y-6">
+            <PageHero
+                title="Group Rehearsal"
+                subtitle={`Band chemistry, rehearsal habits, and live performance readiness for ${student.name}`}
+                imageSrc="/images/rock101-band.jpg"
+            />
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-          <div className="sor-finish-card rounded-2xl p-5">
-            <div>
-              <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                <span className="sor-display-red">{songHeader.firstPart}</span>
-                {songHeader.secondPart && (
-                  <span className="ml-2 text-white italic opacity-80">
-                    {songHeader.secondPart}
-                  </span>
-                )}
-              </h2>
-              <div className="sor-divider" />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-4 backdrop-blur-sm">
-            {classId && classSongs.length > 0 ? (
-              <div className="space-y-3">
-                {classSongs.map((song) => {
-                  const readiness = activeSongReadiness[song]?.readiness ?? 1;
-
-                  return (
-                    <div
-                      key={song}
-                      className="rounded-xl border border-zinc-800 bg-black/35 p-3 backdrop-blur-sm"
-                    >
-                      <div className="flex flex-col gap-2">
+            <div className="grid gap-6 xl:grid-cols-2">
+                <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
+                    <div className="sor-finish-card rounded-2xl p-5">
                         <div>
-                          <div className="font-semibold text-white">{song}</div>
-                          <div className="text-sm text-zinc-400">
-                            Student readiness: {getSongReadinessLabel(readiness)}
-                          </div>
+                            <h2 className="sor-display text-4xl md:text-5xl leading-none">
+                                <span className="sor-display-red">{songHeader.firstPart}</span>
+                                {songHeader.secondPart && (
+                                    <span className="ml-2 text-white italic opacity-80">
+                                        {songHeader.secondPart}
+                                    </span>
+                                )}
+                            </h2>
+                            <div className="sor-divider" />
                         </div>
-
-                        <div className="w-full">
-                          <input
-                            type="range"
-                            min={1}
-                            max={5}
-                            step={1}
-                            value={readiness}
-                            onChange={(e) =>
-                              onUpdateSongReadiness(
-                                classId,
-                                song,
-                                Number(e.target.value) as SongReadinessValue
-                              )
-                            }
-                            className="w-full accent-red-600"
-                            disabled={!canEdit}
-                          />
-                          <div className="mt-1 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
-                            <span>Just Starting</span>
-                            <span>Show Ready</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 text-sm text-zinc-400">
-                No songs assigned to this class yet.
-              </div>
-            )}
-          </div>
+
+                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-4 backdrop-blur-sm">
+                        {classId && classSongs.length > 0 ? (
+                            <div className="space-y-3">
+                                {classSongs.map((song) => {
+                                    const readiness = activeSongReadiness[song]?.readiness ?? 1;
+
+                                    return (
+                                        <div
+                                            key={song}
+                                            className="rounded-xl border border-zinc-800 bg-black/35 p-3 backdrop-blur-sm"
+                                        >
+                                            <div className="flex flex-col gap-2">
+                                                <div>
+                                                    <div className="font-semibold text-white">{song}</div>
+                                                    <div className="text-sm text-zinc-400">
+                                                        Student readiness: {getSongReadinessLabel(readiness)}
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full">
+                                                    <input
+                                                        type="range"
+                                                        min={1}
+                                                        max={5}
+                                                        step={1}
+                                                        value={readiness}
+                                                        onChange={(e) =>
+                                                            onUpdateSongReadiness(
+                                                                classId,
+                                                                song,
+                                                                Number(e.target.value) as SongReadinessValue
+                                                            )
+                                                        }
+                                                        className="w-full"
+                                                        style={{ accentColor: "var(--sor-red)" }}
+                                                        disabled={!canEdit}
+                                                    />
+                                                    <div className="mt-1 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
+                                                        <span>Just Starting</span>
+                                                        <span>Show Ready</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 text-sm text-zinc-400">
+                                No songs assigned to this class yet.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {section && (
+                    <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
+                        <div className="sor-finish-card rounded-2xl p-5">
+                            <div>
+                                <h2 className="sor-display text-4xl md:text-5xl leading-none">
+                                    <span className="sor-display-red">
+                                        {rehearsalHeader.firstPart}
+                                    </span>
+                                    {rehearsalHeader.secondPart && (
+                                        <span className="ml-2 text-white italic opacity-80">
+                                            {rehearsalHeader.secondPart}
+                                        </span>
+                                    )}
+                                </h2>
+                                <div className="sor-divider" />
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
+                            <ChecklistSection
+                                title={section.title}
+                                items={section.items}
+                                curriculum={student.curriculum}
+                                onToggleDone={onToggleDone}
+                                onToggleSigned={onToggleSigned}
+                                onAddFistBump={onAddFistBump}
+                                canEdit={canEdit}
+                                canSign={canSign}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
-
-        {section && (
-          <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-            <div className="sor-finish-card rounded-2xl p-5">
-              <div>
-                <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                  <span className="sor-display-red">
-                    {rehearsalHeader.firstPart}
-                  </span>
-                  {rehearsalHeader.secondPart && (
-                    <span className="ml-2 text-white italic opacity-80">
-                      {rehearsalHeader.secondPart}
-                    </span>
-                  )}
-                </h2>
-                <div className="sor-divider" />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
-              <ChecklistSection
-                title={section.title}
-                items={section.items}
-                curriculum={student.curriculum}
-                onToggleDone={onToggleDone}
-                onToggleSigned={onToggleSigned}
-                onAddFistBump={onAddFistBump}
-                canEdit={canEdit}
-                canSign={canSign}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
 }
