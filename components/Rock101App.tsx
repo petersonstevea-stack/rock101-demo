@@ -231,11 +231,11 @@ export default function Rock101App() {
                 return {
                     id: c.id,
                     name: c.name,
-                    schoolId: c.school_id,
+                    schoolId: c.school_id ?? c.school ?? "del-mar",
                     directorEmail:
                         c.director_email === "director@delmar.com"
                             ? "director.delmar@rock101.com"
-                            : c.director_email,
+                            : (c.director_email ?? ""),
                     instructorEmail: c.instructor_email ?? "",
                     dayOfWeek: c.day_of_week ?? "Monday",
                     time: c.time ?? "",
