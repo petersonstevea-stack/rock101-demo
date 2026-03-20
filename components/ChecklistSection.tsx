@@ -92,7 +92,7 @@ export default function ChecklistSection({
             )}
 
             <div className="grid gap-2">
-                {items.map((item) => {
+                {items.map((item, index) => {
                     const state = curriculum[item.id];
                     const earned = isItemEarned(item, state);
                     const fistBumps = state?.fistBumps ?? 0;
@@ -103,9 +103,9 @@ export default function ChecklistSection({
 
                     return (
                         <div
-                            key={item.id}
+                            key={`${item.id}-${index}`}
                             className={`rounded-lg border px-4 py-3 transition ${earned
-                                ? "border-red-500 bg-red-950/20"
+                                ? "border-red-500 bg-red-950/20 shadow-[0_0_18px_rgba(190,55,60,0.18)]"
                                 : "border-zinc-800 bg-zinc-900"
                                 }`}
                         >
@@ -121,7 +121,7 @@ export default function ChecklistSection({
                                     <div className="flex items-center justify-between gap-3">
                                         <span className="font-medium text-white">{item.label}</span>
                                         <span className="ml-4 text-sm text-zinc-300">
-                                            {earned ? "✓" : "○"}
+                                            {earned ? "🏆" : "○"}
                                         </span>
                                     </div>
                                 </button>
@@ -133,7 +133,7 @@ export default function ChecklistSection({
                                             onClick={() => onAddFistBump(item.id)}
                                             className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                                         >
-                                            🤜 {fistBumps}/{FIST_BUMPS_TO_EARN}
+                                            🙌 High Fives {fistBumps}/{FIST_BUMPS_TO_EARN}
                                         </button>
                                     )}
 
@@ -160,7 +160,7 @@ export default function ChecklistSection({
 
                             {earnedByFistBumps && (
                                 <div className="mt-2 text-xs text-amber-300">
-                                    Earned through 10 fist bumps
+                                    Earned through 10 High Fives
                                 </div>
                             )}
 

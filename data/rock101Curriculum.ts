@@ -334,8 +334,8 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
         items: [
             withMonth(
                 {
-                    id: "prepared-for-rehearsal",
-                    label: "Comes to rehearsal prepared and having practiced",
+                    id: "no_noodling",
+                    label: "No Noodling!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
@@ -345,8 +345,8 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
             ),
             withMonth(
                 {
-                    id: "has-materials",
-                    label: "Has materials needed for rehearsal",
+                    id: "you_practiced",
+                    label: "You Practiced!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
@@ -356,8 +356,8 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
             ),
             withMonth(
                 {
-                    id: "rehearsal-etiquette",
-                    label: "Knows and follows rehearsal etiquette",
+                    id: "great_listener",
+                    label: "Great Listener!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
@@ -367,8 +367,8 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
             ),
             withMonth(
                 {
-                    id: "positive-attitude",
-                    label: "Maintains a positive attitude in rehearsal",
+                    id: "great_attitude",
+                    label: "Great Attitude!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
@@ -378,8 +378,8 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
             ),
             withMonth(
                 {
-                    id: "well-behaved",
-                    label: "Is well-behaved and focused during rehearsal",
+                    id: "rockstar_focus",
+                    label: "Rockstar Focus!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
@@ -389,58 +389,14 @@ const sharedRehearsalReadiness: CurriculumSection[] = [
             ),
             withMonth(
                 {
-                    id: "listens-to-instructors",
-                    label: "Listens to instructors and follows direction",
+                    id: "legendary_bandmate",
+                    label: "Legendary Bandmate!",
                     area: "rehearsalReadiness",
                     location: "groupRehearsal",
                     allowedSigner: "director",
                     required: true,
                 },
                 1
-            ),
-            withMonth(
-                {
-                    id: "listens-to-bandmates",
-                    label: "Listens to bandmates and plays as part of the group",
-                    area: "rehearsalReadiness",
-                    location: "groupRehearsal",
-                    allowedSigner: "director",
-                    required: true,
-                },
-                2
-            ),
-            withMonth(
-                {
-                    id: "no-noodling",
-                    label: "Avoids noodling or playing out of turn during instruction",
-                    area: "rehearsalReadiness",
-                    location: "groupRehearsal",
-                    allowedSigner: "director",
-                    required: true,
-                },
-                2
-            ),
-            withMonth(
-                {
-                    id: "plays-full-song-with-band",
-                    label: "Can play songs with the band all the way through",
-                    area: "rehearsalReadiness",
-                    location: "groupRehearsal",
-                    allowedSigner: "director",
-                    required: true,
-                },
-                3
-            ),
-            withMonth(
-                {
-                    id: "follows-song-structure-in-band",
-                    label: "Can follow song form and transitions in a group setting",
-                    area: "rehearsalReadiness",
-                    location: "groupRehearsal",
-                    allowedSigner: "director",
-                    required: true,
-                },
-                3
             ),
         ],
     },
