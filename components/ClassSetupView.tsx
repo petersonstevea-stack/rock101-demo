@@ -108,7 +108,6 @@ export default function ClassSetupView({
             student_ids: selectedStudentRecords.map((s) => s.id),
             student_names: selectedStudentRecords.map((s) => s.name),
             song_progress: {},
-            performance_title: performanceTitle.trim(),
         };
 
         const { error } = await supabase
