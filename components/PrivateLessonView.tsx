@@ -136,9 +136,7 @@ export default function PrivateLessonView({
                     const columns = splitIntoTwoColumns(group.requiredLessonItems);
                     const { monthPart, descriptorPart } = splitMonthTitle(group.title);
                     const completedCount = group.requiredLessonItems.filter(
-                        (item) =>
-                            student.curriculum[item.id]?.done ||
-                            student.curriculum[item.id]?.signed
+                        (item) => student.curriculum[item.id]?.signed
                     ).length;
 
                     const percent =
@@ -147,20 +145,19 @@ export default function PrivateLessonView({
                                 (completedCount / group.requiredLessonItems.length) * 100
                             )
                             : 0;
+
                     return (
                         <div
                             key={group.month}
                             className={`space-y-5 ${group.month === currentMonth
-                                ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
-                                : ""
+                                    ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
+                                    : ""
                                 }`}
                         >
                             <div className="sor-finish-card rounded-2xl p-5 backdrop-blur-sm">
                                 <div>
-                                    <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                                        <span className="sor-display-red">
-                                            {monthPart}
-                                        </span>
+                                    <h2 className="sor-display text-4xl leading-none md:text-5xl">
+                                        <span className="sor-display-red">{monthPart}</span>
 
                                         {descriptorPart && (
                                             <span className="ml-2 text-white italic opacity-80">
@@ -170,6 +167,25 @@ export default function PrivateLessonView({
                                     </h2>
 
                                     <div className="sor-divider" />
+
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+                                            Month Progress
+                                        </div>
+                                        <div className="text-sm font-semibold text-red-300">
+                                            {percent}%
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
+                                        <div
+                                            className="h-full transition-all"
+                                            style={{
+                                                width: `${percent}%`,
+                                                backgroundColor: "var(--sor-red)"
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -184,6 +200,7 @@ export default function PrivateLessonView({
                                             onToggleSigned={onToggleSigned}
                                             canEdit={canEdit}
                                             canSign={canSign}
+                                            showHeader={false}
                                         />
                                     </div>
                                 )}
@@ -198,6 +215,7 @@ export default function PrivateLessonView({
                                             onToggleSigned={onToggleSigned}
                                             canEdit={canEdit}
                                             canSign={canSign}
+                                            showHeader={false}
                                         />
                                     </div>
                                 )}
@@ -206,6 +224,6 @@ export default function PrivateLessonView({
                     );
                 })}
             </div>
-        </div>
+        </div >
     );
 }

@@ -648,14 +648,18 @@ export default function Rock101App() {
         console.log("TOGGLE ITEM AREA:", item, itemArea);
         const existing = student.curriculum[item] ?? defaultCurriculumState;
 
+        const nextDone = !existing.done;
+
         const nextCurriculum = {
             ...student.curriculum,
             [item]: {
                 ...existing,
-                done: !existing.done,
+                done: nextDone,
+                signed: nextDone ? existing.signed : false,
+                date: nextDone ? existing.date : null,
             },
         };
-
+        console.log("TOGGLE DONE DEBUG:", item, existing, nextCurriculum[item]);
         const nextWorkflow = {
             ...student.workflow,
 
@@ -782,12 +786,12 @@ export default function Rock101App() {
             ...student.curriculum,
             [item]: {
                 ...existing,
-                done: nextSigned ? true : existing.done,
+                done: nextSigned,
                 signed: nextSigned,
                 date: nextSigned ? new Date().toLocaleDateString() : null,
             },
         };
-
+        console.log("TOGGLE SIGNED DEBUG:", item, existing, nextCurriculum[item]);
         const nextWorkflow = {
             ...student.workflow,
 
@@ -1230,10 +1234,23 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={() => setStudentViewFilter("allStudents")}
-                            className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
-                                ? "bg-red-600"
-                                : "bg-zinc-800 hover:bg-zinc-700"
-                                }`}
+                            className="rounded-lg px-4 py-2 transition text-white"
+                            style={{
+                                backgroundColor:
+                                    studentViewFilter === "allStudents"
+                                        ? "var(--sor-red)"
+                                        : "#27272a"
+                            }}
+                            onMouseEnter={(e) => {
+                                if (studentViewFilter !== "allStudents") {
+                                    e.currentTarget.style.backgroundColor = "#3f3f46";
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (studentViewFilter !== "allStudents") {
+                                    e.currentTarget.style.backgroundColor = "#27272a";
+                                }
+                            }}
                         >
                             All Students
                         </button>
@@ -1365,10 +1382,23 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => setStudentViewFilter("myStudents")}
-                                        className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
-                                            ? "bg-red-600"
-                                            : "bg-zinc-800 hover:bg-zinc-700"
-                                            }`}
+                                        className="rounded-lg px-4 py-2 transition text-white"
+                                        style={{
+                                            backgroundColor:
+                                                studentViewFilter === "myStudents"
+                                                    ? "var(--sor-red)"
+                                                    : "#27272a"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (studentViewFilter !== "myStudents") {
+                                                e.currentTarget.style.backgroundColor = "#3f3f46";
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (studentViewFilter !== "myStudents") {
+                                                e.currentTarget.style.backgroundColor = "#27272a";
+                                            }
+                                        }}
                                     >
                                         My Students
                                     </button>
@@ -1475,10 +1505,23 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("privateLesson")}
-                                className={`rounded-lg px-4 py-2 ${tab === "privateLesson"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                                    }`}
+                                className="rounded-lg px-4 py-2 transition text-white"
+                                style={{
+                                    backgroundColor:
+                                        tab === "privateLesson"
+                                            ? "var(--sor-red)"
+                                            : "#27272a"
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tab !== "privateLesson") {
+                                        e.currentTarget.style.backgroundColor = "#3f3f46";
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (tab !== "privateLesson") {
+                                        e.currentTarget.style.backgroundColor = "#27272a";
+                                    }
+                                }}
                             >
                                 Private Lesson
                             </button>
@@ -1495,10 +1538,23 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("groupRehearsal")}
-                                className={`rounded-lg px-4 py-2 ${tab === "groupRehearsal"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                                    }`}
+                                className="rounded-lg px-4 py-2 transition text-white"
+                                style={{
+                                    backgroundColor:
+                                        tab === "groupRehearsal"
+                                            ? "var(--sor-red)"
+                                            : "#27272a"
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (tab !== "groupRehearsal") {
+                                        e.currentTarget.style.backgroundColor = "#3f3f46";
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (tab !== "groupRehearsal") {
+                                        e.currentTarget.style.backgroundColor = "#27272a";
+                                    }
+                                }}
                             >
                                 Group Rehearsal
                             </button>

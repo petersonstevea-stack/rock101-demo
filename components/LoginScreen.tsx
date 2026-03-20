@@ -83,9 +83,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <h1 className="text-center text-3xl font-bold uppercase md:text-5xl">
                     STAGE READY
                 </h1>
+
                 <div className="w-full max-w-sm rounded-lg bg-zinc-800 px-6 py-8 shadow-lg">
-
-
                     <input
                         type="email"
                         placeholder="Enter your email"
@@ -95,7 +94,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     />
 
                     <button
-                        className="mt-4 w-full rounded-lg bg-red-600 py-4 text-white hover:bg-red-500"
+                        className="mt-4 w-full rounded-lg py-4 text-white transition"
+                        style={{ backgroundColor: "var(--sor-red)" }}
+                        onMouseEnter={(e) =>
+                            (e.currentTarget.style.backgroundColor = "#a82e33")
+                        }
+                        onMouseLeave={(e) =>
+                            (e.currentTarget.style.backgroundColor = "var(--sor-red)")
+                        }
                         onClick={handleLogin}
                     >
                         Continue
@@ -116,9 +122,24 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                             <button
                                 type="button"
                                 onClick={() => handleDemoLogin("steve@rock101.com")}
-                                className="rounded-lg border border-red-500/30 bg-red-950/20 px-4 py-3 text-left transition hover:bg-red-900/30 md:col-span-2"
+                                className="rounded-lg border px-4 py-3 text-left transition md:col-span-2"
+                                style={{
+                                    borderColor: "rgba(190, 55, 60, 0.3)",
+                                    backgroundColor: "rgba(190, 55, 60, 0.12)",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                        "rgba(190, 55, 60, 0.22)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                        "rgba(190, 55, 60, 0.12)";
+                                }}
                             >
-                                <div className="text-sm font-semibold text-red-300">
+                                <div
+                                    className="text-sm font-semibold"
+                                    style={{ color: "var(--sor-red)" }}
+                                >
                                     Owner
                                 </div>
                                 <div className="text-xs text-zinc-400">
@@ -129,9 +150,24 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                             <button
                                 type="button"
                                 onClick={() => handleDemoLogin("gm.delmar@rock101.com")}
-                                className="rounded-lg bg-zinc-800 px-4 py-3 text-left transition hover:bg-zinc-700"
+                                className="rounded-lg border px-4 py-3 text-left transition"
+                                style={{
+                                    borderColor: "rgba(190, 55, 60, 0.2)",
+                                    backgroundColor: "rgba(190, 55, 60, 0.06)",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                        "rgba(190, 55, 60, 0.14)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                        "rgba(190, 55, 60, 0.06)";
+                                }}
                             >
-                                <div className="text-sm font-semibold">
+                                <div
+                                    className="text-sm font-semibold"
+                                    style={{ color: "var(--sor-red)" }}
+                                >
                                     General Manager
                                 </div>
                                 <div className="text-xs text-zinc-400">
@@ -178,9 +214,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
                             <button
                                 type="button"
-                                onClick={() =>
-                                    handleDemoLogin("zoeparent@example.com")
-                                }
+                                onClick={() => handleDemoLogin("zoeparent@example.com")}
                                 className="rounded-lg bg-zinc-800 px-4 py-3 text-left transition hover:bg-zinc-700 md:col-span-2"
                             >
                                 <div className="text-sm font-semibold">Parent</div>

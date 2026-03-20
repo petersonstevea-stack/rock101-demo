@@ -45,6 +45,10 @@ function isItemEarned(
         return true;
     }
 
+    if (item.area === "requiredLessons") {
+        return Boolean(state.signed);
+    }
+
     return Boolean(state.done || state.signed);
 }
 
@@ -77,8 +81,11 @@ export default function ChecklistSection({
 
                     <div className="mb-4 h-3 overflow-hidden rounded-full bg-zinc-800">
                         <div
-                            className="h-full bg-red-600 transition-all"
-                            style={{ width: `${percent}%` }}
+                            className="h-full transition-all"
+                            style={{
+                                width: `${percent}%`,
+                                backgroundColor: "var(--sor-red)"
+                            }}
                         />
                     </div>
                 </>
@@ -98,8 +105,8 @@ export default function ChecklistSection({
                         <div
                             key={item.id}
                             className={`rounded-lg border px-4 py-3 transition ${earned
-                                    ? "border-red-500 bg-red-950/20"
-                                    : "border-zinc-800 bg-zinc-900"
+                                ? "border-red-500 bg-red-950/20"
+                                : "border-zinc-800 bg-zinc-900"
                                 }`}
                         >
                             <div className="flex items-start justify-between gap-3">
@@ -135,8 +142,8 @@ export default function ChecklistSection({
                                             type="button"
                                             onClick={() => onToggleSigned(item.id)}
                                             className={`rounded-lg px-3 py-2 text-sm font-medium transition ${state?.signed
-                                                    ? "bg-emerald-700 text-white hover:bg-emerald-600"
-                                                    : "bg-red-600 text-white hover:bg-red-500"
+                                                ? "bg-emerald-700 text-white hover:bg-emerald-600"
+                                                : "bg-red-600 text-white hover:bg-red-500"
                                                 }`}
                                         >
                                             {state?.signed ? "Signed" : "Sign"}

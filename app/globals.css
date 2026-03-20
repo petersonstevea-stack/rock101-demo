@@ -1,9 +1,13 @@
 @import "tailwindcss";
-
+@theme {
+  --color-red-400: #d46a6e;
+  --color-red-500: #c84a50;
+  --color-red-600: #be373c;
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --sor-red: #d21f2b;
+  --sor-red: #be373c;
   --sor-black: #000000;
   --sor-dark: #18181b;
   --sor-light: #a1a1aa;
