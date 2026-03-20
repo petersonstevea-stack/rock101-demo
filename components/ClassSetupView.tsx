@@ -100,6 +100,7 @@ export default function ClassSetupView({
         const supabaseClassData = {
             id: editingClassId ?? crypto.randomUUID(),
             name: className.trim(),
+            school: schoolId,
             school_id: schoolId,
             director_email: directorEmail.trim().toLowerCase(),
             day_of_week: dayOfWeek,
