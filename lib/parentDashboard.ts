@@ -451,27 +451,32 @@ export function buildParentDashboardData({
     },
     overallProgressPercent,
     stats: {
-      privateLessons: {
-        label: "Private Lessons",
-        value: `${privateLessons.percent}%`,
-        sublabel: `${privateLessons.completed}/${privateLessons.total} complete`,
-      },
-      groupRehearsal: {
-        label: "Group Rehearsal",
-        value: `${groupRehearsal.percent}%`,
-        sublabel: `${groupRehearsal.completed}/${groupRehearsal.total} complete`,
-      },
-      badgesEarned: {
-        label: "Badges Earned",
-        value: `${badgesEarned}`,
-        sublabel: `${badges.length} available`,
-      },
-      fistBumps: {
-        label: "Fist Bumps",
-        value: `${fistBumps}`,
-        sublabel: "Positive rehearsal moments",
-      },
-    },
+  privateLessons: {
+    label: "Private Lessons",
+    value: `${privateLessons.percent}%`,
+    sublabel: `${privateLessons.completed}/${privateLessons.total} complete`,
+  },
+  graduationRequirements: {
+    label: "Graduation Requirements",
+    value: `${graduationRequirements.percent}%`,
+    sublabel: `${graduationRequirements.completed}/${graduationRequirements.total} complete`,
+  },
+  groupRehearsal: {
+    label: "Group Rehearsal",
+    value: `${groupRehearsal.percent}%`,
+    sublabel: `${groupRehearsal.completed}/${groupRehearsal.total} complete`,
+  },
+  badgesEarned: {
+    label: "Badges Earned",
+    value: `${badgesEarned}`,
+    sublabel: `${badges.length} available`,
+  },
+  fistBumps: {
+    label: "Fist Bumps",
+    value: `${fistBumps}`,
+    sublabel: "Positive rehearsal moments",
+  },
+},
     progress: {
       graduationRequirements: {
         label: "Graduation Requirements",

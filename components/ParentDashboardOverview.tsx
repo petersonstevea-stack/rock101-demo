@@ -265,9 +265,9 @@ export default function ParentDashboardOverview({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
-                            <div className="text-sm text-zinc-400">Certificate Status</div>
+                            <div className="text-sm text-zinc-400">Rock 101 Graduation Certificate</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.certificate.earned ? "Earned" : "Not yet earned"}
                             </div>
@@ -276,22 +276,52 @@ export default function ParentDashboardOverview({
                                 {data.certificate.totalRequired} required items complete
                             </div>
                         </div>
-                    </div>
 
-                    <div className="rounded-2xl border border-zinc-800 bg-white/10 p-4">
-                        <div className="text-sm text-zinc-300">Next Performance</div>
-                        <div className="mt-1 text-lg font-semibold text-white">
-                            {data.student.nextPerformanceDate || "Not scheduled"}
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+                            <div className="text-sm text-zinc-400">Rehearsals to Show!</div>
+                            <div className="mt-1 text-lg font-semibold text-white">
+                                Not scheduled
+                            </div>
+                            <div className="mt-2 text-sm text-zinc-400">
+                                Add a performance date to track rehearsals remaining
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+                            <div className="text-sm text-zinc-400">Next Performance</div>
+                            <div className="mt-1 text-lg font-semibold text-white">
+                                {data.student.nextPerformanceDate || "Not scheduled"}
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard {...data.stats.privateLessons} />
-                <StatCard {...data.stats.groupRehearsal} />
-                <StatCard {...data.stats.badgesEarned} />
-                <StatCard {...data.stats.fistBumps} />
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <StatCard
+                    {...data.stats.privateLessons}
+                    label="Method App Lessons Completed"
+                />
+
+                <StatCard
+                    {...data.stats.graduationRequirements}
+                    label="Graduation Requirements"
+                />
+
+                <StatCard
+                    {...data.stats.groupRehearsal}
+                    label="Group Rehearsal"
+                />
+
+                <StatCard
+                    {...data.stats.badgesEarned}
+                    label="Badges Earned"
+                />
+
+                <StatCard
+                    {...data.stats.fistBumps}
+                    label="High Fives!"
+                />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">

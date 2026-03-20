@@ -1578,7 +1578,7 @@ export default function Rock101App() {
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
                             >
-                                Parent
+                                Student Dashboard
                             </button>
 
                             <button
