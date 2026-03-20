@@ -124,7 +124,7 @@ export default function ClassSetupView({
 
     if (error) {
         console.error("SUPABASE SAVE ERROR:", error);
-        alert("Error saving class");
+        alert(`Error saving class: ${error.message}`);
         return;
     }
 
