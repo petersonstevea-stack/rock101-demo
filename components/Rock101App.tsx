@@ -855,26 +855,45 @@ export default function Rock101App() {
         }));
     }
 
-    function handleAddFistBump(item: string) {
-        updateSelectedStudent((student) => {
-            const existing = student.curriculum[item] ?? defaultCurriculumState;
+    async function handleAddFistBump(item: string) {
+        if (!selectedStudent) return;
 
-            return {
-                ...student,
-                curriculum: {
-                    ...student.curriculum,
-                    [item]: {
-                        ...existing,
-                        fistBumps: (existing.fistBumps || 0) + 1,
-                    },
-                },
-                workflow: {
-                    ...student.workflow,
-                    directorSubmitted: false,
-                    parentSubmitted: false,
-                },
-            };
-        });
+        const student = selectedStudent;
+        const existing = student.curriculum[item] ?? defaultCurriculumState;
+
+        const nextCurriculum = {
+            ...student.curriculum,
+            [item]: {
+                ...existing,
+                fistBumps: (existing.fistBumps || 0) + 1,
+            },
+        };
+
+        const nextWorkflow = {
+            ...student.workflow,
+            directorSubmitted: false,
+            parentSubmitted: false,
+        };
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                curriculum: nextCurriculum,
+                workflow: nextWorkflow,
+            })
+            .eq("id", student.id);
+
+        if (error) {
+            console.error("Supabase fist bump save failed:", error);
+            alert("Save failed");
+            return;
+        }
+
+        updateSelectedStudent((student) => ({
+            ...student,
+            curriculum: nextCurriculum,
+            workflow: nextWorkflow,
+        }));
     }
 
     async function handleUpdateStudentSongReadiness(
@@ -1764,85 +1783,39 @@ export default function Rock101App() {
                         />
                     )}
 
-                {canSeeStudentTabs &&
-                    tab === "groupRehearsal" &&
-                    !selectedStudent &&
-                    selectedClass && (
-                        <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-                            <h2 className="mb-4 text-xl font-bold text-white">
-                                Group Song Readiness
-                            </h2>
-
-                            <div className="space-y-4">
-                                {selectedClass.songs?.map((song: string) => {
-                                    const currentReadiness =
-                                        classSongReadiness[selectedClass.id]?.[song] ?? 0;
-
-                                    return (
-                                        <div
-                                            key={song}
-                                            className="flex items-center justify-between rounded-lg bg-zinc-800 p-4"
-                                        >
-                                            <div className="font-medium text-white">{song}</div>
-
-                                            <div className="flex gap-2">
-                                                {[1, 2, 3, 4, 5].map((level) => (
-                                                    <button
-                                                        key={level}
-                                                        type="button"
-                                                        onClick={() =>
-                                                            handleUpdateClassSongProgress(
-                                                                song,
-                                                                level as 1 | 2 | 3 | 4 | 5
-                                                            )
-                                                        }
-                                                        className={`rounded px-3 py-1 ${currentReadiness === level
-                                                            ? "bg-red-600 text-white"
-                                                            : "bg-zinc-700 text-zinc-300"
-                                                            }`}
-                                                    >
-                                                        {level}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                {canSeeStudentTabs &&
-                    tab === "groupRehearsal" &&
-                    selectedStudent && (
-                        <>
-
-
-                            <GroupRehearsalView
-                                student={selectedStudent}
-                                classId={activeClassForSelectedStudent?.id ?? null}
-                                classSongs={activeClassForSelectedStudent?.songs ?? []}
-                                onToggleDone={handleToggleDone}
-                                onToggleSigned={handleToggleSigned}
-                                onAddFistBump={handleAddFistBump}
-                                onUpdateSongReadiness={handleUpdateStudentSongReadiness}
-                                canEdit={
-                                    role === "owner" ||
-                                    role === "generalManager" ||
-                                    (role === "director" &&
-                                        currentUser?.email === activeClassForSelectedStudent?.directorEmail)
-                                }
-                                canSign={
-                                    role === "director" ||
-                                    role === "generalManager" ||
-                                    role === "owner"
-                                }
-                            />
-
-                            {(role === "owner" ||
+                {canSeeStudentTabs && tab === "groupRehearsal" && selectedStudent && (
+                    <>
+                        <GroupRehearsalView
+                            student={selectedStudent}
+                            classId={activeClassForSelectedStudent?.id ?? null}
+                            classSongs={activeClassForSelectedStudent?.songs ?? []}
+                            onToggleDone={handleToggleDone}
+                            onToggleSigned={handleToggleSigned}
+                            onAddFistBump={handleAddFistBump}
+                            onUpdateSongReadiness={handleUpdateStudentSongReadiness}
+                            canEdit={
+                                role === "owner" ||
                                 role === "generalManager" ||
                                 (role === "director" &&
-                                    currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
+                                    currentUser?.email === activeClassForSelectedStudent?.directorEmail)
+                            }
+                            canSign={
+                                role === "director" ||
+                                role === "generalManager" ||
+                                role === "owner"
+                            }
+                        />
+
+                        {(role === "owner" ||
+                            role === "generalManager" ||
+                            role === "director") && (
+                                <>
+                                    <div className="mb-2 text-lg font-semibold text-white">
+                                        Director Weekly Feedback
+                                    </div>
+                                    <div className="mb-2 text-lg font-semibold text-white">
+                                        Director Weekly Feedback
+                                    </div>
                                     <NotesPanel
                                         role="director"
                                         value={selectedStudent.notes?.director ?? ""}
@@ -1852,104 +1825,14 @@ export default function Rock101App() {
                                         canEdit={
                                             role === "owner" ||
                                             role === "generalManager" ||
-                                            (role === "director" &&
-                                                currentUser?.email === activeClassForSelectedStudent?.directorEmail)
+                                            role === "director"
                                         }
                                     />
-                                )}
-                        </>
-                    )}
-
-                {canSeeStudentTabs && tab === "badges" && selectedStudent && (
-                    <BadgeGrid earnedBadges={earnedBadges} />
-                )}
-
-                {canSeeStudentTabs && tab === "parent" && selectedStudent && (
-                    <div className="space-y-8">
-                        {parentDashboardData && (
-                            <ParentDashboardOverview
-                                data={parentDashboardData}
-                                lessonNotes={selectedStudent.notes.instructor}
-                                rehearsalNotes={selectedStudent.notes.director}
-                                lessonLastUpdated={
-                                    (
-                                        selectedStudent.notes as typeof selectedStudent.notes & {
-                                            instructorUpdatedAt?: string | null;
-                                            directorUpdatedAt?: string | null;
-                                        }
-                                    ).instructorUpdatedAt ?? null
-                                }
-                                rehearsalLastUpdated={
-                                    (
-                                        selectedStudent.notes as typeof selectedStudent.notes & {
-                                            instructorUpdatedAt?: string | null;
-                                            directorUpdatedAt?: string | null;
-                                        }
-                                    ).directorUpdatedAt ?? null
-                                }
-                                onNavigate={(nextTab) => handleSetTab(nextTab)}
-                            />
-                        )}
-                    </div>
-                )}
-
-                {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
-                    <CertificateView student={selectedStudent} />
-                )}
-
-                {tab === "classSetup" && canManageRock101 && (
-                    <ClassSetupView
-                        students={filteredStudentsBySchool}
-                        users={filteredUsersBySchool}
-                    />
-                )}
-
-                {tab === "performanceDashboard" && canManageRock101 && (
-                    <PerformanceDashboard
-                        classes={filteredClassesBySchool}
-                        users={filteredUsersBySchool}
-                    />
-                )}
-
-                {tab === "bandsDashboard" && canManageRock101 && (
-                    <BandsDashboard students={filteredStudentsBySchool} />
-                )}
-
-                {tab === "pipeline" && canManageRock101 && (
-                    <PipelineView students={filteredStudentsBySchool} />
-                )}
-
-                {tab === "accounts" && canManageRock101 && (
-                    <DirectorAccountsView currentUserEmail={currentUser.email} />
-                )}
-
-                {tab === "admin" && canManageRock101 && (
-                    <AdminView
-                        users={filteredUsersBySchool}
-                        students={filteredStudentsBySchool}
-                        canManageUsers={isGeneralManager || isOwner}
-                        onUpdateStudentInstructor={handleUpdateStudentInstructor}
-                        onUpdateStudentParentEmail={(studentName, parentEmail) => {
-                            setStudents((prev) =>
-                                prev.map((student) =>
-                                    student.name === studentName
-                                        ? {
-                                            ...student,
-                                            parentEmail,
-                                        }
-                                        : student
-                                )
-                            );
-                        }}
-                        onDeleteStudent={(studentName) => {
-                            setStudents((prev) =>
-                                prev.filter((student) => student.name !== studentName)
-                            );
-                        }}
-                    />
+                                </>
+                            )}
+                    </>
                 )}
             </div>
         </div>
-
     );
 }
