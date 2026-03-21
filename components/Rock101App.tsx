@@ -390,15 +390,11 @@ export default function Rock101App() {
     const selectedStudent = useMemo(() => {
         if (visibleStudents.length === 0) return null;
 
-        if (canManageRock101 && !selectedStudentName) {
-            return null;
-        }
-
         return (
             visibleStudents.find((student) => student.name === selectedStudentName) ??
             visibleStudents[0]
         );
-    }, [visibleStudents, selectedStudentName, canManageRock101]);
+    }, [visibleStudents, selectedStudentName]);
 
     const activeClassForSelectedStudent = useMemo(() => {
         if (selectedClass) return selectedClass;
