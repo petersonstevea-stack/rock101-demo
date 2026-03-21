@@ -1841,6 +1841,139 @@ export default function Rock101App() {
                             )}
                     </>
                 )}
+                {canSeeStudentTabs && tab === "badges" && selectedStudent && (
+                    <BadgeGrid earnedBadges={earnedBadges} />
+                )}
+
+                {canSeeStudentTabs && tab === "parent" && selectedStudent && (
+                    <div className="space-y-8">
+                        {parentDashboardData && (
+                            <ParentDashboardOverview
+                                data={parentDashboardData}
+                                lessonNotes={selectedStudent.notes.instructor}
+                                rehearsalNotes={selectedStudent.notes.director}
+                                lessonLastUpdated={
+                                    (
+                                        selectedStudent.notes as typeof selectedStudent.notes & {
+                                            instructorUpdatedAt?: string | null;
+                                            directorUpdatedAt?: string | null;
+                                        }
+                                    ).instructorUpdatedAt ?? null
+                                }
+                                rehearsalLastUpdated={
+                                    (
+                                        selectedStudent.notes as typeof selectedStudent.notes & {
+                                            instructorUpdatedAt?: string | null;
+                                            directorUpdatedAt?: string | null;
+                                        }
+                                    ).directorUpdatedAt ?? null
+                                }
+                                onNavigate={(nextTab) => handleSetTab(nextTab)}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
+                    <CertificateView student={selectedStudent} />
+                )}
+
+                {tab === "classSetup" && canManageRock101 && (
+                    <ClassSetupView
+                        students={filteredStudentsBySchool}
+                        users={filteredUsersBySchool}
+                    />
+                )}
+
+                {tab === "performanceDashboard" && canManageRock101 && (
+                    <PerformanceDashboard
+                        classes={filteredClassesBySchool}
+                        users={filteredUsersBySchool}
+                    />
+                )}
+
+                {tab === "bandsDashboard" && canManageRock101 && (
+                    <BandsDashboard students={filteredStudentsBySchool} />
+                )}
+
+                {tab === "pipeline" && canManageRock101 && (
+                    <PipelineView students={filteredStudentsBySchool} />
+                )}
+
+                {tab === "accounts" && canManageRock101 && (
+                    <DirectorAccountsView currentUserEmail={currentUser.email} />
+                )}
+
+                {tab === "admin" && canManageRock101 && (
+                    <AdminView
+                        users={filteredUsersBySchool}
+                        students={filteredStudentsBySchool}
+                        canManageUsers={role === "owner" || role === "generalManager"}
+                        onUpdateStudentParentEmail={async (studentName, parentEmail) => {
+                            const targetStudent = students.find(
+                                (student) => student.name === studentName
+                            );
+
+                            if (!targetStudent) {
+                                alert("Student not found");
+                                return;
+                            }
+
+                            const { error } = await supabase
+                                .from("students")
+                                .update({ parent_email: parentEmail })
+                                .eq("id", targetStudent.id);
+
+                            if (error) {
+                                console.error("Supabase parent email update failed:", error);
+                                alert("Parent email update failed");
+                                return;
+                            }
+
+                            setStudents((prev) =>
+                                prev.map((student) =>
+                                    student.name === studentName
+                                        ? { ...student, parentEmail }
+                                        : student
+                                )
+                            );
+                        }}
+                        onDeleteStudent={async (studentName) => {
+                            const targetStudent = students.find(
+                                (student) => student.name === studentName
+                            );
+
+                            if (!targetStudent) {
+                                alert("Student not found");
+                                return;
+                            }
+
+                            const confirmed = window.confirm(
+                                `Are you sure you want to delete ${studentName}?`
+                            );
+
+                            if (!confirmed) return;
+
+                            const { error } = await supabase
+                                .from("students")
+                                .delete()
+                                .eq("id", targetStudent.id);
+
+                            if (error) {
+                                console.error("Supabase delete student failed:", error);
+                                alert("Delete failed");
+                                return;
+                            }
+
+                            setStudents((prev) =>
+                                prev.filter((student) => student.name !== studentName)
+                            );
+                        }}
+                        onUpdateStudentInstructor={(studentName, instructorEmail) => {
+                            handleUpdateStudentInstructor(studentName, instructorEmail);
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
