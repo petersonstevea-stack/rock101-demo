@@ -1502,6 +1502,19 @@ export default function Rock101App() {
                         onSelectStudent={(studentName) => {
                             setSelectedStudentName(studentName);
                         }}
+                        directorFeedback={(selectedClass as any)?.directorFeedback ?? ""}
+                        onDirectorFeedbackChange={(value) => {
+                            setSavedClasses((prev) =>
+                                prev.map((rockClass) =>
+                                    rockClass.id === selectedClass.id
+                                        ? { ...rockClass, directorFeedback: value }
+                                        : rockClass
+                                )
+                            );
+                        }}
+                        onSaveDirectorFeedback={() => {
+                            alert("Director feedback save wiring is next.");
+                        }}
                     />
                 )}
 

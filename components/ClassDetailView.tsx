@@ -28,6 +28,9 @@ type ClassDetailViewProps = {
   onAddStudentToClass: (studentId: string) => void;
   onRemoveStudentFromClass: (studentId: string) => void;
   onUpdateSongProgress: (song: string, readiness: SongReadinessValue) => void;
+  directorFeedback: string;
+  onDirectorFeedbackChange: (value: string) => void;
+  onSaveDirectorFeedback: () => void;
 };
 
 function getSongReadinessLabel(readiness?: number) {
@@ -44,11 +47,14 @@ export default function ClassDetailView({
   users,
   allStudents,
   onBackToClasses,
-  onEditClass, // ✅ ADD THIS LINE
+  onEditClass,
   onSelectStudent,
   onAddStudentToClass,
   onRemoveStudentFromClass,
   onUpdateSongProgress,
+  directorFeedback,
+  onDirectorFeedbackChange,
+  onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
@@ -192,7 +198,28 @@ export default function ClassDetailView({
           <div className="mt-4 text-zinc-200">No songs assigned</div>
         )}
       </div>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+        <h3 className="text-xl font-semibold text-white">Director Weekly Feedback</h3>
 
+        <div className="mt-4">
+          <textarea
+            value={directorFeedback}
+            onChange={(e) => onDirectorFeedbackChange(e.target.value)}
+            placeholder="Add weekly class-level feedback here..."
+            className="min-h-[140px] w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"
+          />
+        </div>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onSaveDirectorFeedback}
+            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+          >
+            Save Director Feedback
+          </button>
+        </div>
+      </div>
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
         <h3 className="text-xl font-semibold text-white">Student Roster</h3>
 
