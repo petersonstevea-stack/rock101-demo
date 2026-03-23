@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
     getPrivateLessonSections,
@@ -46,7 +46,7 @@ import {
     clearSavedTab,
     SessionUser,
 } from "@/lib/session";
-
+import Link from "next/link";
 type Tab =
     | "privateLesson"
     | "graduationRequirements"
@@ -89,6 +89,7 @@ function mapSchoolNameToId(schoolName?: string | null): SchoolId {
 }
 
 export default function Rock101App() {
+    const router = useRouter();
     const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
     const [studentViewFilter, setStudentViewFilter] = useState<
         "myStudents" | "allStudents"
@@ -634,14 +635,39 @@ export default function Rock101App() {
         );
     }
 
-    function handleUpdateStudentInstructor(
+    async function handleUpdateStudentInstructor(
         studentName: string,
         instructorEmail: string
     ) {
+        const targetStudent = students.find(
+            (student) => student.name === studentName
+        );
+
+        if (!targetStudent) {
+            alert("Student not found");
+            return;
+        }
+
+        const { error } = await supabase
+            .from("students")
+            .update({
+                primary_instructor_email: instructorEmail || null,
+            })
+            .eq("id", targetStudent.id);
+
+        if (error) {
+            console.error("Supabase instructor update failed:", error);
+            alert("Instructor update failed");
+            return;
+        }
+
         setStudents((prev) =>
             prev.map((student) =>
                 student.name === studentName
-                    ? { ...student, primaryInstructorEmail: instructorEmail }
+                    ? {
+                        ...student,
+                        primaryInstructorEmail: instructorEmail || "",
+                    }
                     : student
             )
         );
@@ -1971,6 +1997,55 @@ export default function Rock101App() {
                         }}
                         onUpdateStudentInstructor={(studentName, instructorEmail) => {
                             handleUpdateStudentInstructor(studentName, instructorEmail);
+                        }}
+                        onUpdateStudentRecord={async (studentName, updates) => {
+                            const targetStudent = students.find(
+                                (student) => student.name === studentName
+                            );
+
+                            if (!targetStudent) {
+                                alert("Student not found");
+                                return;
+                            }
+
+                            const nextName = `${updates.firstName} ${updates.lastInitial}`.trim();
+
+                            const { error } = await supabase
+                                .from("students")
+                                .update({
+                                    first_name: updates.firstName,
+                                    last_initial: updates.lastInitial || null,
+                                    instrument: updates.instrument,
+                                    school: updates.school,
+                                    program: updates.primaryProgramId,
+                                    primary_program_id: updates.primaryProgramId,
+                                })
+                                .eq("id", targetStudent.id);
+
+                            if (error) {
+                                console.error("Supabase student update failed:", error);
+                                alert("Student update failed");
+                                return;
+                            }
+
+                            setStudents((prev) =>
+                                prev.map((student) =>
+                                    student.name === studentName
+                                        ? {
+                                            ...student,
+                                            name: `${updates.firstName} ${updates.lastInitial}`.trim(),
+                                            firstName: updates.firstName,
+                                            lastInitial: updates.lastInitial,
+                                            instrument: updates.instrument,
+                                            school: updates.school,
+
+                                            // 🔴 CRITICAL FIX
+                                            primaryProgramId: updates.primaryProgramId,
+                                            program: updates.primaryProgramId,
+                                        }
+                                        : student
+                                )
+                            );
                         }}
                     />
                 )}
