@@ -1964,9 +1964,13 @@ export default function Rock101App() {
                                 )
                             );
                         }}
-                        onDeleteStudent={async (studentName) => {
+                        onDeleteStudent={async (studentId) => {
+                            if (!studentId) {
+                                alert("Student ID is missing");
+                                return;
+                            }
                             const targetStudent = students.find(
-                                (student) => student.name === studentName
+                                (student) => student.id === studentId
                             );
 
                             if (!targetStudent) {
@@ -1975,7 +1979,7 @@ export default function Rock101App() {
                             }
 
                             const confirmed = window.confirm(
-                                `Are you sure you want to delete ${studentName}?`
+                                `Are you sure you want to delete ${targetStudent.name}?`
                             );
 
                             if (!confirmed) return;
@@ -1983,7 +1987,7 @@ export default function Rock101App() {
                             const { error } = await supabase
                                 .from("students")
                                 .delete()
-                                .eq("id", targetStudent.id);
+                                .eq("id", studentId);
 
                             if (error) {
                                 console.error("Supabase delete student failed:", error);
@@ -1992,8 +1996,9 @@ export default function Rock101App() {
                             }
 
                             setStudents((prev) =>
-                                prev.filter((student) => student.name !== studentName)
+                                prev.filter((student) => student.id !== studentId)
                             );
+                          
                         }}
                         onUpdateStudentInstructor={(studentName, instructorEmail) => {
                             handleUpdateStudentInstructor(studentName, instructorEmail);
