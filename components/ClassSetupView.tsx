@@ -60,12 +60,23 @@ export default function ClassSetupView({
         setPerformanceDate(classToEdit.performanceDate ?? "");
     }, [mode, classToEdit]);
     const schoolUsers = useMemo(() => {
-        return users.filter((user) => user.schoolId === schoolId);
-    }, [users, schoolId]);
+    console.log("CURRENT schoolId:", schoolId);
+    console.log("ALL USERS BEFORE FILTER:", users);
+
+    return users.filter((user) => {
+        console.log("COMPARING:", user.schoolId, "vs", schoolId);
+        return user.schoolId === schoolId;
+    });
+}, [users, schoolId]);
 
     const directorUsers = useMemo(() => {
-        return schoolUsers.filter((user) => user.role === "director");
-    }, [schoolUsers]);
+    console.log("ALL SCHOOL USERS:", schoolUsers);
+
+    return schoolUsers.filter((user) => {
+        console.log("CHECKING ROLE:", user.role);
+        return user.role?.toLowerCase() === "director";
+    });
+}, [schoolUsers]);
 
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);

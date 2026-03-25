@@ -116,7 +116,7 @@ export default function Rock101App() {
                 console.log("AUTH EMAIL:", data.user.email);
 
                 const { data: dbUser } = await supabase
-                    .from("users")
+                    .from("staff")
                     .select("id, email, name, role, school_id, auth_id")
                     .eq("auth_id", data.user.id)
                     .maybeSingle();
@@ -270,7 +270,7 @@ export default function Rock101App() {
     const isGeneralManager = role === "generalManager";
     const canSeeManagementTabs = canManageRock101;
 
-    const allUsers = useMemo(() => getAllUsers(), []);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
 
     const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
         if (isOwner) return selectedSchoolId;
@@ -436,7 +436,33 @@ export default function Rock101App() {
             setSelectedStudentName(visibleStudents[0].name);
         }
     }, [visibleStudents, selectedStudentName, canManageRock101]);
+    useEffect(() => {
+        async function loadUsers() {
+            const { data, error } = await supabase
+                .from("staff")
+                .select("*");
 
+            if (error) {
+                console.error("LOAD USERS ERROR:", error);
+                return;
+            }
+
+            if (data) {
+                console.log("ALL USERS FROM SUPABASE:", data);
+
+                setAllUsers(
+                    data.map((u) => ({
+                        name: u.name,
+                        email: u.email,
+                        role: u.role,
+                        schoolId: (u.school_slug ?? "").replaceAll("_", "-"),
+                    }))
+                );
+            }
+        }
+
+        loadUsers();
+    }, []);
     useEffect(() => {
         setSelectedClassId(null);
         setSelectedStudentName("");
@@ -1940,7 +1966,7 @@ export default function Rock101App() {
                         mode={editingClass ? "edit" : "create"}
                         classToEdit={editingClass}
                         onClassSaved={() => {
-                            
+
                             setEditingClass(null);
                             setClassesVersion((prev) => prev + 1);
                             setTab("privateLesson");
