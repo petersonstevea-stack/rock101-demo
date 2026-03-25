@@ -107,33 +107,42 @@ export default function Rock101App() {
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
     useEffect(() => {
-        const checkUser = async () => {
-            const { data } = await supabase.auth.getUser();
-            console.log("FULL AUTH OBJECT:", data);
+    const checkUser = async () => {
+        const { data } = await supabase.auth.getUser();
+        console.log("FULL AUTH OBJECT:", data);
 
-            if (data?.user) {
-                console.log("User is logged in:", data.user.email);
+        if (data?.user) {
+            console.log("User is logged in:", data.user.email);
+            console.log("AUTH EMAIL:", data.user.email);
 
-                console.log("AUTH EMAIL:", data.user.email);
+            const { data: dbUser } = await supabase
+                .from("users")
+                .select("id, email, name, role, school_id, auth_id")
+                .eq("auth_id", data.user.id)
+                .maybeSingle();
 
-                const { data: dbUser } = await supabase
-                    .from("users")
-                    .select("id, email, name, role, school_id, auth_id")
-                    .eq("auth_id", data.user.id)
-                    .maybeSingle();
+            console.log("DB USER:", dbUser);
 
-                console.log("DB USER:", dbUser);
+            if (dbUser) {
+                const sessionUser: SessionUser = {
+                    email: dbUser.email,
+                    name: dbUser.name,
+                    role: dbUser.role ?? "owner",
+                    schoolId: dbUser.school_id ?? "del-mar",
+                };
 
-                if (dbUser) {
-                    setCurrentUser(dbUser);
-                }
+                setCurrentUser(sessionUser);
+                saveSession(sessionUser);
             } else {
                 console.log("No user logged in");
             }
-        };
+        } else {
+            console.log("No auth user found");
+        }
+    };
 
-        checkUser();
-    }, []);
+    checkUser();
+}, []);
     useEffect(() => {
         const savedUser = getSavedSession();
         const savedTab = getSavedTab();
@@ -1998,7 +2007,7 @@ export default function Rock101App() {
                             setStudents((prev) =>
                                 prev.filter((student) => student.id !== studentId)
                             );
-                          
+
                         }}
                         onUpdateStudentInstructor={(studentName, instructorEmail) => {
                             handleUpdateStudentInstructor(studentName, instructorEmail);
