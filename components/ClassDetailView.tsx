@@ -23,6 +23,7 @@ type ClassDetailViewProps = {
   users: AppUser[];
   allStudents: Student[];
   onBackToClasses: () => void;
+  onDeleteClass: () => void;
   onEditClass: () => void;
   onSelectStudent: (studentName: string) => void;
   onAddStudentToClass: (studentId: string) => void;
@@ -47,6 +48,7 @@ export default function ClassDetailView({
   users,
   allStudents,
   onBackToClasses,
+  onDeleteClass,
   onEditClass,
   onSelectStudent,
   onAddStudentToClass,
@@ -95,16 +97,27 @@ export default function ClassDetailView({
           Back to Classes
         </button>
 
-        <button
-          type="button"
-          onClick={onEditClass}
-          className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
-        >
-          Edit Class
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onEditClass}
+            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+          >
+            Edit Class
+          </button>
+
+          <button
+            type="button"
+            onClick={onDeleteClass}
+            className="rounded-lg bg-red-800 px-4 py-2 text-white hover:bg-red-700"
+          >
+            Delete Class
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
             <div className="text-sm text-zinc-400">School</div>

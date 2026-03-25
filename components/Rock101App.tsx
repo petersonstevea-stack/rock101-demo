@@ -106,43 +106,44 @@ export default function Rock101App() {
     const [classesVersion, setClassesVersion] = useState(0);
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
+    const [editingClass, setEditingClass] = useState<any | null>(null);
     useEffect(() => {
-    const checkUser = async () => {
-        const { data } = await supabase.auth.getUser();
-        console.log("FULL AUTH OBJECT:", data);
+        const checkUser = async () => {
+            const { data } = await supabase.auth.getUser();
+            console.log("FULL AUTH OBJECT:", data);
 
-        if (data?.user) {
-            console.log("User is logged in:", data.user.email);
-            console.log("AUTH EMAIL:", data.user.email);
+            if (data?.user) {
+                console.log("User is logged in:", data.user.email);
+                console.log("AUTH EMAIL:", data.user.email);
 
-            const { data: dbUser } = await supabase
-                .from("users")
-                .select("id, email, name, role, school_id, auth_id")
-                .eq("auth_id", data.user.id)
-                .maybeSingle();
+                const { data: dbUser } = await supabase
+                    .from("users")
+                    .select("id, email, name, role, school_id, auth_id")
+                    .eq("auth_id", data.user.id)
+                    .maybeSingle();
 
-            console.log("DB USER:", dbUser);
+                console.log("DB USER:", dbUser);
 
-            if (dbUser) {
-                const sessionUser: SessionUser = {
-                    email: dbUser.email,
-                    name: dbUser.name,
-                    role: dbUser.role ?? "owner",
-                    schoolId: dbUser.school_id ?? "del-mar",
-                };
+                if (dbUser) {
+                    const sessionUser: SessionUser = {
+                        email: dbUser.email,
+                        name: dbUser.name,
+                        role: dbUser.role ?? "owner",
+                        schoolId: dbUser.school_id ?? "del-mar",
+                    };
 
-                setCurrentUser(sessionUser);
-                saveSession(sessionUser);
+                    setCurrentUser(sessionUser);
+                    saveSession(sessionUser);
+                } else {
+                    console.log("No user logged in");
+                }
             } else {
-                console.log("No user logged in");
+                console.log("No auth user found");
             }
-        } else {
-            console.log("No auth user found");
-        }
-    };
+        };
 
-    checkUser();
-}, []);
+        checkUser();
+    }, []);
     useEffect(() => {
         const savedUser = getSavedSession();
         const savedTab = getSavedTab();
@@ -224,24 +225,24 @@ export default function Rock101App() {
 
     useEffect(() => {
         async function loadClasses() {
-            const { data, error } = await supabase.from("rock_classes").select("*");
-
-            const localClasses = getSavedClasses();
+            const { data, error } = await supabase
+                .from("rock_classes")
+                .select("*")
+                .eq("school_id", selectedSchoolId ?? currentUser?.schoolId ?? "");
 
             if (error) {
                 console.log("SUPABASE LOAD CLASSES ERROR RAW:", error);
                 console.log("SUPABASE LOAD CLASSES ERROR JSON:", JSON.stringify(error, null, 2));
-                setSavedClasses(localClasses);
+                setSavedClasses([]);
                 return;
             }
 
             const supabaseClasses = (data ?? []).map((c: any) => {
-                console.log("SUPABASE ROCK CLASS ROW", c);
 
                 return {
                     id: c.id,
                     name: c.name,
-                    schoolId: c.school_id ?? c.school ?? "del-mar",
+                    schoolId: c.school_id ?? "",
                     directorEmail:
                         c.director_email === "director@delmar.com"
                             ? "director.delmar@rock101.com"
@@ -257,18 +258,11 @@ export default function Rock101App() {
                     performanceDate: c.performance_date ?? "",
                 };
             });
-
-            const mergedById = new Map<string, any>();
-
-            [...supabaseClasses, ...localClasses].forEach((rockClass) => {
-                mergedById.set(rockClass.id, rockClass);
-            });
-
-            setSavedClasses(Array.from(mergedById.values()));
+            setSavedClasses(supabaseClasses);
         }
 
         loadClasses();
-    }, [classesVersion]);
+    }, [classesVersion, currentUser, selectedSchoolId]);
 
     const role = currentUser?.role ?? null;
     const isOwner = role === "owner";
@@ -315,7 +309,7 @@ export default function Rock101App() {
     }, [savedClasses, effectiveSchoolFilter]);
 
     const selectedClass =
-        filteredClassesBySchool.find((rockClass) => rockClass.id === selectedClassId) ??
+        savedClasses.find((rockClass) => rockClass.id === selectedClassId) ??
         null;
 
     const studentsInSelectedClass = selectedClass
@@ -533,7 +527,11 @@ export default function Rock101App() {
         setTab(nextTab);
         saveSelectedTab(nextTab);
     }
-
+    function handleEditClass(classToEdit: any) {
+        setEditingClass(classToEdit);
+        setTab("classSetup");
+        saveSelectedTab("classSetup");
+    }
     function handleSelectStudent(studentName: string) {
         setSelectedStudentName(studentName);
 
@@ -559,6 +557,27 @@ export default function Rock101App() {
             })
             .eq("id", selectedClass.id);
 
+        setClassesVersion((prev) => prev + 1);
+    }
+    async function handleDeleteClass(classId: string) {
+        const confirmDelete = confirm("Are you sure you want to delete this class?");
+        if (!confirmDelete) return;
+
+        const { error } = await supabase
+            .from("rock_classes")
+            .delete()
+            .eq("id", classId);
+
+        if (error) {
+            console.error("DELETE ERROR:", error);
+            alert("Error deleting class");
+            return;
+        }
+
+        // Clear selected class so UI resets
+        setSelectedClassId(null);
+
+        // Force reload of classes from Supabase
         setClassesVersion((prev) => prev + 1);
     }
 
@@ -1520,8 +1539,10 @@ export default function Rock101App() {
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
                         onEditClass={() => {
-                            setSelectedClassId(null);
-                            setTab("classSetup");
+                            handleEditClass(selectedClass);
+                        }}
+                        onDeleteClass={() => {
+                            handleDeleteClass(selectedClass.id);
                         }}
                         onUpdateSongProgress={(song, readiness) => {
                             handleUpdateClassSongProgress(song, readiness);
@@ -1917,6 +1938,8 @@ export default function Rock101App() {
                     <ClassSetupView
                         students={filteredStudentsBySchool}
                         users={filteredUsersBySchool}
+                        mode={editingClass ? "edit" : "create"}
+                        classToEdit={editingClass}
                     />
                 )}
 

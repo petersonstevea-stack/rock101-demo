@@ -31,8 +31,8 @@ function normalizeSongProgress(
 
       const safeReadiness: SongReadinessValue =
         typeof readiness === "number" &&
-        readiness >= 1 &&
-        readiness <= SONG_READINESS_LEVELS.length
+          readiness >= 1 &&
+          readiness <= SONG_READINESS_LEVELS.length
           ? (readiness as SongReadinessValue)
           : 1;
 
@@ -59,7 +59,7 @@ function normalizeClass(rockClass: any): RockClass {
   return {
     id: rockClass.id ?? crypto.randomUUID(),
 
-    schoolId: rockClass.schoolId ?? "del-mar",
+    schoolId: rockClass.schoolId ?? "",
 
     name: rockClass.name ?? "Unnamed Class",
     dayOfWeek: rockClass.dayOfWeek ?? "Monday",
@@ -104,7 +104,24 @@ export function getSavedClasses(): RockClass[] {
 export function saveClasses(classes: RockClass[]) {
   if (typeof window === "undefined") return;
 
-  const normalized = classes.map(normalizeClass);
+  const normalized = classes.map((rockClass) => {
+    const normalizedClass = normalizeClass(rockClass);
+
+    if (!normalizedClass.schoolId) {
+      throw new Error("Cannot save class without schoolId");
+    }
+
+    return normalizedClass;
+  });
 
   localStorage.setItem(CLASSES_KEY, JSON.stringify(normalized));
+}
+export function getClassesBySchool(schoolId: string): RockClass[] {
+  if (!schoolId) {
+    throw new Error("getClassesBySchool requires schoolId");
+  }
+
+  const allClasses = getSavedClasses();
+
+  return allClasses.filter((c) => c.schoolId === schoolId);
 }

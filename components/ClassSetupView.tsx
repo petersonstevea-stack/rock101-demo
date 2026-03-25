@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RockClass } from "@/types/class";
-import { getSavedClasses, saveClasses } from "@/lib/classes";
+import { getSavedClasses, getClassesBySchool, saveClasses } from "@/lib/classes";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
 import { schools, type SchoolId } from "@/data/schools";
@@ -17,16 +17,21 @@ type Student = {
 type ClassSetupViewProps = {
     students: Student[];
     users?: AppUser[];
+    mode?: "create" | "edit";
+    classToEdit?: RockClass | null;
 };
 
 export default function ClassSetupView({
     students,
     users = [],
+    mode = "create",
+    classToEdit = null,
 }: ClassSetupViewProps) {
+
     const [classes, setClasses] = useState<RockClass[]>([]);
     const [editingClassId, setEditingClassId] = useState<string | null>(null);
     const [directorEmail, setDirectorEmail] = useState("");
-    const [schoolId, setSchoolId] = useState<SchoolId>("del-mar");
+    const [schoolId, setSchoolId] = useState<SchoolId>(schools[0].id);
     const [className, setClassName] = useState("");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
     const [time, setTime] = useState("");
@@ -36,9 +41,22 @@ export default function ClassSetupView({
     const [performanceDate, setPerformanceDate] = useState("");
 
     useEffect(() => {
-        setClasses(getSavedClasses());
-    }, []);
+        if (mode !== "edit" || !classToEdit) {
+            resetForm();
+            return;
+        }
 
+        setEditingClassId(classToEdit.id);
+        setDirectorEmail(classToEdit.directorEmail ?? "");
+        setSchoolId(classToEdit.schoolId);
+        setClassName(classToEdit.name);
+        setDayOfWeek(classToEdit.dayOfWeek);
+        setTime(classToEdit.time ?? "");
+        setSelectedStudentIds(classToEdit.studentIds ?? []);
+        setSelectedSongs(classToEdit.songs ?? []);
+        setPerformanceTitle(classToEdit.performanceTitle ?? "");
+        setPerformanceDate(classToEdit.performanceDate ?? "");
+    }, [mode, classToEdit]);
     const schoolUsers = useMemo(() => {
         return users.filter((user) => user.schoolId === schoolId);
     }, [users, schoolId]);
@@ -50,13 +68,14 @@ export default function ClassSetupView({
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);
     }, [students, schoolId]);
-    const filteredClasses = useMemo(() => {
-        return classes.filter((rockClass) => rockClass.schoolId === schoolId);
-    }, [classes, schoolId]);
+    const filteredClasses = classes.filter(
+    (c) => c.schoolId === schoolId
+);
+    console.log("CLASSES DEBUG:", classes);
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
-        setSchoolId("del-mar");
+        setSchoolId(schools[0].id);
         setClassName("");
         setDayOfWeek("Monday");
         setTime("");
@@ -100,7 +119,9 @@ export default function ClassSetupView({
         );
 
         const supabaseClassData = {
-            id: editingClassId ?? crypto.randomUUID(),
+            id: mode === "edit" && classToEdit
+                ? classToEdit.id
+                : crypto.randomUUID(),
             name: className.trim(),
             school: schoolId,
             school_id: schoolId,
@@ -111,11 +132,13 @@ export default function ClassSetupView({
             student_ids: selectedStudentRecords.map((s) => s.id),
             student_names: selectedStudentRecords.map((s) => s.name),
             song_progress: {},
+            performance_title: performanceTitle.trim(),
+            performance_date: performanceDate || null,
         };
 
         const { error } = await supabase
             .from("rock_classes")
-            .upsert(supabaseClassData);
+            .upsert(supabaseClassData, { onConflict: "id" });
 
         if (error) {
             console.error("SUPABASE SAVE ERROR:", error);
@@ -169,20 +192,32 @@ export default function ClassSetupView({
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function handleDeleteClass(classId: string) {
+    async function handleDeleteClass(classId: string) {
         const confirmed = window.confirm(
             "Are you sure you want to delete this class?"
         );
 
         if (!confirmed) return;
 
+        const { error } = await supabase
+            .from("rock_classes")
+            .delete()
+            .eq("id", classId);
+
+        if (error) {
+            console.error("SUPABASE DELETE CLASS ERROR:", error);
+            alert(`Error deleting class: ${error.message}`);
+            return;
+        }
+
         const updatedClasses = classes.filter((rockClass) => rockClass.id !== classId);
         setClasses(updatedClasses);
-        saveClasses(updatedClasses);
 
         if (editingClassId === classId) {
             resetForm();
         }
+
+        alert("Class deleted.");
     }
 
     return (
@@ -422,16 +457,6 @@ export default function ClassSetupView({
                                                 Edit
                                             </button>
 
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteClass(rockClass.id);
-                                                }}
-                                                className="rounded-lg bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-600"
-                                            >
-                                                Delete
-                                            </button>
                                         </div>
                                     </div>
 
