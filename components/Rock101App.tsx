@@ -97,7 +97,6 @@ export default function Rock101App() {
     const [tab, setTab] = useState<Tab>("privateLesson");
     const [students, setStudents] = useState<any[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-    const [editingClassId, setEditingClassId] = useState<string | null>(null);
     const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
@@ -1940,6 +1939,13 @@ export default function Rock101App() {
                         users={filteredUsersBySchool}
                         mode={editingClass ? "edit" : "create"}
                         classToEdit={editingClass}
+                        onClassSaved={() => {
+                            
+                            setEditingClass(null);
+                            setClassesVersion((prev) => prev + 1);
+                            setTab("privateLesson");
+                            saveSelectedTab("privateLesson");
+                        }}
                     />
                 )}
 

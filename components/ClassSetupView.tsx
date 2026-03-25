@@ -19,6 +19,7 @@ type ClassSetupViewProps = {
     users?: AppUser[];
     mode?: "create" | "edit";
     classToEdit?: RockClass | null;
+    onClassSaved?: () => void;
 };
 
 export default function ClassSetupView({
@@ -26,6 +27,7 @@ export default function ClassSetupView({
     users = [],
     mode = "create",
     classToEdit = null,
+    onClassSaved,
 }: ClassSetupViewProps) {
 
     const [classes, setClasses] = useState<RockClass[]>([]);
@@ -68,9 +70,12 @@ export default function ClassSetupView({
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);
     }, [students, schoolId]);
-    const filteredClasses = classes.filter(
-    (c) => c.schoolId === schoolId
-);
+    const filteredClasses = classes
+        .filter((c) => c.schoolId === schoolId)
+        .filter(
+            (rockClass, index, arr) =>
+                arr.findIndex((c) => c.id === rockClass.id) === index
+        );
     console.log("CLASSES DEBUG:", classes);
     function resetForm() {
         setEditingClassId(null);
@@ -143,6 +148,13 @@ export default function ClassSetupView({
         if (error) {
             console.error("SUPABASE SAVE ERROR:", error);
             alert(`Error saving class: ${error.message}`);
+            return;
+        }
+
+        resetForm();
+
+        if (onClassSaved) {
+            onClassSaved();
             return;
         }
 
