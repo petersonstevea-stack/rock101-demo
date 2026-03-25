@@ -50,7 +50,9 @@ export default function ClassSetupView({
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);
     }, [students, schoolId]);
-
+    const filteredClasses = useMemo(() => {
+        return classes.filter((rockClass) => rockClass.schoolId === schoolId);
+    }, [classes, schoolId]);
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
@@ -369,11 +371,11 @@ export default function ClassSetupView({
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
                 <h3 className="text-xl font-semibold">Saved Classes</h3>
 
-                {classes.length === 0 ? (
+                {filteredClasses.length === 0 ? (
                     <p className="mt-4 text-zinc-400">No classes created yet.</p>
                 ) : (
                     <div className="mt-4 space-y-4">
-                        {classes.map((rockClass) => {
+                        {filteredClasses.map((rockClass) => {
                             const instructorName =
                                 users.find((user) => user.email === rockClass.instructorEmail)
                                     ?.name ?? rockClass.instructorEmail;
