@@ -16,7 +16,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     const [error, setError] = useState("");
     const [pendingUser, setPendingUser] = useState<SessionUser | null>(null);
     const [schoolChoices, setSchoolChoices] = useState<string[]>([]);
+    const [isResetMode, setIsResetMode] = useState(false);
+
     async function handleForgotPassword() {
+        setIsResetMode(true);
+
         if (!email.trim()) {
             setError("Enter your email above first");
             return;
@@ -35,6 +39,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         setError("Password reset email sent");
     }
+
     async function handleLogin() {
         if (!email || !password) {
             setError("Please enter email and password");
@@ -177,8 +182,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             (e.currentTarget.style.backgroundColor = "#a82e33")
                                         }
                                         onMouseLeave={(e) =>
-                                        (e.currentTarget.style.backgroundColor =
-                                            "var(--sor-red)")
+                                            (e.currentTarget.style.backgroundColor =
+                                                "var(--sor-red)")
                                         }
                                         onClick={() => {
                                             const resolvedUser: SessionUser = {
@@ -204,13 +209,17 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="mt-6 w-full rounded-lg bg-white p-4 text-black"
                             />
-                            <input
-                                type="password"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="mt-4 w-full rounded-lg bg-white p-4 text-black"
-                            />
+
+                            {!isResetMode && (
+                                <input
+                                    type="password"
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="mt-4 w-full rounded-lg bg-white p-4 text-black"
+                                />
+                            )}
+
                             <button
                                 className="mt-4 w-full rounded-lg py-4 text-white transition"
                                 style={{ backgroundColor: "var(--sor-red)" }}
@@ -220,18 +229,32 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 onMouseLeave={(e) =>
                                     (e.currentTarget.style.backgroundColor = "var(--sor-red)")
                                 }
-                                onClick={handleLogin}
+                                onClick={isResetMode ? handleForgotPassword : handleLogin}
                             >
-                                Continue
+                                {isResetMode ? "Send Reset Email" : "Continue"}
                             </button>
+
                             <p className="mt-3 text-center text-sm text-white/60">
-                                <button
-                                    type="button"
-                                    onClick={handleForgotPassword}
-                                    className="underline hover:text-white"
-                                >
-                                    Forgot password?
-                                </button>
+                                {isResetMode ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsResetMode(false);
+                                            setError("");
+                                        }}
+                                        className="underline hover:text-white"
+                                    >
+                                        Back to login
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsResetMode(true)}
+                                        className="underline hover:text-white"
+                                    >
+                                        Forgot password?
+                                    </button>
+                                )}
                             </p>
                         </>
                     )}
