@@ -47,6 +47,7 @@ type BuildParentDashboardArgs = {
         label: string;
     }[];
     badges?: Badge[];
+    classFeedback?: string | null;
 };
 
 function clampPercent(value: number) {
@@ -373,6 +374,7 @@ export function buildParentDashboardData({
     groupRehearsalItems,
     songProgress = [],
     badges = [],
+    classFeedback = null,
 }: BuildParentDashboardArgs): ParentDashboardData {
     const graduationRequirementItems = privateLessonItems.filter(
         (item) => normalizeArea(item.area) === "graduation"
@@ -439,7 +441,19 @@ export function buildParentDashboardData({
         groupRehearsalItems,
         curriculum
     );
+const today = new Date();
 
+let rehearsalsToShow: number | null = null;
+
+if (student.nextPerformanceDate) {
+    const showDate = new Date(student.nextPerformanceDate);
+    const diffMs = showDate.getTime() - today.getTime();
+
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    // assume 1 rehearsal per week
+    rehearsalsToShow = Math.max(0, Math.ceil(diffDays / 7));
+}
     return {
     student: {
       id: student.id,
@@ -450,6 +464,7 @@ export function buildParentDashboardData({
       nextPerformanceDate: student.nextPerformanceDate ?? null,
     },
     overallProgressPercent,
+    rehearsalsToShow,
     stats: {
   privateLessons: {
     label: "Private Lessons",
@@ -478,41 +493,41 @@ export function buildParentDashboardData({
   },
 },
     progress: {
-      graduationRequirements: {
-        label: "Graduation Requirements",
-        completed: graduationRequirements.completed,
-        total: graduationRequirements.total,
-        percent: graduationRequirements.percent,
-        targetTab: "privateLesson",
-      },
-      methodAppLessons: {
-        label: "Rock 101 Method App Lessons",
-        completed: methodAppLessons.completed,
-        total: methodAppLessons.total,
-        percent: methodAppLessons.percent,
-        targetTab: "privateLesson",
-      },
-      rehearsalReadiness: {
-        label: "Rehearsal Readiness",
-        completed: rehearsalReadiness.completed,
-        total: rehearsalReadiness.total,
-        percent: rehearsalReadiness.percent,
-        targetTab: "groupRehearsal",
-      },
-      certificate: {
-        label: "Rock 101 Certificate",
-        completed: certificate.completedRequired,
-        total: certificate.totalRequired,
-        percent: certificate.percent,
-        targetTab: "certificate",
-      },
-      songs: songProgress.map((item) => ({
-        song: item.song,
-        readiness: item.readiness,
-        label: item.label,
-        targetTab: "groupRehearsal" as const,
-      })),
-    },
+  graduationRequirements: {
+    label: "Graduation Requirements",
+    completed: graduationRequirements.completed,
+    total: graduationRequirements.total,
+    percent: graduationRequirements.percent,
+    targetTab: "privateLesson",
+  },
+  methodAppLessons: {
+    label: "Rock 101 Method App Lessons",
+    completed: methodAppLessons.completed,
+    total: methodAppLessons.total,
+    percent: methodAppLessons.percent,
+    targetTab: "privateLesson",
+  },
+  rehearsalReadiness: {
+    label: "Rehearsal Readiness",
+    completed: rehearsalReadiness.completed,
+    total: rehearsalReadiness.total,
+    percent: rehearsalReadiness.percent,
+    targetTab: "groupRehearsal",
+  },
+  certificate: {
+    label: "Rock 101 Certificate",
+    completed: certificate.completedRequired,
+    total: certificate.totalRequired,
+    percent: certificate.percent,
+    targetTab: "certificate",
+  },
+},
+songs: songProgress.map((item) => ({
+  song: item.song,
+  readiness: item.readiness,
+  label: item.label,
+  targetTab: "groupRehearsal",
+})),
     rehearsalReady,
     certificate,
     badgeSummary: {
@@ -520,7 +535,7 @@ export function buildParentDashboardData({
       available: badges.length,
       nextBadgeLabel: nextBadge?.label,
     },
-    recentActivity,
+        recentActivity,
     whatsNext,
     notesMeta: {
       lessonLastUpdated,
@@ -538,5 +553,6 @@ export function buildParentDashboardData({
         whatsNext,
       }),
     },
+    classFeedback,
   };
 }

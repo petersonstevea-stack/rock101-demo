@@ -241,10 +241,24 @@ export default function ParentDashboardOverview({
     rehearsalLastUpdated,
     onNavigate,
 }: Props) {
+    const rehearsals = data.rehearsalsToShow;
+
+    let urgencyClass = "border-zinc-700 bg-zinc-950/80";
+
+    if (rehearsals !== null) {
+        if (rehearsals <= 3) {
+            urgencyClass =
+                "border-red-500/40 bg-red-950/40 shadow-[0_0_30px_rgba(255,0,0,0.15)]";
+        } else if (rehearsals <= 7) {
+            urgencyClass = "border-orange-400/40 bg-orange-950/30";
+        } else {
+            urgencyClass = "border-zinc-700 bg-zinc-950/80";
+        }
+    }
     return (
         <div className="mt-8 space-y-6">
             <section className="sor-finish-card overflow-hidden rounded-3xl p-6 shadow-lg">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr] xl:items-end">
                     <div>
                         <div className="text-sm uppercase tracking-[0.2em] text-zinc-400">
                             Parent Dashboard
@@ -265,32 +279,40 @@ export default function ParentDashboardOverview({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="grid flex-1 gap-4 md:grid-cols-3">
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
                             <div className="text-sm text-zinc-400">Rock 101 Graduation Certificate</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.certificate.earned ? "Earned" : "Not yet earned"}
                             </div>
                             <div className="mt-2 text-sm text-zinc-400">
-                                {data.certificate.completedRequired}/
-                                {data.certificate.totalRequired} required items complete
+                                {data.certificate.completedRequired}/{data.certificate.totalRequired} required items complete
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
-                            <div className="text-sm text-zinc-400">Rehearsals to Show!</div>
+                        <div className={`rounded-2xl border p-4 transition-all duration-300 ${urgencyClass}`}>
+                            <div className="text-sm text-zinc-400">Countdown to the Stage</div>
                             <div className="mt-1 text-lg font-semibold text-white">
-                                Not scheduled
+                                {data.rehearsalsToShow !== null
+                                    ? `${data.rehearsalsToShow} rehearsal${data.rehearsalsToShow === 1 ? "" : "s"}`
+                                    : "Not scheduled"}
                             </div>
                             <div className="mt-2 text-sm text-zinc-400">
-                                Add a performance date to track rehearsals remaining
+                                {data.rehearsalsToShow !== null
+                                    ? `${data.rehearsalsToShow} rehearsal${data.rehearsalsToShow === 1 ? "" : "s"} until showtime`
+                                    : "Add a performance date to track rehearsals remaining"}
                             </div>
                         </div>
 
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
                             <div className="text-sm text-zinc-400">Next Performance</div>
                             <div className="mt-1 text-lg font-semibold text-white">
-                                {data.student.nextPerformanceDate || "Not scheduled"}
+                                {data.student.nextPerformanceDate ?? "Not scheduled"}
+                            </div>
+                            <div className="mt-2 text-sm text-zinc-400">
+                                {data.student.nextPerformanceDate
+                                    ? "Scheduled show date"
+                                    : "Add a performance date to track the next show"}
                             </div>
                         </div>
                     </div>
@@ -347,13 +369,13 @@ export default function ParentDashboardOverview({
                                 onNavigate?.(data.progress.graduationRequirements.targetTab)
                             }
                         />
-                        {data.progress.songs.length > 0 && (
+                        {data.songs.length > 0 && (
                             <div className="space-y-3 pt-2">
                                 <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
                                     Song Progress
                                 </div>
 
-                                {data.progress.songs.map((item) => (
+                                {data.songs.map((item) => (
                                     <button
                                         key={item.song}
                                         type="button"
@@ -411,17 +433,23 @@ export default function ParentDashboardOverview({
                 <SectionCard title="Notes & Summary">
                     <div className="space-y-4">
                         <NotesPanelCard
-                            title="Private Lesson Notes"
+                            title={`Lesson Notes for ${data.student.name}`}
                             value={lessonNotes}
                             emptyText="No private lesson notes have been added yet."
                             lastUpdated={lessonLastUpdated}
                         />
 
                         <NotesPanelCard
-                            title="Group Rehearsal Notes"
+                            title={`Rehearsal Notes for ${data.student.name}`}
                             value={rehearsalNotes}
                             emptyText="No group rehearsal notes have been added yet."
                             lastUpdated={rehearsalLastUpdated}
+                        />
+                        <NotesPanelCard
+                            title={`Rock 101 Class: ${data.student.className}`}
+                            value={data.classFeedback ?? ""}
+                            emptyText="No class update has been added yet."
+                            lastUpdated={null}
                         />
 
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">

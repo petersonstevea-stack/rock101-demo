@@ -5,6 +5,7 @@ import { SessionUser, saveSession } from "@/lib/session";
 import { supabase } from "@/lib/supabaseClient";
 import BrandedBackground from "@/components/BrandedBackground";
 import { schools } from "@/data/schools";
+
 type LoginScreenProps = {
     onLogin: (user: SessionUser) => void;
 };
@@ -15,12 +16,36 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     const [error, setError] = useState("");
     const [pendingUser, setPendingUser] = useState<SessionUser | null>(null);
     const [schoolChoices, setSchoolChoices] = useState<string[]>([]);
+    async function handleForgotPassword() {
+        if (!email.trim()) {
+            setError("Enter your email above first");
+            return;
+        }
 
-    async function handleLogin() {
         setError("");
 
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+            redirectTo: "https://rock101-demo.vercel.app/set-password",
+        });
+
+        if (error) {
+            setError(error.message);
+            return;
+        }
+
+        setError("Password reset email sent");
+    }
+    async function handleLogin() {
+        if (!email || !password) {
+            setError("Please enter email and password");
+            return;
+        }
+
+        setError("");
+        const normalizedEmail = email.trim().toLowerCase();
+
         const { data, error } = await supabase.auth.signInWithPassword({
-            email,
+            email: normalizedEmail,
             password,
         });
 
@@ -37,7 +62,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         const { data: staffRow, error: staffError } = await supabase
             .from("staff")
             .select("id")
-            .ilike("email", email.trim().toLowerCase())
+            .ilike("email", normalizedEmail)
             .maybeSingle();
 
         if (staffError) {
@@ -64,22 +89,35 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             );
         }
 
-        const { data: dbUser } = await supabase
+        const { data: dbUser, error: dbUserError } = await supabase
             .from("users")
             .select("email, name, role, school_id")
             .eq("auth_id", data.user.id)
             .maybeSingle();
 
-        if (!dbUser) {
-            setError("User not found in database");
+        if (dbUserError) {
+            setError("Failed to load user record");
             return;
         }
 
+        const fallbackName =
+            data.user.user_metadata?.name?.toString().trim() || normalizedEmail;
+        const fallbackRole =
+            data.user.user_metadata?.role?.toString().trim() || "instructor";
+        const fallbackSchool =
+            data.user.user_metadata?.school_slug?.toString().trim() || "del-mar";
+
+        const resolvedEmail = dbUser?.email ?? normalizedEmail;
+        const resolvedName = dbUser?.name ?? fallbackName;
+        const resolvedRole = dbUser?.role ?? fallbackRole;
+        const resolvedSchoolId =
+            resolvedSchoolChoices[0] ?? dbUser?.school_id ?? fallbackSchool;
+
         if (resolvedSchoolChoices.length > 1) {
             setPendingUser({
-                email: dbUser.email,
-                name: dbUser.name,
-                role: dbUser.role ?? "owner",
+                email: resolvedEmail,
+                name: resolvedName,
+                role: resolvedRole,
                 schoolId: resolvedSchoolChoices[0],
             });
             setSchoolChoices(resolvedSchoolChoices);
@@ -87,15 +125,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         }
 
         const sessionUser: SessionUser = {
-            email: dbUser.email,
-            name: dbUser.name,
-            role: dbUser.role ?? "owner",
-            schoolId:
-                resolvedSchoolChoices[0] ??
-                dbUser.school_id ??
-                "del-mar",
+            email: resolvedEmail,
+            name: resolvedName,
+            role: resolvedRole,
+            schoolId: resolvedSchoolId,
         };
 
+        saveSession(sessionUser);
         onLogin(sessionUser);
     }
 
@@ -150,7 +186,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                                 schoolId,
                                             };
 
-                                            saveSession(resolvedUser); // 👈 ADD THIS LINE
+                                            saveSession(resolvedUser);
                                             onLogin(resolvedUser);
                                         }}
                                     >
@@ -188,6 +224,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                             >
                                 Continue
                             </button>
+                            <p className="mt-3 text-center text-sm text-white/60">
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="underline hover:text-white"
+                                >
+                                    Forgot password?
+                                </button>
+                            </p>
                         </>
                     )}
 

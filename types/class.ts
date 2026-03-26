@@ -20,4 +20,6 @@ export type RockClass = {
 
   performanceTitle: string;
   performanceDate: string;
+
+  directorFeedback?: string;
 };

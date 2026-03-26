@@ -123,16 +123,7 @@ export default function StaffEnrollmentPage() {
                 { onConflict: "email" }
             );
 
-        if (userError) {
-            setStatusType("error");
-            setStatusMessage(`Staff saved, but users sync failed: ${userError.message}`);
-            setIsSaving(false);
-            return;
-        }
-        setStatusType("success");
-        setStatusMessage(`Staff member saved: ${data.name}`);
-
-        await fetch(
+        const inviteResponse = await fetch(
             "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
             {
                 method: "POST",
@@ -142,9 +133,32 @@ export default function StaffEnrollmentPage() {
                 body: JSON.stringify({
                     email: data.email,
                     name: data.name,
+                    role: data.role,
+                    school_slug: data.school_slug,
                 }),
             }
         );
+
+        const inviteResult = await inviteResponse.json();
+
+        if (!inviteResponse.ok) {
+            setStatusType("error");
+            setStatusMessage(
+                `Staff saved, but invite failed: ${inviteResult.error ?? "Unknown invite error"}`
+            );
+            setIsSaving(false);
+            return;
+        }
+
+        if (userError) {
+            setStatusType("success"); // ✅ still success
+            setStatusMessage(
+                `Staff member saved and invite sent: ${data.name} (users sync pending)`
+            );
+        } else {
+            setStatusType("success");
+            setStatusMessage(`Staff member saved and invite sent: ${data.name}`);
+        }
 
         setValues(initialValues);
         await loadStaff();
@@ -229,7 +243,7 @@ export default function StaffEnrollmentPage() {
         setStatusMessage(`Staff member updated: ${data.name}`);
 
         // 🔥 CALL INVITE EDGE FUNCTION
-        await fetch(
+        const inviteResponse = await fetch(
             "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
             {
                 method: "POST",
@@ -239,9 +253,23 @@ export default function StaffEnrollmentPage() {
                 body: JSON.stringify({
                     email: data.email,
                     name: data.name,
+                    role: data.role,
+                    school_slug: data.school_slug,
                 }),
             }
         );
+
+        const inviteResult = await inviteResponse.json();
+
+        if (!inviteResponse.ok) {
+            setStatusType("error");
+            setStatusMessage(
+                `Staff saved, but invite failed: ${inviteResult.error ?? "Unknown invite error"
+                }`
+            );
+            setIsUpdating(false);
+            return;
+        }
         setIsUpdating(false);
         cancelEditingStaff();
     }
@@ -279,7 +307,39 @@ export default function StaffEnrollmentPage() {
         );
         setIsTogglingStaffId(null);
     }
+    async function handleResendInvite(staff: StaffRow) {
+        setStatusType("idle");
+        setStatusMessage("");
 
+        const inviteResponse = await fetch(
+            "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: staff.email,
+                    name: staff.name,
+                    role: staff.role,
+                    school_slug: staff.school_slug,
+                }),
+            }
+        );
+
+        const inviteResult = await inviteResponse.json();
+
+        if (!inviteResponse.ok) {
+            setStatusType("error");
+            setStatusMessage(
+                `Invite failed for ${staff.name}: ${inviteResult.error ?? "Unknown invite error"}`
+            );
+            return;
+        }
+
+        setStatusType("success");
+        setStatusMessage(`Invite sent to ${staff.name}`);
+    }
     return (
         <EnrollmentPageShell
             title="Staff Management"
@@ -489,7 +549,13 @@ export default function StaffEnrollmentPage() {
                                     >
                                         Edit Staff
                                     </button>
-
+                                    <button
+                                        type="button"
+                                        onClick={() => handleResendInvite(staff)}
+                                        className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
+                                    >
+                                        Send Invite
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => handleToggleStaffActive(staff)}

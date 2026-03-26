@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession();
+  }, []);
 
   async function handleSetPassword() {
     if (!password || password !== confirm) {
+      setIsSuccess(false);
       setStatus("Passwords do not match");
       return;
     }
@@ -19,24 +25,26 @@ export default function SetPasswordPage() {
     });
 
     if (error) {
+      setIsSuccess(false);
       setStatus(error.message);
       return;
     }
 
-    setStatus("Password set successfully! You can now log in.");
+    setIsSuccess(true);
+    setStatus("Password set successfully!");
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="w-full max-w-md rounded-xl bg-zinc-900 p-8">
-        <h1 className="text-2xl font-bold mb-6">Set Your Password</h1>
+        <h1 className="mb-6 text-2xl font-bold uppercase">Set Your Password</h1>
 
         <input
           type="password"
           placeholder="New password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 rounded-lg bg-zinc-800 px-4 py-2"
+          className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-2"
         />
 
         <input
@@ -44,7 +52,7 @@ export default function SetPasswordPage() {
           placeholder="Confirm password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full mb-4 rounded-lg bg-zinc-800 px-4 py-2"
+          className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-2"
         />
 
         <button
@@ -55,7 +63,24 @@ export default function SetPasswordPage() {
         </button>
 
         {status && (
-          <div className="mt-4 text-sm text-zinc-300">{status}</div>
+          <div
+            className={`mt-4 text-sm ${
+              isSuccess ? "text-green-400" : "text-zinc-300"
+            }`}
+          >
+            {status}
+          </div>
+        )}
+
+        {isSuccess && (
+          <button
+            onClick={() => {
+              window.location.href = "/";
+            }}
+            className="mt-4 w-full rounded-lg bg-zinc-800 py-2 text-white hover:bg-zinc-700"
+          >
+            Go to Login
+          </button>
         )}
       </div>
     </div>

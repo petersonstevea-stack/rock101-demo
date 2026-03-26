@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
 import { schools } from "@/data/schools";
@@ -58,6 +59,7 @@ export default function ClassDetailView({
   onDirectorFeedbackChange,
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
+  const [feedbackSaved, setFeedbackSaved] = useState(false);
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
     rockClass.instructorEmail ||
@@ -223,14 +225,27 @@ export default function ClassDetailView({
           />
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-3">
           <button
             type="button"
-            onClick={onSaveDirectorFeedback}
+            onClick={() => {
+              onSaveDirectorFeedback();
+              setFeedbackSaved(true);
+
+              setTimeout(() => {
+                setFeedbackSaved(false);
+              }, 2000);
+            }}
             className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
           >
             Save Director Feedback
           </button>
+
+          {feedbackSaved && (
+            <span className="text-sm text-green-400">
+              Saved ✓
+            </span>
+          )}
         </div>
       </div>
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">

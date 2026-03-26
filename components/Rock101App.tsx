@@ -490,7 +490,7 @@ export default function Rock101App() {
 
         const dashboardClass =
             activeClassForSelectedStudent ?? selectedClass ?? null;
-
+        const classFeedback = dashboardClass?.directorFeedback ?? null;
         const dashboardSongProgress = dashboardClass
             ? dashboardClass.songs.map((song: string) => {
                 const readiness =
@@ -520,12 +520,13 @@ export default function Rock101App() {
                 instrument: selectedStudent.instrument,
                 className: dashboardClass?.name ?? selectedStudent.className ?? "Rock 101",
                 schoolName: matchedSchool?.name ?? "School of Rock",
-                nextPerformanceDate: null,
+                nextPerformanceDate: dashboardClass?.performanceDate ?? null,
             },
             curriculum: selectedStudent.curriculum,
             privateLessonItems,
             groupRehearsalItems,
             songProgress: dashboardSongProgress,
+            classFeedback,
             badges: [],
         });
     }, [selectedStudent, selectedClass, activeClassForSelectedStudent]);
@@ -1590,7 +1591,7 @@ export default function Rock101App() {
                             );
                         }}
                         onSaveDirectorFeedback={() => {
-                            alert("Director feedback save wiring is next.");
+                            alert("Director feedback saved.");
                         }}
                     />
                 )}
