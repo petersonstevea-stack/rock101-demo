@@ -186,7 +186,7 @@ export default function Rock101App() {
                     schoolId,
                     className: s.class_name ?? "Rock 101",
                     band: s.class_name ?? "Rock 101",
-                    primaryInstructorEmail: s.primary_instructor_email ?? "jennifer@gmail.com",
+                    primaryInstructorEmail: s.primary_instructor_email ?? "",
                     curriculum: s.curriculum ?? {},
                     notes: {
                         instructor: s.notes?.instructor ?? "",
@@ -347,11 +347,22 @@ export default function Rock101App() {
                 return filteredStudentsBySchool;
             }
 
-            return filteredStudentsBySchool.filter(
-                (student) =>
+            return filteredStudentsBySchool.filter((student) => {
+                const assigned =
                     student.primaryInstructorEmail?.toLowerCase() ===
-                    currentUser.email.toLowerCase()
-            );
+                    currentUser.email.toLowerCase();
+
+                console.log("INSTRUCTOR STUDENT CHECK", {
+                    studentName: student.name,
+                    primaryInstructorEmail: student.primaryInstructorEmail,
+                    currentUserEmail: currentUser.email,
+                    assigned,
+                    schoolId: student.schoolId,
+                    effectiveSchoolFilter,
+                });
+
+                return assigned;
+            });
         }
 
         if (canManageRock101) {
