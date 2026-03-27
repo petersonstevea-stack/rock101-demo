@@ -130,7 +130,7 @@ export default function Rock101App() {
                         role: dbUser.role ?? "owner",
                         schoolId: dbUser.school_slug ?? "del-mar",
                     };
-
+                    console.log("SESSION USER CREATED:", sessionUser);
                     setCurrentUser(sessionUser);
                     saveSession(sessionUser);
                 } else {
@@ -562,7 +562,7 @@ export default function Rock101App() {
                     : !selectedStudent.workflow.graduationDirectorSubmitted
                         ? "Waiting on director graduation signoff."
                         : undefined;
-    function handleSetTab(nextTab: Tab) {}
+    function handleSetTab(nextTab: Tab) { }
     function handleEditClass(classToEdit: any) {
         setEditingClass(classToEdit);
         setTab("classSetup");
@@ -616,7 +616,7 @@ export default function Rock101App() {
         // Force reload of classes from Supabase
         setClassesVersion((prev) => prev + 1);
     }
-    
+
     function handleRemoveStudentFromClass(studentId: string) {
         if (!selectedClass) return;
 
@@ -1197,7 +1197,9 @@ export default function Rock101App() {
         setSelectedStudentName("");
     }
 
-    function handleLogout() {
+    async function handleLogout() {
+        await supabase.auth.signOut();
+
         clearSavedSession();
         clearSavedTab();
         setCurrentUser(null);
