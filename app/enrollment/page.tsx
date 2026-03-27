@@ -88,6 +88,7 @@ export default function EnrollmentPage() {
     const [submittedValues, setSubmittedValues] =
         useState<StaffFormValues | null>(null);
     const [statusMessage, setStatusMessage] = useState("");
+    const [studentSearch, setStudentSearch] = useState("");
     const [statusType, setStatusType] = useState<"success" | "error" | "idle">(
         "idle"
     );
@@ -484,6 +485,13 @@ export default function EnrollmentPage() {
 
             <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
                 <h2 className="text-lg font-semibold text-white">Student Directory</h2>
+                <input
+                    type="text"
+                    placeholder="Search students..."
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="mt-3 w-full rounded-lg bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
+                />
                 <p className="mt-1 text-sm text-white/60">
                     This shows all students currently enrolled in the system.
                 </p>
@@ -492,39 +500,51 @@ export default function EnrollmentPage() {
                     {studentList.length === 0 ? (
                         <p className="text-sm text-white/50">No students added yet.</p>
                     ) : (
-                        studentList.map((student) => (
-                            <div
-                                key={student.id}
-                                className="rounded-xl border border-white/10 bg-black/40 p-4"
-                            >
-                                <p className="text-sm font-semibold text-white">
-                                    {student.first_name} {student.last_initial ?? ""}
-                                </p>
-                                <p className="text-xs text-white/60">
-                                    {student.instrument
-                                        ? getInstrumentLabel(student.instrument as any)
-                                        : "No instrument"}
-                                    {" • "}
-                                    {student.school
-                                        ? getSchoolLabel(student.school as any)
-                                        : "No school"}
-                                </p>
-                                <p className="mt-1 text-xs text-white/50">
-                                    {student.primary_program_id
-                                        ? getProgramLabel(student.primary_program_id as any)
-                                        : student.program ?? "No program"}
-                                    {" • "}
-                                    {student.class_name ?? "No class assigned"}
-                                </p>
-                                <p className="mt-1 text-xs text-white/40">
-                                    Parent:{" "}
-                                    {student.parent_email
-                                        ? parentList.find((parent) => parent.email === student.parent_email)?.name ??
-                                        "No parent linked"
-                                        : "No parent linked"}
-                                </p>
-                            </div>
-                        ))
+                        studentList
+                            .filter((student) => {
+                                const search = studentSearch.toLowerCase();
+
+                                const name =
+                                    `${student.first_name} ${student.last_initial ?? ""}`.toLowerCase();
+
+                                return (
+                                    student.active && // 👈 hide inactive
+                                    name.includes(search)
+                                );
+                            })
+                            .map((student) => (
+                                <div
+                                    key={student.id}
+                                    className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                >
+                                    <p className="text-sm font-semibold text-white">
+                                        {student.first_name} {student.last_initial ?? ""}
+                                    </p>
+                                    <p className="text-xs text-white/60">
+                                        {student.instrument
+                                            ? getInstrumentLabel(student.instrument as any)
+                                            : "No instrument"}
+                                        {" • "}
+                                        {student.school
+                                            ? getSchoolLabel(student.school as any)
+                                            : "No school"}
+                                    </p>
+                                    <p className="mt-1 text-xs text-white/50">
+                                        {student.primary_program_id
+                                            ? getProgramLabel(student.primary_program_id as any)
+                                            : student.program ?? "No program"}
+                                        {" • "}
+                                        {student.class_name ?? "No class assigned"}
+                                    </p>
+                                    <p className="mt-1 text-xs text-white/40">
+                                        Parent:{" "}
+                                        {student.parent_email
+                                            ? parentList.find((parent) => parent.email === student.parent_email)?.name ??
+                                            "No parent linked"
+                                            : "No parent linked"}
+                                    </p>
+                                </div>
+                            ))
                     )}
                 </div>
             </section>

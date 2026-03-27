@@ -176,6 +176,7 @@ export default function Rock101App() {
 
                 return {
                     id: s.id,
+                    active: s.active ?? true,
                     name: `${s.first_name} ${s.last_initial ?? ""}`.trim(),
                     firstName: s.first_name,
                     lastInitial: s.last_initial ?? "",
@@ -2065,6 +2066,23 @@ export default function Rock101App() {
                             );
 
                         }}
+                        onToggleStudentActive={(studentId, nextActive) => {
+                            console.log("TOGGLE:", studentId, nextActive);
+
+                            setStudents((prev) => {
+                                const updated = prev.map((student) => {
+                                    if (String(student.id) === String(studentId)) {
+                                        console.log("MATCH FOUND:", student);
+                                        return { ...student, active: nextActive };
+                                    }
+                                    return student;
+                                });
+
+                                console.log("UPDATED STUDENTS:", updated);
+                                return updated;
+                            });
+                        }}
+
                         onUpdateStudentInstructor={(studentName, instructorEmail) => {
                             handleUpdateStudentInstructor(studentName, instructorEmail);
                         }}

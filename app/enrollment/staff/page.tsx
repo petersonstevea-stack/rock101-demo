@@ -45,7 +45,7 @@ export default function StaffEnrollmentPage() {
         "idle"
     );
     const [isSaving, setIsSaving] = useState(false);
-
+    const [showInactiveStaff, setShowInactiveStaff] = useState(false);
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [editingValues, setEditingValues] =
         useState<StaffFormValues>(initialValues);
@@ -273,7 +273,31 @@ export default function StaffEnrollmentPage() {
         setIsUpdating(false);
         cancelEditingStaff();
     }
+    async function handleDeleteStaff(staff: StaffRow) {
+        const confirmed = confirm(
+            `Are you sure you want to permanently delete ${staff.name}?`
+        );
 
+        if (!confirmed) return;
+
+        const { error } = await supabase
+            .from("staff")
+            .delete()
+            .eq("id", staff.id);
+
+        if (error) {
+            setStatusType("error");
+            setStatusMessage(error.message);
+            return;
+        }
+
+        setStaffList((prev) =>
+            prev.filter((current) => current.id !== staff.id)
+        );
+
+        setStatusType("success");
+        setStatusMessage(`${staff.name} deleted`);
+    }
     async function handleToggleStaffActive(staff: StaffRow) {
         setIsTogglingStaffId(staff.id);
         setStatusType("idle");
@@ -517,60 +541,77 @@ export default function StaffEnrollmentPage() {
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                 <h2 className="text-lg font-semibold text-white">Staff Directory</h2>
-
+                <button
+                    type="button"
+                    onClick={() => setShowInactiveStaff((prev) => !prev)}
+                    className="mt-2 rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                >
+                    {showInactiveStaff ? "Hide Inactive Staff" : "Show Inactive Staff"}
+                </button>
                 <div className="mt-4 space-y-3">
                     {staffList.length === 0 ? (
                         <p className="text-sm text-white/50">No staff yet.</p>
                     ) : (
-                        staffList.map((staff) => (
-                            <div
-                                key={staff.id}
-                                className="rounded-xl border border-white/10 bg-black/40 p-4"
-                            >
-                                <p className="font-semibold text-white">{staff.name}</p>
-                                <p className="text-xs text-white/60">{staff.email}</p>
-                                <p className="text-xs text-white/40">
-                                    {staff.role} • {getSchoolLabel(staff.school_slug as never)}
-                                </p>
+                        staffList
+                            .filter((staff) => showInactiveStaff || staff.active)
+                            .map((staff) => (
+                                <div
+                                    key={staff.id}
+                                    className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                >
+                                    <p className="font-semibold text-white">{staff.name}</p>
+                                    <p className="text-xs text-white/60">{staff.email}</p>
+                                    <p className="text-xs text-white/40">
+                                        {staff.role} • {getSchoolLabel(staff.school_slug as never)}
+                                    </p>
 
-                                <p className="mt-2 text-xs">
-                                    {staff.active ? (
-                                        <span className="text-green-400">Active</span>
-                                    ) : (
-                                        <span className="text-red-400">Inactive</span>
-                                    )}
-                                </p>
+                                    <p className="mt-2 text-xs">
+                                        {staff.active ? (
+                                            <span className="text-green-400">Active</span>
+                                        ) : (
+                                            <span className="text-red-400">Inactive</span>
+                                        )}
+                                    </p>
 
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => startEditingStaff(staff)}
-                                        className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
-                                    >
-                                        Edit Staff
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleResendInvite(staff)}
-                                        className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
-                                    >
-                                        Send Invite
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleToggleStaffActive(staff)}
-                                        disabled={isTogglingStaffId === staff.id}
-                                        className="rounded-md bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
-                                    >
-                                        {isTogglingStaffId === staff.id
-                                            ? "Updating..."
-                                            : staff.active
-                                                ? "Deactivate"
-                                                : "Activate"}
-                                    </button>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingStaff(staff)}
+                                            className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                        >
+                                            Edit Staff
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleResendInvite(staff)}
+                                            className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
+                                        >
+                                            Send Invite
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleStaffActive(staff)}
+                                            disabled={isTogglingStaffId === staff.id}
+                                            className="rounded-md bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
+                                        >
+                                            {isTogglingStaffId === staff.id
+                                                ? "Updating..."
+                                                : staff.active
+                                                    ? "Deactivate"
+                                                    : "Activate"}
+                                        </button>
+                                        {!staff.active && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteStaff(staff)}
+                                                className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
+                                            >
+                                                Delete Staff
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))
                     )}
                 </div>
             </div>

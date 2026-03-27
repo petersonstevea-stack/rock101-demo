@@ -12,6 +12,7 @@ import {
 type Student = {
     id?: string;
     name: string;
+    active: boolean;
     firstName?: string;
     parentEmail?: string;
     instrument?: string;
@@ -65,6 +66,7 @@ type AdminViewProps = {
         studentName: string,
         updates: StudentEditValues
     ) => void;
+    onToggleStudentActive?: (studentId: string, nextActive: boolean) => void;
 };
 
 export default function AdminView({
@@ -75,6 +77,7 @@ export default function AdminView({
     onDeleteStudent,
     onUpdateStudentInstructor,
     onUpdateStudentRecord,
+    onToggleStudentActive,
 }: AdminViewProps) {
     const [instructors, setInstructors] = useState<StaffInstructor[]>([]);
     const [parents, setParents] = useState<ParentRecord[]>([]);
@@ -94,11 +97,13 @@ export default function AdminView({
             primaryProgramId: "",
         });
     const [statusMessage, setStatusMessage] = useState("");
+    const [studentSearch, setStudentSearch] = useState("");
     const [statusType, setStatusType] = useState<"success" | "error" | "idle">(
         "idle"
     );
     const [isSavingParent, setIsSavingParent] = useState(false);
-
+    const [showInactiveStudents, setShowInactiveStudents] = useState(false);
+    const inactiveStudentCount = students.filter((student) => !student.active).length;
     useEffect(() => {
         async function loadAdminData() {
             const { data: staffData, error: staffError } = await supabase
@@ -175,7 +180,25 @@ export default function AdminView({
             primaryProgramId: "",
         });
     }
+    async function handleToggleStudentActive(student: Student) {
+        const { error } = await supabase
+            .from("students")
+            .update({ active: !student.active })
+            .eq("id", student.id);
 
+        if (error) {
+            setStatusType("error");
+            setStatusMessage(error.message);
+            return;
+        }
+        if (onToggleStudentActive && student.id) {
+            onToggleStudentActive(student.id, !student.active);
+        }
+        setStatusType(student.active ? "error" : "success");
+        setStatusMessage(
+            `${student.name} is now ${student.active ? "inactive" : "active"}.`
+        );
+    }
     async function saveParentName(student: Student) {
         if (!student.parentEmail) {
             setStatusType("error");
@@ -311,7 +334,25 @@ export default function AdminView({
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
                 <h3 className="text-xl font-semibold">Student Manager</h3>
+                <input
+                    type="text"
+                    placeholder="Search students..."
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
+                />
 
+                <div className="mt-2 text-sm">
+                    <button
+                        type="button"
+                        onClick={() => setShowInactiveStudents((prev) => !prev)}
+                        className="text-white/60 underline hover:text-white"
+                    >
+                        {showInactiveStudents
+                            ? "Hide inactive students"
+                            : `View inactive students (${inactiveStudentCount})`}
+                    </button>
+                </div>
                 <div className="mt-6 overflow-x-auto">
                     <table className="min-w-full text-left text-sm">
                         <thead>
@@ -325,196 +366,223 @@ export default function AdminView({
                         </thead>
 
                         <tbody>
-                            {students.map((student) => {
-                                const parent = getParentRecord(student.parentEmail);
+                            {students
+                                .filter((student) => {
+                                    if (!showInactiveStudents && !student.active) return false;
 
-                                return (
-                                    <tr key={student.name} className="border-b border-zinc-800">
-                                        <td className="px-3 py-3">
-                                            {editingStudentRecordName === student.name ? (
-                                                <div className="grid gap-3">
-                                                    <input
-                                                        type="text"
-                                                        value={editingStudentValues.firstName}
-                                                        onChange={(e) =>
-                                                            setEditingStudentValues((current) => ({
-                                                                ...current,
-                                                                firstName: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="First name"
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    />
+                                    const search = studentSearch.toLowerCase();
 
-                                                    <input
-                                                        type="text"
-                                                        value={editingStudentValues.lastInitial}
-                                                        onChange={(e) =>
-                                                            setEditingStudentValues((current) => ({
-                                                                ...current,
-                                                                lastInitial: e.target.value,
-                                                            }))
-                                                        }
-                                                        placeholder="Last initial"
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    />
+                                    const name =
+                                        `${student.firstName} ${student.lastInitial ?? ""}`.toLowerCase();
 
-                                                    <select
-                                                        value={editingStudentValues.instrument}
-                                                        onChange={(e) =>
-                                                            setEditingStudentValues((current) => ({
-                                                                ...current,
-                                                                instrument: e.target.value,
-                                                            }))
-                                                        }
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    >
-                                                        <option value="">Select instrument</option>
-                                                        {INSTRUMENT_OPTIONS.map((option) => (
-                                                            <option key={option.value} value={option.value}>
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                    return name.includes(search);
+                                })
+                                .map((student) => {
+                                    const parent = getParentRecord(student.parentEmail);
 
-                                                    <select
-                                                        value={editingStudentValues.school}
-                                                        onChange={(e) =>
-                                                            setEditingStudentValues((current) => ({
-                                                                ...current,
-                                                                school: e.target.value,
-                                                            }))
-                                                        }
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    >
-                                                        <option value="">Select school</option>
-                                                        {SCHOOL_OPTIONS.map((option) => (
-                                                            <option key={option.value} value={option.value}>
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                    return (
+                                        <tr key={student.name} className="border-b border-zinc-800">
+                                            <td className="px-3 py-3">
+                                                {editingStudentRecordName === student.name ? (
+                                                    <div className="grid gap-3">
+                                                        <input
+                                                            type="text"
+                                                            value={editingStudentValues.firstName}
+                                                            onChange={(e) =>
+                                                                setEditingStudentValues((current) => ({
+                                                                    ...current,
+                                                                    firstName: e.target.value,
+                                                                }))
+                                                            }
+                                                            placeholder="First name"
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                        />
 
-                                                    <select
-                                                        value={editingStudentValues.primaryProgramId}
-                                                        onChange={(e) =>
-                                                            setEditingStudentValues((current) => ({
-                                                                ...current,
-                                                                primaryProgramId: e.target.value,
-                                                            }))
-                                                        }
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    >
-                                                        <option value="">Select program</option>
-                                                        {PROGRAM_OPTIONS.map((option) => (
-                                                            <option key={option.value} value={option.value}>
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                        <input
+                                                            type="text"
+                                                            value={editingStudentValues.lastInitial}
+                                                            onChange={(e) =>
+                                                                setEditingStudentValues((current) => ({
+                                                                    ...current,
+                                                                    lastInitial: e.target.value,
+                                                                }))
+                                                            }
+                                                            placeholder="Last initial"
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                        />
 
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => saveStudentRecord(student.name)}
-                                                            className="rounded-md bg-green-600 px-3 py-2 text-white"
+                                                        <select
+                                                            value={editingStudentValues.instrument}
+                                                            onChange={(e) =>
+                                                                setEditingStudentValues((current) => ({
+                                                                    ...current,
+                                                                    instrument: e.target.value,
+                                                                }))
+                                                            }
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         >
-                                                            Save Student
+                                                            <option value="">Select instrument</option>
+                                                            {INSTRUMENT_OPTIONS.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+
+                                                        <select
+                                                            value={editingStudentValues.school}
+                                                            onChange={(e) =>
+                                                                setEditingStudentValues((current) => ({
+                                                                    ...current,
+                                                                    school: e.target.value,
+                                                                }))
+                                                            }
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                        >
+                                                            <option value="">Select school</option>
+                                                            {SCHOOL_OPTIONS.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+
+                                                        <select
+                                                            value={editingStudentValues.primaryProgramId}
+                                                            onChange={(e) =>
+                                                                setEditingStudentValues((current) => ({
+                                                                    ...current,
+                                                                    primaryProgramId: e.target.value,
+                                                                }))
+                                                            }
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                        >
+                                                            <option value="">Select program</option>
+                                                            {PROGRAM_OPTIONS.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => saveStudentRecord(student.name)}
+                                                                className="rounded-md bg-green-600 px-3 py-2 text-white"
+                                                            >
+                                                                Save Student
+                                                            </button>
+
+                                                            <button
+                                                                onClick={cancelEditingStudent}
+                                                                className="rounded-md bg-zinc-700 px-3 py-2 text-white"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    student.name
+                                                )}
+                                            </td>
+
+                                            <td className="px-3 py-3">
+                                                {editingStudentName === student.name ? (
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={editingParentName}
+                                                            onChange={(e) => setEditingParentName(e.target.value)}
+                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                        />
+
+                                                        <button
+                                                            onClick={() => saveParentName(student)}
+                                                            disabled={isSavingParent}
+                                                            className="rounded-md bg-green-600 px-3 py-2 text-white disabled:opacity-50"
+                                                        >
+                                                            {isSavingParent ? "Saving..." : "Save"}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleToggleStudentActive(student)}
+                                                            className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
+                                                        >
+                                                            {student.active ? "Deactivate" : "Activate"}
                                                         </button>
 
                                                         <button
-                                                            onClick={cancelEditingStudent}
+                                                            onClick={cancelEditingParent}
                                                             className="rounded-md bg-zinc-700 px-3 py-2 text-white"
                                                         >
                                                             Cancel
                                                         </button>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                student.name
-                                            )}
-                                        </td>
-
-                                        <td className="px-3 py-3">
-                                            {editingStudentName === student.name ? (
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={editingParentName}
-                                                        onChange={(e) => setEditingParentName(e.target.value)}
-                                                        className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                                    />
-
-                                                    <button
-                                                        onClick={() => saveParentName(student)}
-                                                        disabled={isSavingParent}
-                                                        className="rounded-md bg-green-600 px-3 py-2 text-white disabled:opacity-50"
-                                                    >
-                                                        {isSavingParent ? "Saving..." : "Save"}
-                                                    </button>
-
-                                                    <button
-                                                        onClick={cancelEditingParent}
-                                                        className="rounded-md bg-zinc-700 px-3 py-2 text-white"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                parent?.name || "—"
-                                            )}
-                                        </td>
-
-                                        <td className="px-3 py-3">{student.parentEmail || "—"}</td>
-
-                                        <td className="px-3 py-3">
-                                            <select
-                                                value={student.primaryInstructorEmail || ""}
-                                                onChange={(e) =>
-                                                    onUpdateStudentInstructor?.(student.name, e.target.value)
-                                                }
-                                                className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
-                                            >
-                                                <option value="">Unassigned</option>
-
-                                                {instructors.map((inst) => (
-                                                    <option key={inst.email} value={inst.email}>
-                                                        {inst.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-
-                                        <td className="px-3 py-3">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() =>
-                                                        startEditingParent(student.name, student.parentEmail)
-                                                    }
-                                                    className="rounded-md bg-zinc-800 px-3 py-2 text-white"
-                                                >
-                                                    Edit Parent
-                                                </button>
-
-                                                <button
-                                                    onClick={() => startEditingStudent(student)}
-                                                    className="rounded-md bg-zinc-800 px-3 py-2 text-white"
-                                                >
-                                                    Edit Student
-                                                </button>
-
-                                                {canManageUsers && (
-                                                    <button
-                                                        onClick={() => handleDeleteStudent(student.id, student.name)}
-                                                        className="rounded-md bg-zinc-950 px-3 py-2 text-white"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                ) : (
+                                                    parent?.name || "—"
                                                 )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                            </td>
+
+                                            <td className="px-3 py-3">{student.parentEmail || "—"}</td>
+
+                                            <td className="px-3 py-3">
+                                                <select
+                                                    value={student.primaryInstructorEmail || ""}
+                                                    onChange={(e) =>
+                                                        onUpdateStudentInstructor?.(student.name, e.target.value)
+                                                    }
+                                                    className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                >
+                                                    <option value="">Unassigned</option>
+
+                                                    {instructors.map((inst) => (
+                                                        <option key={inst.email} value={inst.email}>
+                                                            {inst.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </td>
+
+                                            <td className="px-3 py-3">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            startEditingParent(student.name, student.parentEmail)
+                                                        }
+                                                        className="rounded-md bg-zinc-800 px-3 py-2 text-white"
+                                                    >
+                                                        Edit Parent
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => startEditingStudent(student)}
+                                                        className="rounded-md bg-zinc-800 px-3 py-2 text-white"
+                                                    >
+                                                        Edit Student
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleToggleStudentActive(student)}
+                                                        className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
+                                                    >
+                                                        {student.active ? "Deactivate" : "Activate"}
+                                                    </button>
+
+                                                    {!student.active && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteStudent(student.id, student.name)}
+                                                            className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                         </tbody>
                     </table>
                 </div>
