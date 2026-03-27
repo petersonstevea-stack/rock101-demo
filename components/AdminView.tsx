@@ -528,9 +528,10 @@ export default function AdminView({
                                             <td className="px-3 py-3">
                                                 <select
                                                     value={student.primaryInstructorEmail || ""}
-                                                    onChange={(e) =>
-                                                        onUpdateStudentInstructor?.(student.name, e.target.value)
-                                                    }
+                                                    onChange={(e) => {
+                                                        console.log("INSTRUCTOR DROPDOWN CHANGED", student.name, e.target.value);
+                                                        onUpdateStudentInstructor?.(student.name, e.target.value);
+                                                    }}
                                                     className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
                                                 >
                                                     <option value="">Unassigned</option>
