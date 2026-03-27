@@ -562,10 +562,7 @@ export default function Rock101App() {
                     : !selectedStudent.workflow.graduationDirectorSubmitted
                         ? "Waiting on director graduation signoff."
                         : undefined;
-    function handleSetTab(nextTab: Tab) {
-        setTab(nextTab);
-        saveSelectedTab(nextTab);
-    }
+    function handleSetTab(nextTab: Tab) {}
     function handleEditClass(classToEdit: any) {
         setEditingClass(classToEdit);
         setTab("classSetup");
@@ -619,7 +616,7 @@ export default function Rock101App() {
         // Force reload of classes from Supabase
         setClassesVersion((prev) => prev + 1);
     }
-
+    
     function handleRemoveStudentFromClass(studentId: string) {
         if (!selectedClass) return;
 
