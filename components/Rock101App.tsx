@@ -359,6 +359,7 @@ export default function Rock101App() {
                     assigned,
                     schoolId: student.schoolId,
                     effectiveSchoolFilter,
+                    currentUserSchoolId: currentUser.schoolId,
                 });
 
                 return assigned;
