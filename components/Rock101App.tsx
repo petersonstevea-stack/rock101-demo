@@ -117,8 +117,8 @@ export default function Rock101App() {
 
                 const { data: dbUser } = await supabase
                     .from("staff")
-                    .select("id, email, name, role, school_id, auth_id")
-                    .eq("auth_id", data.user.id)
+                    .select("id, email, name, role, school_slug, auth_id")
+                    .ilike("email", data.user.email ?? "")
                     .maybeSingle();
 
                 console.log("DB USER:", dbUser);
@@ -128,7 +128,7 @@ export default function Rock101App() {
                         email: dbUser.email,
                         name: dbUser.name,
                         role: dbUser.role ?? "owner",
-                        schoolId: dbUser.school_id ?? "del-mar",
+                        schoolId: dbUser.school_slug ?? "del-mar",
                     };
 
                     setCurrentUser(sessionUser);
