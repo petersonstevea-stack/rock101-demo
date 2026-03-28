@@ -108,6 +108,7 @@ export default function Rock101App() {
     const [editingClass, setEditingClass] = useState<any | null>(null);
     useEffect(() => {
         const checkUser = async () => {
+            console.log("CHECK USER FUNCTION RUNNING");
             const { data } = await supabase.auth.getUser();
             console.log("FULL AUTH OBJECT:", data);
 
@@ -115,11 +116,31 @@ export default function Rock101App() {
                 console.log("User is logged in:", data.user.email);
                 console.log("AUTH EMAIL:", data.user.email);
 
-                const { data: dbUser } = await supabase
+                const authEmail = data.user.email?.trim().toLowerCase();
+                const authId = data.user.id;
+
+                console.log("AUTH USER ID:", authId);
+                console.log("AUTH USER EMAIL RAW:", data.user.email);
+                console.log("AUTH USER EMAIL NORMALIZED:", authEmail);
+
+                const { data: staffMatches, error: staffError } = await supabase
                     .from("staff")
                     .select("id, email, name, role, school_slug, auth_id")
-                    .ilike("email", data.user.email ?? "")
-                    .maybeSingle();
+                    .eq("email", authEmail);
+
+                console.log("STAFF LOOKUP ERROR:", staffError);
+                console.log("STAFF LOOKUP RESULTS:", staffMatches);
+                console.log("STAFF LOOKUP COUNT:", staffMatches?.length ?? 0);
+
+                let dbUser = null;
+
+                if (staffMatches && staffMatches.length === 1) {
+                    dbUser = staffMatches[0];
+                } else if (staffMatches && staffMatches.length > 1) {
+                    console.error("Multiple staff rows found for email:", authEmail, staffMatches);
+                } else {
+                    console.error("No staff row found for email:", authEmail);
+                }
 
                 console.log("DB USER:", dbUser);
 
