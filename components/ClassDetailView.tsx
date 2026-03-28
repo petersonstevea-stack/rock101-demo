@@ -170,7 +170,7 @@ export default function ClassDetailView({
         {selectedSessionId && (
           <div className="mb-4 rounded-lg bg-red-600 p-3 text-white font-bold">
             🚨 SESSION ACTIVE:{" "}
-            {selectedSession
+            {selectedSession?.session_date && selectedSession?.start_time
               ? `${selectedSession.session_date} · ${selectedSession.start_time}`
               : selectedSessionId}
           </div>
