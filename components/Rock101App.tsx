@@ -558,7 +558,7 @@ export default function Rock101App() {
                     name: u.name,
                     email: u.email,
                     role: u.role,
-                    schoolId: mapSchoolNameToId(u.school_slug),
+                    schoolId: u.school_id,
                 }));
 
                 const safeUsers = isOwner
