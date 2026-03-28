@@ -79,7 +79,9 @@ type SchoolFilter = "all" | SchoolId;
 type ManagementLandingView = "classes" | "students";
 
 function mapSchoolNameToId(schoolName?: string | null): SchoolId {
-    const normalized = (schoolName ?? "").toLowerCase();
+    const normalized = (schoolName ?? "")
+        .toLowerCase()
+        .replace(/_/g, " ");
 
     if (normalized.includes("del mar")) return "del-mar";
     if (normalized.includes("encinitas")) return "encinitas";
