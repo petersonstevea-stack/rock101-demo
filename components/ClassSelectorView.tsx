@@ -40,9 +40,11 @@ export default function ClassSelectorView({
           <h2 className="text-xl font-bold text-white">This Week’s Sessions</h2>
 
           {weeklySessions.map((session) => (
-            <div
+            <button
               key={session.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-4"
+              type="button"
+              onClick={() => onSelectClass(session.rock_classes?.id)}
+              className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-900/82 p-4 hover:border-red-500 hover:bg-zinc-800"
             >
               <div className="text-lg font-semibold text-white">
                 {session.rock_classes?.name ?? "Unnamed Class"}
@@ -51,7 +53,7 @@ export default function ClassSelectorView({
               <div className="text-sm text-zinc-400 mt-1">
                 {session.session_date} · {session.start_time || "Time not set"}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
