@@ -63,6 +63,7 @@ export default function ClassDetailView({
   onDirectorFeedbackChange,
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
+  console.log("CLASS DETAIL SESSION DEBUG", { selectedSessionId, selectedSession });
   const [feedbackSaved, setFeedbackSaved] = useState(false);
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
