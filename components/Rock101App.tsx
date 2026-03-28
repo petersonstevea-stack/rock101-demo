@@ -376,6 +376,8 @@ export default function Rock101App() {
         });
     }, [allUsers, effectiveSchoolFilter]);
 
+    console.log("FILTERED USERS", filteredUsersBySchool);
+
     const filteredClassesBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return savedClasses;
 
