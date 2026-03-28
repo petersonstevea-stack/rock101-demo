@@ -193,7 +193,7 @@ export default function Rock101App() {
 
             const formatted = data.map((s: any) => {
                 console.log("SUPABASE STUDENT ROW", s);
-                const schoolId = s.school?.trim().toLowerCase();
+                const schoolId = mapSchoolNameToId(s.school);
 
                 return {
                     id: s.id,
