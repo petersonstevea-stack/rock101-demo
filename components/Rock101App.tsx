@@ -308,7 +308,9 @@ export default function Rock101App() {
 
     const filteredStudentsBySchool = useMemo(() => {
         console.log("SCHOOL FILTER DEBUG", {
+            currentUser,
             effectiveSchoolFilter,
+            studentCount: students.length,
             studentSchoolIds: students.map((student) => student.schoolId),
         });
 
