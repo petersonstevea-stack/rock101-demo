@@ -90,8 +90,11 @@ export default function ClassDetailView({
     <div className="mt-8 space-y-6">
       <PageHero
         title={rockClass.name}
-        subtitle={`${schoolName} • ${rockClass.dayOfWeek} • ${rockClass.time || "Time not set"
-          }`}
+        subtitle={
+          selectedSession?.session_date && selectedSession?.start_time
+            ? `${selectedSession.session_date} • ${selectedSession.start_time} • This Week's Session`
+            : `${schoolName} • ${rockClass.dayOfWeek} • ${rockClass.time || "Time not set"}`
+        }
         imageSrc="/images/rock101-drums.jpg"
       />
 
