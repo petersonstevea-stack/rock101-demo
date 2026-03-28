@@ -8,12 +8,14 @@ import PageHero from "@/components/PageHero";
 type ClassSelectorViewProps = {
   classes: RockClass[];
   users: AppUser[];
+  weeklySessions?: any[];
   onSelectClass: (classId: string) => void;
 };
 
 export default function ClassSelectorView({
   classes,
   users,
+  weeklySessions,
   onSelectClass,
 }: ClassSelectorViewProps) {
   const instructorMap = Object.fromEntries(
@@ -33,7 +35,26 @@ export default function ClassSelectorView({
         subtitle="Select a class to manage songs, students, rehearsals, and performance readiness."
         imageSrc="/images/rock101-drums.jpg"
       />
+      {weeklySessions && weeklySessions.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-bold text-white">This Week’s Sessions</h2>
 
+          {weeklySessions.map((session) => (
+            <div
+              key={session.id}
+              className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-4"
+            >
+              <div className="text-lg font-semibold text-white">
+                {session.rock_classes?.name ?? "Unnamed Class"}
+              </div>
+
+              <div className="text-sm text-zinc-400 mt-1">
+                {session.session_date} · {session.start_time || "Time not set"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {classes.length === 0 ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 text-zinc-300 backdrop-blur-sm">
           No classes have been created yet. Build one in Class Setup first.
