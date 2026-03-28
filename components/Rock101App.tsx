@@ -558,16 +558,10 @@ export default function Rock101App() {
                     name: u.name,
                     email: u.email,
                     role: u.role,
-                    schoolId: u.school_slug, // ✅ FIXED
+                    schoolId: u.school_slug,
                 }));
 
-                const safeUsers = isOwner
-                    ? formattedUsers
-                    : formattedUsers.filter(
-                        (user) => user.schoolId === currentUser?.schoolId
-                    );
-
-                setAllUsers(safeUsers);
+                setAllUsers(formattedUsers);
             }
         }
 
