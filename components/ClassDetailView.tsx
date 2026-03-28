@@ -92,7 +92,17 @@ export default function ClassDetailView({
         title={rockClass.name}
         subtitle={
           selectedSession?.session_date && selectedSession?.start_time
-            ? `${selectedSession.session_date} • ${selectedSession.start_time} • This Week's Session`
+            ? (() => {
+              const date = new Date(`${selectedSession.session_date}T${selectedSession.start_time}`);
+              return date.toLocaleString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              });
+            })()
             : `${schoolName} • ${rockClass.dayOfWeek} • ${rockClass.time || "Time not set"}`
         }
         imageSrc="/images/rock101-drums.jpg"
