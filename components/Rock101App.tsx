@@ -521,14 +521,20 @@ export default function Rock101App() {
             if (data) {
                 console.log("ALL USERS FROM SUPABASE:", data);
 
-                setAllUsers(
-                    data.map((u) => ({
-                        name: u.name,
-                        email: u.email,
-                        role: u.role,
-                        schoolId: (u.school_slug ?? "").replaceAll("_", "-"),
-                    }))
-                );
+                const formattedUsers = data.map((u) => ({
+                    name: u.name,
+                    email: u.email,
+                    role: u.role,
+                    schoolId: mapSchoolNameToId(u.school_slug),
+                }));
+
+                const safeUsers = isOwner
+                    ? formattedUsers
+                    : formattedUsers.filter(
+                        (user) => user.schoolId === currentUser?.schoolId
+                    );
+
+                setAllUsers(safeUsers);
             }
         }
 
