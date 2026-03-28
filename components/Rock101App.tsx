@@ -236,7 +236,7 @@ export default function Rock101App() {
                 : formatted.filter(
                     (student) => student.schoolId === currentUser?.schoolId
                 );
-
+            console.log("STUDENT DEBUG", { currentUser, isOwner, formattedCount: formatted.length, safeStudentsCount: safeStudents.length });
             setStudents(safeStudents);
             console.log("FORMATTED STUDENTS:", safeStudents);
 
