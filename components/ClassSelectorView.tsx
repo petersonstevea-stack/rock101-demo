@@ -56,6 +56,7 @@ export default function ClassSelectorView({
               <div className="text-sm text-zinc-400 mt-1">
                 {session.session_date} · {session.start_time || "Time not set"}
               </div>
+              <div className="text-xs text-red-400">SESSION DEBUG ACTIVE</div>
             </button>
           ))}
         </div>
