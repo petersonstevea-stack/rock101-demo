@@ -1270,8 +1270,13 @@ export default function Rock101App() {
         return (
             <LoginScreen
                 onLogin={(user) => {
-                    saveSession(user);
-                    setCurrentUser(user);
+                    const normalizedUser = {
+                        ...user,
+                        schoolId: mapSchoolNameToId(user.schoolId),
+                    };
+
+                    saveSession(normalizedUser);
+                    setCurrentUser(normalizedUser);
 
                     const defaultTab: Tab =
                         String(user.role).toLowerCase() === "parent"
