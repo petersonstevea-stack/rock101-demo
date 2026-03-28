@@ -303,7 +303,7 @@ export default function Rock101App() {
             return currentUser.schoolId as SchoolId;
         }
 
-        return "all";
+        return "del-mar";
     }, [isOwner, selectedSchoolId, currentUser]);
 
     const filteredStudentsBySchool = useMemo(() => {
