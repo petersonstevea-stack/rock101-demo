@@ -1690,6 +1690,9 @@ export default function Rock101App() {
                     <ClassDetailView
                         rockClass={selectedClass}
                         selectedSessionId={selectedSessionId}
+                        selectedSession={
+                            weeklySessions.find((session) => session.id === selectedSessionId) ?? null
+                        }
                         students={studentsInSelectedClass}
                         users={filteredUsersBySchool}
                         allStudents={filteredStudentsBySchool}
