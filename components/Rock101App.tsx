@@ -151,7 +151,7 @@ export default function Rock101App() {
                         email: dbUser.email,
                         name: dbUser.name,
                         role: dbUser.role ?? "owner",
-                        schoolId: dbUser.school_slug?.trim().toLowerCase() ?? "del_mar",
+                        schoolId: mapSchoolNameToId(dbUser.school_slug),
                     };
                     console.log("SESSION USER CREATED:", sessionUser);
                     setCurrentUser(sessionUser);
