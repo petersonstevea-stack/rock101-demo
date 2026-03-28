@@ -1576,7 +1576,8 @@ export default function Rock101App() {
                                     classes={filteredClassesBySchool}
                                     weeklySessions={weeklySessions}
                                     users={filteredUsersBySchool}
-                                    onSelectClass={(classId) => {
+                                    onSelectClass={(classId, sessionId) => {
+                                        console.log("SESSION CLICK DEBUG", { classId, sessionId });
                                         setSelectedClassId(classId);
                                         setSelectedStudentName("");
                                     }}
