@@ -184,7 +184,10 @@ export default function Rock101App() {
 
     useEffect(() => {
         async function loadStudents() {
-            const { data, error } = await supabase.from("students").select("*");
+            const { data, error } = await supabase
+                .from("students")
+                .select("*")
+                .eq("program", "rock101");
 
             if (error) {
                 console.log("SUPABASE LOAD STUDENTS ERROR RAW:", error);
@@ -236,7 +239,14 @@ export default function Rock101App() {
                 : formatted.filter(
                     (student) => student.schoolId === currentUser?.schoolId
                 );
-            console.log("STUDENT DEBUG", { currentUser, isOwner, formattedCount: formatted.length, safeStudentsCount: safeStudents.length });
+            console.log("STUDENT DEBUG", {
+                currentUser,
+                isOwner,
+                rawStudentCount: data?.length ?? 0,
+                formattedCount: formatted.length,
+                safeStudentsCount: safeStudents.length,
+                programs: [...new Set((data ?? []).map((s: any) => s.program))],
+            });
             setStudents(safeStudents);
             console.log("FORMATTED STUDENTS:", safeStudents);
 
