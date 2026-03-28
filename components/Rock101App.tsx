@@ -149,7 +149,7 @@ export default function Rock101App() {
                         email: dbUser.email,
                         name: dbUser.name,
                         role: dbUser.role ?? "owner",
-                        schoolId: dbUser.school_slug ?? "del-mar",
+                        schoolId: dbUser.school_slug?.trim().toLowerCase() ?? "del_mar",
                     };
                     console.log("SESSION USER CREATED:", sessionUser);
                     setCurrentUser(sessionUser);
@@ -193,7 +193,7 @@ export default function Rock101App() {
 
             const formatted = data.map((s: any) => {
                 console.log("SUPABASE STUDENT ROW", s);
-                const schoolId = s.school;
+                const schoolId = s.school?.trim().toLowerCase();
 
                 return {
                     id: s.id,
