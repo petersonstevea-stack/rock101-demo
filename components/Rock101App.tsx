@@ -1304,6 +1304,7 @@ export default function Rock101App() {
 
     if (
         (role === "parent" || role === "instructor") &&
+        students.length > 0 &&
         visibleStudents.length === 0
     ) {
         return (
