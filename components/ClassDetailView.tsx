@@ -169,9 +169,13 @@ export default function ClassDetailView({
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
         {selectedSessionId && (
           <div className="mb-4 rounded-lg bg-red-600 p-3 text-white font-bold">
-            🚨 SESSION ACTIVE: {selectedSessionId}
+            🚨 SESSION ACTIVE:{" "}
+            {selectedSession
+              ? `${selectedSession.session_date} · ${selectedSession.start_time}`
+              : selectedSessionId}
           </div>
         )}
+
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
 
         {rockClass.songs.length > 0 ? (
