@@ -378,7 +378,10 @@ export default function Rock101App() {
         }
 
         if (currentUser.role === "instructor") {
+            console.log("STUDENT VIEW FILTER VALUE:", studentViewFilter);
+
             if (studentViewFilter === "allStudents") {
+                console.log("ALL STUDENTS MODE ACTIVE — BYPASSING INSTRUCTOR FILTER");
                 return filteredStudentsBySchool;
             }
 
