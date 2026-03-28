@@ -562,7 +562,10 @@ export default function Rock101App() {
                     : !selectedStudent.workflow.graduationDirectorSubmitted
                         ? "Waiting on director graduation signoff."
                         : undefined;
-    function handleSetTab(nextTab: Tab) { }
+    function handleSetTab(nextTab: Tab) {
+        setTab(nextTab);
+        saveSelectedTab(nextTab);
+    }
     function handleEditClass(classToEdit: any) {
         setEditingClass(classToEdit);
         setTab("classSetup");
