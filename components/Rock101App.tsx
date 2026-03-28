@@ -1564,6 +1564,7 @@ export default function Rock101App() {
                             ) : (
                                 <ClassSelectorView
                                     classes={filteredClassesBySchool}
+                                    weeklySessions={weeklySessions}
                                     users={filteredUsersBySchool}
                                     onSelectClass={(classId) => {
                                         setSelectedClassId(classId);

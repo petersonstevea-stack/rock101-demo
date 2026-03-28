@@ -27,7 +27,7 @@ export default function ClassSelectorView({
   const schoolMap = Object.fromEntries(
     schools.map((school) => [school.id, school.name])
   );
-
+  console.log("CLASS SELECTOR weeklySessions:", weeklySessions);
   return (
     <div className="mt-8 space-y-6">
       <PageHero
