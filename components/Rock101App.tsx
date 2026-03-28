@@ -99,6 +99,7 @@ export default function Rock101App() {
     const [tab, setTab] = useState<Tab>("privateLesson");
     const [students, setStudents] = useState<any[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+    const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
@@ -1579,6 +1580,8 @@ export default function Rock101App() {
                                     onSelectClass={(classId, sessionId) => {
                                         console.log("SESSION CLICK DEBUG", { classId, sessionId });
                                         setSelectedClassId(classId);
+                                        setSelectedSessionId(sessionId ?? null);
+                                        console.log("SELECTED SESSION STORED", sessionId ?? null);
                                         setSelectedStudentName("");
                                     }}
                                 />

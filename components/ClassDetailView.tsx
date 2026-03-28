@@ -20,6 +20,7 @@ type Student = {
 
 type ClassDetailViewProps = {
   rockClass: RockClass;
+  selectedSessionId?: string | null;  // ← add this line
   students: Student[];
   users: AppUser[];
   allStudents: Student[];
@@ -45,6 +46,7 @@ function getSongReadinessLabel(readiness?: number) {
 
 export default function ClassDetailView({
   rockClass,
+  selectedSessionId,
   students,
   users,
   allStudents,
