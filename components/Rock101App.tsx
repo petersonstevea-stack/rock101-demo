@@ -398,7 +398,7 @@ export default function Rock101App() {
                     match: studentEmail === userEmail,
                 });
 
-                const assigned = studentEmail === userEmail;
+                const assigned = true;
 
                 console.log("INSTRUCTOR STUDENT CHECK", {
                     studentName: student.name,
