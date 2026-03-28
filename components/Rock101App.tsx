@@ -125,7 +125,7 @@ export default function Rock101App() {
 
                 const { data: staffMatches, error: staffError } = await supabase
                     .from("staff")
-                    .select("id, email, name, role, school_slug, auth_id")
+                    .select("id, email, name, role, school_slug")
                     .eq("email", authEmail);
 
                 console.log("STAFF LOOKUP ERROR:", staffError);
