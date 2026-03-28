@@ -32,7 +32,7 @@ import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 
 import { supabase } from "@/lib/supabaseClient";
-import { getSavedClasses } from "@/lib/classes";
+import { getSavedClasses, getThisWeeksSessions } from "@/lib/classes";
 import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import { saveClasses } from "@/lib/classes";
@@ -106,6 +106,7 @@ export default function Rock101App() {
         useState<ManagementLandingView>("classes");
     const [classesVersion, setClassesVersion] = useState(0);
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
+    const [weeklySessions, setWeeklySessions] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
     const [editingClass, setEditingClass] = useState<any | null>(null);
     useEffect(() => {
@@ -299,6 +300,18 @@ export default function Rock101App() {
         loadClasses();
     }, [classesVersion, currentUser, selectedSchoolId]);
 
+
+    useEffect(() => {
+        async function loadSessions() {
+            if (!currentUser?.schoolId) return;
+
+            const sessions = await getThisWeeksSessions(currentUser.schoolId);
+            console.log("WEEKLY SESSIONS:", sessions);
+            setWeeklySessions(sessions);
+        }
+
+        loadSessions();
+    }, [currentUser]);
     const role = currentUser?.role ?? null;
     const isOwner = role === "owner";
     const canManageRock101 =
