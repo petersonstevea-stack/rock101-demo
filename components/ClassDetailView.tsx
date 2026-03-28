@@ -63,7 +63,6 @@ export default function ClassDetailView({
   onDirectorFeedbackChange,
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
-  console.log("CLASS DETAIL SESSION DEBUG", { selectedSessionId, selectedSession });
   const [feedbackSaved, setFeedbackSaved] = useState(false);
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
@@ -181,14 +180,7 @@ export default function ClassDetailView({
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
-        {selectedSessionId && (
-          <div className="mb-4 rounded-lg bg-red-600 p-3 text-white font-bold">
-            🚨 SESSION ACTIVE:{" "}
-            {selectedSession?.session_date && selectedSession?.start_time
-              ? `${selectedSession.session_date} · ${selectedSession.start_time}`
-              : selectedSessionId}
-          </div>
-        )}
+        
 
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
 

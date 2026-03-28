@@ -1575,7 +1575,6 @@ export default function Rock101App() {
                                     weeklySessions={weeklySessions}
                                     users={filteredUsersBySchool}
                                     onSelectClass={(classId, sessionId) => {
-                                        console.log("SESSION CLICK DEBUG", { classId, sessionId });
 
                                         const matchedSession =
                                             weeklySessions.find((session) => session.id === sessionId) ?? null;
@@ -1583,8 +1582,6 @@ export default function Rock101App() {
                                         setSelectedClassId(classId);
                                         setSelectedSessionId(sessionId ?? null);
                                         setSelectedSession(matchedSession);
-                                        console.log("SELECTED SESSION STORED", sessionId ?? null);
-                                        console.log("SELECTED SESSION OBJECT", matchedSession);
                                         setSelectedStudentName("");
                                     }}
                                 />
