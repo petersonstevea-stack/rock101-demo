@@ -287,7 +287,13 @@ export default function Rock101App() {
                     performanceDate: c.performance_date ?? "",
                 };
             });
-            setSavedClasses(supabaseClasses);
+            const safeClasses = isOwner
+                ? supabaseClasses
+                : supabaseClasses.filter(
+                    (c) => c.schoolId === currentUser?.schoolId
+                );
+
+            setSavedClasses(safeClasses);
         }
 
         loadClasses();
