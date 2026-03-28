@@ -169,8 +169,7 @@ export default function Rock101App() {
         const savedTab = getSavedTab();
 
         if (savedUser) {
-            console.log("RESTORING SAVED SESSION:", savedUser);
-            setCurrentUser(savedUser);
+            console.log("FOUND SAVED SESSION (waiting for auth):", savedUser);
         }
 
         if (role === "director") {
