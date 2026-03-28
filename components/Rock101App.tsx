@@ -100,6 +100,7 @@ export default function Rock101App() {
     const [students, setStudents] = useState<any[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+    const [selectedSession, setSelectedSession] = useState<any | null>(null);
     const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
@@ -1579,9 +1580,15 @@ export default function Rock101App() {
                                     users={filteredUsersBySchool}
                                     onSelectClass={(classId, sessionId) => {
                                         console.log("SESSION CLICK DEBUG", { classId, sessionId });
+
+                                        const matchedSession =
+                                            weeklySessions.find((session) => session.id === sessionId) ?? null;
+
                                         setSelectedClassId(classId);
                                         setSelectedSessionId(sessionId ?? null);
+                                        setSelectedSession(matchedSession);
                                         console.log("SELECTED SESSION STORED", sessionId ?? null);
+                                        console.log("SELECTED SESSION OBJECT", matchedSession);
                                         setSelectedStudentName("");
                                     }}
                                 />
