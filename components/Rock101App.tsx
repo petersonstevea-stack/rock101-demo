@@ -1682,6 +1682,7 @@ export default function Rock101App() {
                 {canManageRock101 && selectedClass && !selectedStudentName && (
                     <ClassDetailView
                         rockClass={selectedClass}
+                        selectedSessionId={selectedSessionId}
                         students={studentsInSelectedClass}
                         users={filteredUsersBySchool}
                         allStudents={filteredStudentsBySchool}
