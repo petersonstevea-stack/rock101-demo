@@ -371,9 +371,17 @@ export default function Rock101App() {
             return filteredStudentsBySchool.filter((student) => {
                 console.log("RAW STUDENT OBJECT:", student);
 
-                const assigned =
-                    student.primaryInstructorEmail?.toLowerCase() ===
-                    currentUser.email.toLowerCase();
+                const studentEmail = student.primaryInstructorEmail?.trim().toLowerCase();
+                const userEmail = currentUser.email?.trim().toLowerCase();
+
+                console.log("EMAIL COMPARISON", {
+                    studentName: student.name,
+                    studentEmail,
+                    userEmail,
+                    match: studentEmail === userEmail,
+                });
+
+                const assigned = studentEmail === userEmail;
 
                 console.log("INSTRUCTOR STUDENT CHECK", {
                     studentName: student.name,
