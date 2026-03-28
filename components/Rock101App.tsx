@@ -230,8 +230,14 @@ export default function Rock101App() {
                 };
             });
 
-            setStudents(formatted);
-            console.log("FORMATTED STUDENTS:", formatted);
+            const safeStudents = isOwner
+                ? formatted
+                : formatted.filter(
+                    (student) => student.schoolId === currentUser?.schoolId
+                );
+
+            setStudents(safeStudents);
+            console.log("FORMATTED STUDENTS:", safeStudents);
 
             if (currentUser?.role === "parent") {
                 const matchedStudent = formatted.find(
