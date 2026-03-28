@@ -43,9 +43,10 @@ export default function ClassSelectorView({
             <button
               key={session.id}
               type="button"
-              onClick={() =>
-                onSelectClass(session.rock_classes?.id, session.id)
-              }
+              onClick={() => {
+                console.log("SESSION BUTTON CLICKED", session);
+                onSelectClass(session.rock_classes?.id, session.id);
+              }}
               className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-900/82 p-4 hover:border-red-500 hover:bg-zinc-800"
             >
               <div className="text-lg font-semibold text-white">
