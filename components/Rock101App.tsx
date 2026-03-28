@@ -305,11 +305,25 @@ export default function Rock101App() {
     }, [isOwner, selectedSchoolId, currentUser]);
 
     const filteredStudentsBySchool = useMemo(() => {
+        console.log("SCHOOL FILTER DEBUG", {
+            effectiveSchoolFilter,
+            studentSchoolIds: students.map((student) => student.schoolId),
+        });
+
         if (effectiveSchoolFilter === "all") return students;
 
-        return students.filter(
-            (student) => student.schoolId === effectiveSchoolFilter
-        );
+        return students.filter((student) => {
+            const matches = student.schoolId === effectiveSchoolFilter;
+
+            console.log("SCHOOL MATCH CHECK", {
+                studentName: student.name,
+                studentSchoolId: student.schoolId,
+                effectiveSchoolFilter,
+                matches,
+            });
+
+            return matches;
+        });
     }, [students, effectiveSchoolFilter]);
 
     const filteredUsersBySchool = useMemo(() => {
