@@ -1721,15 +1721,17 @@ export default function Rock101App() {
                         onSaveDirectorFeedback={async () => {
                             if (!selectedSessionId) return;
 
+                            const feedbackToSave =
+                                weeklySessions.find((session) => session.id === selectedSessionId)?.director_feedback ?? "";
+
                             console.log("SAVE DEBUG", {
                                 selectedSessionId,
-                                selectedSession,
-                                feedback: selectedSession?.director_feedback ?? "",
+                                feedbackToSave,
                             });
 
                             const { error } = await supabase
                                 .from("class_sessions")
-                                .update({ director_feedback: selectedSession?.director_feedback ?? "" })
+                                .update({ director_feedback: feedbackToSave })
                                 .eq("id", selectedSessionId);
 
                             if (error) {
