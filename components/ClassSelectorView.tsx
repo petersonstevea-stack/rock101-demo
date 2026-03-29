@@ -84,16 +84,19 @@ export default function ClassSelectorView({
                   }
                   className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-4 text-left transition hover:border-red-500 hover:bg-zinc-800"
                 >
-                  <div className="text-lg font-semibold text-white">
+                  <div className="text-xl font-semibold text-white">
                     {session.rock_classes?.name ?? "Unnamed Class"}
                   </div>
 
-                  <div className="mt-3 space-y-1 text-sm text-zinc-300">
+                  <div className="mt-2 text-sm text-zinc-300">
+                    Director: {directorName}
+                  </div>
+
+                  <div className="mt-2 space-y-1 text-sm text-zinc-400">
                     <div>
-                      Session: {formatSessionDate(session.session_date)} ·{" "}
+                      {formatSessionDate(session.session_date)} ·{" "}
                       {formatSessionTime(session.start_time)}
                     </div>
-                    <div>Director: {directorName}</div>
                     <div>
                       Show Date:{" "}
                       {rockClass?.performanceDate
