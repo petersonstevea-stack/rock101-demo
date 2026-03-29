@@ -259,10 +259,10 @@ export default function StaffEnrollmentPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email: data.email,
-                    name: data.name,
-                    role: data.role,
-                    school_slug: data.school_slug,
+                    email: data[0].email,
+                    name: data[0].name,
+                    role: data[0].role,
+                    school_slug: data[0].school_slug,
                 }),
             }
         );
