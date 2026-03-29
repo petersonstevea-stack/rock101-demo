@@ -7,6 +7,7 @@ type NotesPanelProps = {
   canEdit?: boolean;
   authorName?: string;
   studentName?: string;
+  context?: "lesson" | "rehearsal" | "general";
 };
 
 export default function NotesPanel({
@@ -18,13 +19,27 @@ export default function NotesPanel({
   canEdit = true,
   authorName,
   studentName,
+  context = "general",
 }: NotesPanelProps) {
+  const contextLabel =
+    context === "lesson"
+      ? "lesson"
+      : context === "rehearsal"
+        ? "rehearsal"
+        : "";
+
   const fallbackTitle =
-    role === "instructor" ? "Instructor Notes" : "Rock 101 Director Notes";
+    role === "instructor"
+      ? contextLabel
+        ? `Instructor ${contextLabel} notes`
+        : "Instructor Notes"
+      : contextLabel
+        ? `Director ${contextLabel} notes`
+        : "Rock 101 Director Notes";
 
   const title =
     authorName && studentName
-      ? `${authorName}'s notes for ${studentName}`
+      ? `${authorName}'s ${contextLabel ? contextLabel + " " : ""}notes for ${studentName}`
       : fallbackTitle;
 
   const placeholder =

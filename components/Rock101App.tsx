@@ -1962,6 +1962,9 @@ export default function Rock101App() {
                                 currentUser?.email === selectedStudent.primaryInstructorEmail)) && (
                                 <NotesPanel
                                     role="instructor"
+                                    authorName={currentUser?.name}
+                                    studentName={selectedStudent.name}
+                                    context="lesson"
                                     value={selectedStudent.notes.instructor}
                                     saved={selectedStudent.workflow.instructorSubmitted}
                                     onChange={(v) => handleNoteChange("instructor", v)}
@@ -2052,15 +2055,14 @@ export default function Rock101App() {
                                     </div>
                                     <NotesPanel
                                         role="director"
-                                        value={selectedStudent.notes?.director ?? ""}
-                                        saved={selectedStudent.workflow?.directorSubmitted ?? false}
+                                        authorName={currentUser?.name}
+                                        studentName={selectedStudent.name}
+                                        context="rehearsal"
+                                        value={selectedStudent.notes.director}
+                                        saved={selectedStudent.workflow.directorSubmitted}
                                         onChange={(v) => handleNoteChange("director", v)}
                                         onSave={() => handleSaveFeedback("director")}
-                                        canEdit={
-                                            role === "owner" ||
-                                            role === "generalManager" ||
-                                            role === "director"
-                                        }
+                                        canEdit={role === "owner" || role === "generalManager" || role === "director"}
                                     />
                                 </>
                             )}
