@@ -265,7 +265,7 @@ export default function ClassDetailView({
           </button>
 
           {lastSavedAt && (
-            <span className="text-sm text-green-400">
+            <span className="text-sm text-zinc-400 opacity-80">
               Saved {lastSavedAt}
             </span>
           )}
