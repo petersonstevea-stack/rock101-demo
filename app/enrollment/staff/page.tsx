@@ -214,12 +214,20 @@ export default function StaffEnrollmentPage() {
                 school_type: null,
             })
             .eq("id", editingStaffId)
-            .select()
-            .single();
+            .select("id, name, email, role, school_slug, school_type");
 
         if (error) {
             setStatusType("error");
             setStatusMessage(error.message);
+            setIsUpdating(false);
+            return;
+        }
+
+        console.log("STAFF EDIT RESULT:", data);
+
+        if (!data || data.length === 0) {
+            setStatusType("error");
+            setStatusMessage(`No staff row matched id ${editingStaffId}`);
             setIsUpdating(false);
             return;
         }
@@ -229,18 +237,18 @@ export default function StaffEnrollmentPage() {
                 staff.id === editingStaffId
                     ? {
                         ...staff,
-                        name: data.name,
-                        email: data.email,
-                        role: data.role,
-                        school_slug: data.school_slug,
-                        school_type: data.school_type,
+                        name: data[0].name,
+                        email: data[0].email,
+                        role: data[0].role,
+                        school_slug: data[0].school_slug,
+                        school_type: data[0].school_type,
                     }
                     : staff
             )
         );
 
         setStatusType("success");
-        setStatusMessage(`Staff member updated: ${data.name}`);
+        setStatusMessage(`Staff member updated: ${data[0].name}`);
 
         // 🔥 CALL INVITE EDGE FUNCTION
         const inviteResponse = await fetch(
