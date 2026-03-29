@@ -12,7 +12,15 @@ type Props = {
         tab: "privateLesson" | "groupRehearsal" | "certificate"
     ) => void;
 };
+function formatNameShort(name?: string) {
+    if (!name) return "";
 
+    const parts = name.trim().split(" ");
+    const first = parts[0];
+    const lastInitial = parts[1] ? parts[1][0] + "." : "";
+
+    return `${first} ${lastInitial}`.trim();
+}
 function splitSectionTitle(title: string) {
     const words = title.split(" ");
 

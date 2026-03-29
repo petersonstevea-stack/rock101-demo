@@ -88,11 +88,13 @@ export type ParentDashboardData = {
   notesMeta: {
     lessonLastUpdated: string | null;
     rehearsalLastUpdated: string | null;
+    lessonAuthorName?: string | null;
+    rehearsalAuthorName?: string | null;
   };
 
   summary: {
     title: string;
     text: string;
   };
-    classFeedback?: string | null;
+  classFeedback?: string | null;
 };

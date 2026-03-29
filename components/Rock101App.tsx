@@ -629,6 +629,16 @@ export default function Rock101App() {
             privateLessonItems,
             groupRehearsalItems,
             songProgress: dashboardSongProgress,
+            lessonAuthorName:
+                filteredUsersBySchool.find(
+                    (user) => user.email === selectedStudent.primaryInstructorEmail
+                )?.name ?? null,
+            rehearsalAuthorName:
+                filteredUsersBySchool.find(
+                    (user) =>
+                        user.email ===
+                        (activeClassForSelectedStudent?.directorEmail ?? selectedClass?.directorEmail)
+                )?.name ?? null,
             classFeedback,
             badges: [],
         });
