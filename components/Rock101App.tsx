@@ -376,7 +376,6 @@ export default function Rock101App() {
         });
     }, [allUsers, effectiveSchoolFilter]);
 
-    console.log("FILTERED USERS", filteredUsersBySchool);
 
     const filteredClassesBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return savedClasses;
@@ -1707,17 +1706,34 @@ export default function Rock101App() {
                         onSelectStudent={(studentName) => {
                             setSelectedStudentName(studentName);
                         }}
-                        directorFeedback={(selectedClass as any)?.directorFeedback ?? ""}
                         onDirectorFeedbackChange={(value) => {
-                            setSavedClasses((prev) =>
-                                prev.map((rockClass) =>
-                                    rockClass.id === selectedClass.id
-                                        ? { ...rockClass, directorFeedback: value }
-                                        : rockClass
+                            setWeeklySessions((prev) =>
+                                prev.map((session) =>
+                                    session.id === selectedSessionId
+                                        ? { ...session, director_feedback: value }
+                                        : session
                                 )
                             );
                         }}
-                        onSaveDirectorFeedback={() => {
+                        onSaveDirectorFeedback={async () => {
+                            if (!selectedSessionId) return;
+
+                            const sessionToSave =
+                                weeklySessions.find((session) => session.id === selectedSessionId);
+
+                            const feedbackToSave = sessionToSave?.director_feedback ?? "";
+
+                            const { error } = await supabase
+                                .from("class_sessions")
+                                .update({ director_feedback: feedbackToSave })
+                                .eq("id", selectedSessionId);
+
+                            if (error) {
+                                console.error("SAVE DIRECTOR FEEDBACK ERROR:", error);
+                                alert("Could not save director feedback.");
+                                return;
+                            }
+
                             alert("Director feedback saved.");
                         }}
                     />

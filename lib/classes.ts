@@ -139,6 +139,7 @@ export async function getThisWeeksSessions(schoolId: string) {
       session_date,
       start_time,
       status,
+      director_feedback,
       rock_classes (
         id,
         name,
