@@ -1719,29 +1719,22 @@ export default function Rock101App() {
                             );
                         }}
                         onSaveDirectorFeedback={async () => {
-                            if (!selectedSessionId) return;
+                            if (!selectedSessionId) return false;
 
                             const feedbackToSave =
                                 weeklySessions.find((session) => session.id === selectedSessionId)?.director_feedback ?? "";
 
-                            console.log("SAVE DEBUG", {
-                                selectedSessionId,
-                                feedbackToSave,
-                            });
-
-                            const { data, error } = await supabase
+                            const { error } = await supabase
                                 .from("class_sessions")
                                 .update({ director_feedback: feedbackToSave })
-                                .eq("id", selectedSessionId)
-                                .select();
-                            console.log("SAVE RESULT", { data, error });
+                                .eq("id", selectedSessionId);
+
                             if (error) {
                                 console.error("SAVE DIRECTOR FEEDBACK ERROR:", error);
-                                alert("Could not save director feedback.");
-                                return;
+                                return false;
                             }
 
-                            alert("Director feedback saved.");
+                            return true;
                         }}
                     />
                 )}

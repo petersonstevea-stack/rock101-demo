@@ -180,7 +180,7 @@ export default function ClassDetailView({
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
-        
+
 
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
 
@@ -247,8 +247,11 @@ export default function ClassDetailView({
         <div className="mt-4 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              onSaveDirectorFeedback();
+            onClick={async () => {
+              const didSave = await onSaveDirectorFeedback();
+
+              if (!didSave) return;
+
               setFeedbackSaved(true);
 
               setTimeout(() => {
