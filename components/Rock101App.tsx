@@ -1706,7 +1706,9 @@ export default function Rock101App() {
                         onSelectStudent={(studentName) => {
                             setSelectedStudentName(studentName);
                         }}
-                        directorFeedback={selectedSession?.director_feedback ?? ""}
+                        directorFeedback={
+                            weeklySessions.find((session) => session.id === selectedSessionId)?.director_feedback ?? ""
+                        }
                         onDirectorFeedbackChange={(value) => {
                             setWeeklySessions((prev) =>
                                 prev.map((session) =>
