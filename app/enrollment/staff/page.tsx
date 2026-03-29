@@ -377,6 +377,7 @@ export default function StaffEnrollmentPage() {
     }
 
     async function handleResendInvite(staff: StaffRow) {
+        alert(`Send invite clicked for ${staff.name}`);
         setStatusType("success");
         setStatusMessage(`Sending invite to ${staff.name}...`);
         console.log("SEND INVITE CLICKED:", staff);
