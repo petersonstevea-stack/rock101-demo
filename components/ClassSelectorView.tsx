@@ -66,7 +66,7 @@ export default function ClassSelectorView({
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-white">This Week’s Sessions</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {weeklySessions.map((session) => {
               const rockClass = classMap[session.rock_classes?.id];
               const instructorName =
@@ -82,9 +82,9 @@ export default function ClassSelectorView({
                   onClick={() =>
                     onSelectClass(session.rock_classes?.id, session.id)
                   }
-                  className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-5 text-left transition hover:border-red-500 hover:bg-zinc-800"
+                  className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-4 text-left transition hover:border-red-500 hover:bg-zinc-800"
                 >
-                  <div className="text-xl font-semibold text-white">
+                  <div className="text-lg font-semibold text-white">
                     {session.rock_classes?.name ?? "Unnamed Class"}
                   </div>
 
