@@ -557,7 +557,7 @@ export default function StaffEnrollmentPage() {
                             onChange={(value) =>
                                 setEditingValues((current) => ({ ...current, school: value }))
                             }
-                            options={SCHOOL_OPTIONS}
+                            options={schoolOptions}
                             placeholder="Search school..."
                             required
                             disabled={isUpdating}
