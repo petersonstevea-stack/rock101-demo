@@ -1729,11 +1729,12 @@ export default function Rock101App() {
                                 feedbackToSave,
                             });
 
-                            const { error } = await supabase
+                            const { data, error } = await supabase
                                 .from("class_sessions")
                                 .update({ director_feedback: feedbackToSave })
-                                .eq("id", selectedSessionId);
-
+                                .eq("id", selectedSessionId)
+                                .select();
+                            console.log("SAVE RESULT", { data, error });
                             if (error) {
                                 console.error("SAVE DIRECTOR FEEDBACK ERROR:", error);
                                 alert("Could not save director feedback.");
