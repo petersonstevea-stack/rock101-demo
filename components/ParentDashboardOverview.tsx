@@ -441,14 +441,10 @@ export default function ParentDashboardOverview({
                 <SectionCard title="Notes & Summary">
                     <div className="space-y-4">
                         <NotesPanelCard
-                            title={
-                                data.notesMeta.lessonAuthorName
-                                    ? `${formatNameShort(data.notesMeta.lessonAuthorName)}'s lesson notes for ${data.student.name}`
-                                    : `Lesson Notes for ${data.student.name}`
-                            }
-                            value={lessonNotes}
-                            emptyText="No private lesson notes have been added yet."
-                            lastUpdated={lessonLastUpdated}
+                            title={`REHEARSAL AUTHOR: ${data.notesMeta.rehearsalAuthorName ?? "NULL"}`}
+                            value={rehearsalNotes}
+                            emptyText="No group rehearsal notes have been added yet."
+                            lastUpdated={rehearsalLastUpdated}
                         />
 
                         <NotesPanelCard
