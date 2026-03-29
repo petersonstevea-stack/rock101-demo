@@ -181,20 +181,27 @@ function NotesPanelCard({
     authorName?: string | null;
 }) {
     const hasContent = Boolean(value?.trim());
-    function formatLastUpdatedLabel(dateString?: string | null) {
+    function formatLastUpdatedLabel(
+        dateString?: string | null,
+        authorName?: string | null
+    ) {
         if (!dateString) return "Not yet updated";
 
         const date = new Date(dateString);
 
         if (isNaN(date.getTime())) return "Not yet updated";
 
-        return `Last updated ${date.toLocaleDateString("en-US", {
+        const formatted = `Last updated ${date.toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
         })} · ${date.toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
         })}`;
+
+        return authorName
+            ? `${formatted} by ${formatNameShort(authorName)}`
+            : formatted;
     }
     return (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
