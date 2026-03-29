@@ -307,8 +307,7 @@ export default function StaffEnrollmentPage() {
             .from("staff")
             .update({ active: !staff.active })
             .eq("id", staff.id)
-            .select()
-            .single();
+            .select("id, active");
 
         if (error) {
             setStatusType("error");
@@ -317,17 +316,26 @@ export default function StaffEnrollmentPage() {
             return;
         }
 
+        console.log("STAFF TOGGLE RESULT:", data);
+
+        if (!data || data.length === 0) {
+            setStatusType("error");
+            setStatusMessage(`No staff row matched id ${staff.id}`);
+            setIsTogglingStaffId(null);
+            return;
+        }
+
         setStaffList((prev) =>
             prev.map((currentStaff) =>
                 currentStaff.id === staff.id
-                    ? { ...currentStaff, active: data.active }
+                    ? { ...currentStaff, active: data[0].active }
                     : currentStaff
             )
         );
 
         setStatusType("success");
         setStatusMessage(
-            `${staff.name} is now ${data.active ? "active" : "inactive"}.`
+            `${staff.name} is now ${data[0].active ? "active" : "inactive"}.`
         );
         setIsTogglingStaffId(null);
     }
