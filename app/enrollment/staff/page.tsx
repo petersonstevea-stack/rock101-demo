@@ -263,13 +263,13 @@ export default function StaffEnrollmentPage() {
             prev.map((staff) =>
                 staff.id === editingStaffId
                     ? {
-                          ...staff,
-                          name: data[0].name,
-                          email: data[0].email,
-                          role: data[0].role,
-                          school_slug: data[0].school_slug,
-                          school_type: data[0].school_type,
-                      }
+                        ...staff,
+                        name: data[0].name,
+                        email: data[0].email,
+                        role: data[0].role,
+                        school_slug: data[0].school_slug,
+                        school_type: data[0].school_type,
+                    }
                     : staff
             )
         );
@@ -377,37 +377,47 @@ export default function StaffEnrollmentPage() {
     }
 
     async function handleResendInvite(staff: StaffRow) {
-        setStatusType("idle");
-        setStatusMessage("");
-
-        const inviteResponse = await fetch(
-            "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email: staff.email,
-                    name: staff.name,
-                    role: staff.role,
-                    school_slug: staff.school_slug,
-                }),
-            }
-        );
-
-        const inviteResult = await inviteResponse.json();
-
-        if (!inviteResponse.ok) {
-            setStatusType("error");
-            setStatusMessage(
-                `Invite failed for ${staff.name}: ${inviteResult.error ?? "Unknown invite error"}`
-            );
-            return;
-        }
-
         setStatusType("success");
-        setStatusMessage(`Invite sent to ${staff.name}`);
+        setStatusMessage(`Sending invite to ${staff.name}...`);
+        console.log("SEND INVITE CLICKED:", staff);
+
+        try {
+            const inviteResponse = await fetch(
+                "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: staff.email,
+                        name: staff.name,
+                        role: staff.role,
+                        school_slug: staff.school_slug,
+                    }),
+                }
+            );
+
+            console.log("INVITE RESPONSE STATUS:", inviteResponse.status);
+
+            const inviteResult = await inviteResponse.json();
+            console.log("INVITE RESPONSE BODY:", inviteResult);
+
+            if (!inviteResponse.ok) {
+                setStatusType("error");
+                setStatusMessage(
+                    `Invite failed for ${staff.name}: ${inviteResult.error ?? "Unknown invite error"}`
+                );
+                return;
+            }
+
+            setStatusType("success");
+            setStatusMessage(`Invite sent to ${staff.name}`);
+        } catch (error) {
+            console.error("Invite request crashed:", error);
+            setStatusType("error");
+            setStatusMessage(`Invite request crashed for ${staff.name}`);
+        }
     }
 
     return (
@@ -646,8 +656,8 @@ export default function StaffEnrollmentPage() {
                                             {isTogglingStaffId === staff.id
                                                 ? "Updating..."
                                                 : staff.active
-                                                  ? "Deactivate"
-                                                  : "Activate"}
+                                                    ? "Deactivate"
+                                                    : "Activate"}
                                         </button>
 
                                         {!staff.active && (
