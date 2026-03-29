@@ -5,6 +5,8 @@ type NotesPanelProps = {
   onChange: (value: string) => void;
   onSave: () => void;
   canEdit?: boolean;
+  authorName?: string;
+  studentName?: string;
 };
 
 export default function NotesPanel({
@@ -14,9 +16,16 @@ export default function NotesPanel({
   onChange,
   onSave,
   canEdit = true,
+  authorName,
+  studentName,
 }: NotesPanelProps) {
-  const title =
+  const fallbackTitle =
     role === "instructor" ? "Instructor Notes" : "Rock 101 Director Notes";
+
+  const title =
+    authorName && studentName
+      ? `${authorName}'s notes for ${studentName}`
+      : fallbackTitle;
 
   const placeholder =
     role === "instructor"
