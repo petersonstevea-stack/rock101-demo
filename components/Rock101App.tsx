@@ -222,6 +222,8 @@ export default function Rock101App() {
                         director: s.notes?.director ?? "",
                         instructorUpdatedAt: s.notes?.instructorUpdatedAt ?? null,
                         directorUpdatedAt: s.notes?.directorUpdatedAt ?? null,
+                        instructorUpdatedBy: s.notes?.instructorUpdatedBy ?? null,
+                        directorUpdatedBy: s.notes?.directorUpdatedBy ?? null,
                     },
                     workflow: {
                         instructorSubmitted: s.workflow?.instructorSubmitted ?? false,
@@ -629,18 +631,8 @@ export default function Rock101App() {
             privateLessonItems,
             groupRehearsalItems,
             songProgress: dashboardSongProgress,
-            lessonAuthorName:
-                filteredUsersBySchool.find(
-                    (user) => user.email === selectedStudent.primaryInstructorEmail
-                )?.name ?? null,
-            rehearsalAuthorName:
-                filteredUsersBySchool.find(
-                    (user) =>
-                        user.email ===
-                        (dashboardClass?.directorEmail ??
-                            activeClassForSelectedStudent?.directorEmail ??
-                            selectedClass?.directorEmail)
-                )?.name ?? null,
+            lessonAuthorName: selectedStudent.notes?.instructorUpdatedBy ?? null,
+            rehearsalAuthorName: selectedStudent.notes?.directorUpdatedBy ?? null,
             classFeedback,
             badges: [],
         });
@@ -1176,9 +1168,15 @@ export default function Rock101App() {
                 ? "instructorUpdatedAt"
                 : "directorUpdatedAt";
 
+        const updatedByKey =
+            roleType === "instructor"
+                ? "instructorUpdatedBy"
+                : "directorUpdatedBy";
+
         const nextNotes = {
             ...student.notes,
             [timestampKey]: new Date().toLocaleString(),
+            [updatedByKey]: currentUser?.name ?? currentUser?.email ?? "Unknown",
         };
 
         const nextWorkflow = {
