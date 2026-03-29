@@ -1156,30 +1156,69 @@ export default function Rock101App() {
     }
 
     async function handleSaveFeedback(roleType: "instructor" | "director") {
-        console.log("handleSaveFeedback called", {
-            roleType,
-            selectedStudentName,
-        });
-        if (!selectedStudent) return;
-        const student = selectedStudent;
+    console.log("handleSaveFeedback called", {
+        roleType,
+        selectedStudentName,
+    });
 
-        const timestampKey =
+    if (!selectedStudent) return;
+
+    const student = selectedStudent;
+
+    const timestampKey =
+        roleType === "instructor"
+            ? "instructorUpdatedAt"
+            : "directorUpdatedAt";
+
+    const updatedByKey =
+        roleType === "instructor"
+            ? "instructorUpdatedBy"
+            : "directorUpdatedBy";
+
+    const now = new Date().toLocaleString();
+    const author = currentUser?.name ?? currentUser?.email ?? "Unknown";
+
+    const nextNotes = {
+        ...student.notes,
+        [timestampKey]: now,
+        [updatedByKey]: author,
+    };
+
+    const nextWorkflow = {
+        ...student.workflow,
+        instructorSubmitted:
             roleType === "instructor"
-                ? "instructorUpdatedAt"
-                : "directorUpdatedAt";
+                ? true
+                : student.workflow.instructorSubmitted,
+        directorSubmitted:
+            roleType === "director"
+                ? true
+                : student.workflow.directorSubmitted,
+    };
 
-        const updatedByKey =
-            roleType === "instructor"
-                ? "instructorUpdatedBy"
-                : "directorUpdatedBy";
+    const { error } = await supabase
+        .from("students")
+        .update({
+            notes: nextNotes,
+            workflow: nextWorkflow,
+        })
+        .eq("id", student.id);
 
-        const nextNotes = {
+    if (error) {
+        console.error("Supabase save failed:", error);
+        alert("Save failed");
+        return;
+    }
+
+    updateSelectedStudent((student) => ({
+        ...student,
+        primaryInstructorEmail: student.primaryInstructorEmail,
+        notes: {
             ...student.notes,
-            [timestampKey]: new Date().toLocaleString(),
-            [updatedByKey]: currentUser?.name ?? currentUser?.email ?? "Unknown",
-        };
-
-        const nextWorkflow = {
+            [timestampKey]: now,
+            [updatedByKey]: author,
+        },
+        workflow: {
             ...student.workflow,
             instructorSubmitted:
                 roleType === "instructor"
@@ -1189,53 +1228,9 @@ export default function Rock101App() {
                 roleType === "director"
                     ? true
                     : student.workflow.directorSubmitted,
-        };
-
-        const { error } = await supabase
-            .from("students")
-            .update({
-                notes: nextNotes,
-                workflow: nextWorkflow,
-            })
-            .eq("id", student.id);
-
-        if (error) {
-            console.error("Supabase save failed:", error);
-            alert("Save failed");
-            return;
-        }
-        updateSelectedStudent((student) => {
-            const timestampKey =
-                roleType === "instructor"
-                    ? "instructorUpdatedAt"
-                    : "directorUpdatedAt";
-
-            const nextNotes = {
-                ...student.notes,
-                [timestampKey]: new Date().toLocaleString(),
-            } as typeof student.notes & {
-                instructorUpdatedAt?: string | null;
-                directorUpdatedAt?: string | null;
-            };
-
-            return {
-                ...student,
-                primaryInstructorEmail: student.primaryInstructorEmail,
-                notes: nextNotes,
-                workflow: {
-                    ...student.workflow,
-                    instructorSubmitted:
-                        roleType === "instructor"
-                            ? true
-                            : student.workflow.instructorSubmitted,
-                    directorSubmitted:
-                        roleType === "director"
-                            ? true
-                            : student.workflow.directorSubmitted,
-                },
-            };
-        });
-    }
+        },
+    }));
+}
 
     async function handleSubmitToParents() {
         if (!selectedStudent) {
