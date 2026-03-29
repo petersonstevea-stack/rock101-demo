@@ -804,21 +804,37 @@ export default function Rock101App() {
             (student) => student.name === studentName
         );
 
+        console.log("TARGET STUDENT FOR INSTRUCTOR UPDATE:", targetStudent);
+
         if (!targetStudent) {
             alert("Student not found");
             return;
         }
 
-        const { error } = await supabase
+        if (!targetStudent.id) {
+            alert(`Instructor update failed: missing student id for ${studentName}`);
+            return;
+        }
+
+        const { data, error } = await supabase
             .from("students")
             .update({
                 primary_instructor_email: instructorEmail || null,
             })
-            .eq("id", targetStudent.id);
+            .eq("id", targetStudent.id)
+            .select("id, primary_instructor_email");
+
+        console.log("INSTRUCTOR UPDATE MATCHED ROWS:", data);
+        console.log("INSTRUCTOR UPDATE ERROR:", error);
 
         if (error) {
             console.error("Supabase instructor update failed:", error);
             alert(`Instructor update failed: ${error.message}`);
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            alert(`Instructor update failed: no student row matched id ${targetStudent.id}`);
             return;
         }
 
@@ -833,7 +849,6 @@ export default function Rock101App() {
             )
         );
     }
-
     async function handleToggleDone(item: string) {
         if (!selectedStudent) return;
 
