@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabaseClient";
 import { RockClass } from "@/types/class";
 import {
   SONG_READINESS_LEVELS,
@@ -31,8 +32,8 @@ function normalizeSongProgress(
 
       const safeReadiness: SongReadinessValue =
         typeof readiness === "number" &&
-          readiness >= 1 &&
-          readiness <= SONG_READINESS_LEVELS.length
+        readiness >= 1 &&
+        readiness <= SONG_READINESS_LEVELS.length
           ? (readiness as SongReadinessValue)
           : 1;
 
@@ -41,7 +42,8 @@ function normalizeSongProgress(
         {
           readiness: safeReadiness,
           updatedAt:
-            typeof existing?.updatedAt === "string" || existing?.updatedAt === null
+            typeof existing?.updatedAt === "string" ||
+            existing?.updatedAt === null
               ? existing.updatedAt
               : null,
         },
@@ -58,27 +60,21 @@ function normalizeClass(rockClass: any): RockClass {
 
   return {
     id: rockClass.id ?? crypto.randomUUID(),
-
     schoolId: rockClass.schoolId ?? "",
-
     name: rockClass.name ?? "Unnamed Class",
     dayOfWeek: rockClass.dayOfWeek ?? "Monday",
     time: rockClass.time ?? "",
     directorEmail: rockClass.directorEmail ?? "",
     instructorEmail: rockClass.instructorEmail ?? "",
     studentIds: Array.isArray(rockClass.studentIds) ? rockClass.studentIds : [],
-
     studentNames: Array.isArray(rockClass.studentNames)
       ? rockClass.studentNames
       : [],
-
     songs,
-
     songProgress: normalizeSongProgress(
       songs,
       rockClass.songProgress ?? createDefaultSongProgress(songs)
     ),
-
     performanceTitle: rockClass.performanceTitle ?? "",
     performanceDate: rockClass.performanceDate ?? "",
   };
@@ -116,6 +112,7 @@ export function saveClasses(classes: RockClass[]) {
 
   localStorage.setItem(CLASSES_KEY, JSON.stringify(normalized));
 }
+
 export function getClassesBySchool(schoolId: string): RockClass[] {
   if (!schoolId) {
     throw new Error("getClassesBySchool requires schoolId");
@@ -125,12 +122,17 @@ export function getClassesBySchool(schoolId: string): RockClass[] {
 
   return allClasses.filter((c) => c.schoolId === schoolId);
 }
-import { supabase } from "@/lib/supabaseClient";
 
 export async function getThisWeeksSessions(schoolId: string) {
   const today = new Date();
   const sevenDaysFromNow = new Date();
   sevenDaysFromNow.setDate(today.getDate() + 7);
+
+  console.log("SESSION DATE WINDOW", {
+    today: today.toISOString().split("T")[0],
+    sevenDaysFromNow: sevenDaysFromNow.toISOString().split("T")[0],
+    schoolId,
+  });
 
   const { data, error } = await supabase
     .from("class_sessions")
