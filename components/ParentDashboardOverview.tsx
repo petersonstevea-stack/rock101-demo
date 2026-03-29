@@ -145,27 +145,62 @@ function ProgressNavCard({
         </button>
     );
 }
+function formatLastUpdatedLabel(
+    dateString?: string | null,
+    authorName?: string | null
+) {
+    if (!dateString) return "Not yet updated";
 
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) return "Not yet updated";
+
+    const formatted = `Last updated ${date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    })} · ${date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+    })}`;
+
+    return authorName
+        ? `${formatted} by ${formatNameShort(authorName)}`
+        : formatted;
+}
 function NotesPanelCard({
     title,
     value,
     emptyText,
     lastUpdated,
+    authorName,
 }: {
     title: string;
     value?: string;
     emptyText: string;
     lastUpdated?: string | null;
+    authorName?: string | null;
 }) {
     const hasContent = Boolean(value?.trim());
+    function formatLastUpdatedLabel(dateString?: string | null) {
+        if (!dateString) return "Not yet updated";
 
+        const date = new Date(dateString);
+
+        if (isNaN(date.getTime())) return "Not yet updated";
+
+        return `Last updated ${date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+        })} · ${date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+        })}`;
+    }
     return (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-base font-semibold text-white">{title}</div>
             <div className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500">
-                {lastUpdated
-                    ? `Last updated ${lastUpdated}`
-                    : "Last updated not yet tracked"}
+                {formatLastUpdatedLabel(lastUpdated, authorName)}
             </div>
 
             {hasContent ? (
@@ -440,13 +475,21 @@ export default function ParentDashboardOverview({
 
                 <SectionCard title="Notes & Summary">
                     <div className="space-y-4">
+
+                        {/* ✅ LESSON NOTES */}
                         <NotesPanelCard
-                            title={`REHEARSAL AUTHOR: ${data.notesMeta.rehearsalAuthorName ?? "NULL"}`}
-                            value={rehearsalNotes}
-                            emptyText="No group rehearsal notes have been added yet."
-                            lastUpdated={rehearsalLastUpdated}
+                            title={
+                                data.notesMeta.lessonAuthorName
+                                    ? `${formatNameShort(data.notesMeta.lessonAuthorName)}'s lesson notes for ${data.student.name}`
+                                    : `Lesson Notes for ${data.student.name}`
+                            }
+                            value={lessonNotes}
+                            emptyText="No private lesson notes have been added yet."
+                            lastUpdated={lessonLastUpdated}
+                            authorName={data.notesMeta.lessonAuthorName}
                         />
 
+                        {/* ✅ REHEARSAL NOTES */}
                         <NotesPanelCard
                             title={
                                 data.notesMeta.rehearsalAuthorName
@@ -456,7 +499,10 @@ export default function ParentDashboardOverview({
                             value={rehearsalNotes}
                             emptyText="No group rehearsal notes have been added yet."
                             lastUpdated={rehearsalLastUpdated}
+                            authorName={data.notesMeta.rehearsalAuthorName}
                         />
+
+                        {/* ✅ CLASS FEEDBACK */}
                         <NotesPanelCard
                             title={`Rock 101 Class: ${data.student.className}`}
                             value={data.classFeedback ?? ""}
@@ -464,6 +510,7 @@ export default function ParentDashboardOverview({
                             lastUpdated={null}
                         />
 
+                        {/* ✅ SUMMARY */}
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                             <div className="text-base font-semibold text-white">
                                 {data.summary.title}
@@ -472,6 +519,7 @@ export default function ParentDashboardOverview({
                                 {data.summary.text}
                             </div>
                         </div>
+
                     </div>
                 </SectionCard>
             </section>
