@@ -69,10 +69,10 @@ export default function ClassSelectorView({
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {weeklySessions.map((session) => {
               const rockClass = classMap[session.rock_classes?.id];
-              const instructorName =
-                rockClass?.instructorEmail
-                  ? instructorMap[rockClass.instructorEmail] ||
-                    rockClass.instructorEmail
+              const directorName =
+                rockClass?.directorEmail
+                  ? instructorMap[rockClass.directorEmail] ||
+                  rockClass.directorEmail
                   : "Not assigned";
 
               return (
@@ -93,7 +93,7 @@ export default function ClassSelectorView({
                       Session: {formatSessionDate(session.session_date)} ·{" "}
                       {formatSessionTime(session.start_time)}
                     </div>
-                    <div>Instructor: {instructorName}</div>
+                    <div>Director: {directorName}</div>
                     <div>
                       Show Date:{" "}
                       {rockClass?.performanceDate
