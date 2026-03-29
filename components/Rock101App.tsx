@@ -637,7 +637,9 @@ export default function Rock101App() {
                 filteredUsersBySchool.find(
                     (user) =>
                         user.email ===
-                        (activeClassForSelectedStudent?.directorEmail ?? selectedClass?.directorEmail)
+                        (dashboardClass?.directorEmail ??
+                            activeClassForSelectedStudent?.directorEmail ??
+                            selectedClass?.directorEmail)
                 )?.name ?? null,
             classFeedback,
             badges: [],
