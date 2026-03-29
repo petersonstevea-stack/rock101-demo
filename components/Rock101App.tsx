@@ -1706,6 +1706,7 @@ export default function Rock101App() {
                         onSelectStudent={(studentName) => {
                             setSelectedStudentName(studentName);
                         }}
+                        directorFeedback={selectedSession?.director_feedback ?? ""}
                         onDirectorFeedbackChange={(value) => {
                             setWeeklySessions((prev) =>
                                 prev.map((session) =>
@@ -1718,14 +1719,15 @@ export default function Rock101App() {
                         onSaveDirectorFeedback={async () => {
                             if (!selectedSessionId) return;
 
-                            const sessionToSave =
-                                weeklySessions.find((session) => session.id === selectedSessionId);
-
-                            const feedbackToSave = sessionToSave?.director_feedback ?? "";
+                            console.log("SAVE DEBUG", {
+                                selectedSessionId,
+                                selectedSession,
+                                feedback: selectedSession?.director_feedback ?? "",
+                            });
 
                             const { error } = await supabase
                                 .from("class_sessions")
-                                .update({ director_feedback: feedbackToSave })
+                                .update({ director_feedback: selectedSession?.director_feedback ?? "" })
                                 .eq("id", selectedSessionId);
 
                             if (error) {
