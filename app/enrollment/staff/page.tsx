@@ -55,7 +55,6 @@ export default function StaffEnrollmentPage() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isTogglingStaffId, setIsTogglingStaffId] = useState<string | null>(
         null
-
     );
 
     async function loadStaff() {
@@ -74,6 +73,7 @@ export default function StaffEnrollmentPage() {
             setStaffList(data as StaffRow[]);
         }
     }
+
     async function loadSchools() {
         const { data, error } = await supabase
             .from("schools")
@@ -95,6 +95,7 @@ export default function StaffEnrollmentPage() {
             );
         }
     }
+
     useEffect(() => {
         loadStaff();
         loadSchools();
@@ -136,6 +137,7 @@ export default function StaffEnrollmentPage() {
             setIsSaving(false);
             return;
         }
+
         const { error: userError } = await supabase
             .from("users")
             .upsert(
@@ -176,7 +178,7 @@ export default function StaffEnrollmentPage() {
         }
 
         if (userError) {
-            setStatusType("success"); // ✅ still success
+            setStatusType("success");
             setStatusMessage(
                 `Staff member saved and invite sent: ${data.name} (users sync pending)`
             );
@@ -261,13 +263,13 @@ export default function StaffEnrollmentPage() {
             prev.map((staff) =>
                 staff.id === editingStaffId
                     ? {
-                        ...staff,
-                        name: data[0].name,
-                        email: data[0].email,
-                        role: data[0].role,
-                        school_slug: data[0].school_slug,
-                        school_type: data[0].school_type,
-                    }
+                          ...staff,
+                          name: data[0].name,
+                          email: data[0].email,
+                          role: data[0].role,
+                          school_slug: data[0].school_slug,
+                          school_type: data[0].school_type,
+                      }
                     : staff
             )
         );
@@ -275,7 +277,6 @@ export default function StaffEnrollmentPage() {
         setStatusType("success");
         setStatusMessage(`Staff member updated: ${data[0].name}`);
 
-        // 🔥 CALL INVITE EDGE FUNCTION
         const inviteResponse = await fetch(
             "https://qkshyyydmewegfdplhfv.supabase.co/functions/v1/invite-staff",
             {
@@ -297,15 +298,16 @@ export default function StaffEnrollmentPage() {
         if (!inviteResponse.ok) {
             setStatusType("error");
             setStatusMessage(
-                `Staff saved, but invite failed: ${inviteResult.error ?? "Unknown invite error"
-                }`
+                `Staff saved, but invite failed: ${inviteResult.error ?? "Unknown invite error"}`
             );
             setIsUpdating(false);
             return;
         }
+
         setIsUpdating(false);
         cancelEditingStaff();
     }
+
     async function handleDeleteStaff(staff: StaffRow) {
         const confirmed = confirm(
             `Are you sure you want to permanently delete ${staff.name}?`
@@ -331,6 +333,7 @@ export default function StaffEnrollmentPage() {
         setStatusType("success");
         setStatusMessage(`${staff.name} deleted`);
     }
+
     async function handleToggleStaffActive(staff: StaffRow) {
         setIsTogglingStaffId(staff.id);
         setStatusType("idle");
@@ -372,6 +375,7 @@ export default function StaffEnrollmentPage() {
         );
         setIsTogglingStaffId(null);
     }
+
     async function handleResendInvite(staff: StaffRow) {
         setStatusType("idle");
         setStatusMessage("");
@@ -405,6 +409,7 @@ export default function StaffEnrollmentPage() {
         setStatusType("success");
         setStatusMessage(`Invite sent to ${staff.name}`);
     }
+
     return (
         <EnrollmentPageShell
             title="Staff Management"
@@ -483,178 +488,183 @@ export default function StaffEnrollmentPage() {
                         required
                         disabled={isSaving}
                     />
+                </div>
 
-                    <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSaving}
+                        className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isSaving ? "Saving..." : "Save Staff"}
+                    </button>
+                </div>
+            </div>
+
+            {editingStaffId && (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
+                    <div className="mb-4">
+                        <h2 className="text-lg font-semibold text-white">Edit Staff</h2>
+                        <p className="mt-1 text-sm text-white/70">
+                            Update name, email, role, and assigned school.
+                        </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <EnrollmentTextField
+                            id="edit-staff-name"
+                            label="Full Name"
+                            value={editingValues.name}
+                            onChange={(value) =>
+                                setEditingValues((current) => ({ ...current, name: value }))
+                            }
+                            placeholder="Enter full name"
+                            required
+                            disabled={isUpdating}
+                        />
+
+                        <EnrollmentTextField
+                            id="edit-staff-email"
+                            label="Email"
+                            value={editingValues.email}
+                            onChange={(value) =>
+                                setEditingValues((current) => ({ ...current, email: value }))
+                            }
+                            placeholder="Enter email address"
+                            required
+                            disabled={isUpdating}
+                            type="email"
+                        />
+
+                        <EnrollmentSelectField
+                            id="edit-staff-role"
+                            label="Role"
+                            value={editingValues.role}
+                            onChange={(value) =>
+                                setEditingValues((current) => ({ ...current, role: value }))
+                            }
+                            options={STAFF_ROLE_OPTIONS}
+                            placeholder="Select role"
+                            required
+                            disabled={isUpdating}
+                        />
+
+                        <EnrollmentSearchSelectField
+                            id="edit-staff-school"
+                            label="Assigned School"
+                            value={editingValues.school}
+                            onChange={(value) =>
+                                setEditingValues((current) => ({ ...current, school: value }))
+                            }
+                            options={SCHOOL_OPTIONS}
+                            placeholder="Search school..."
+                            required
+                            disabled={isUpdating}
+                        />
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-2">
                         <button
                             type="button"
-                            onClick={handleSubmit}
-                            disabled={isSaving}
+                            onClick={cancelEditingStaff}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                        >
+                            Cancel Edit
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleUpdateStaff}
+                            disabled={isUpdating}
                             className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isSaving ? "Saving..." : "Save Staff"}
+                            {isUpdating ? "Saving..." : "Save Staff Changes"}
                         </button>
                     </div>
                 </div>
+            )}
 
-                {editingStaffId && (
-                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
-                        <div className="mb-4">
-                            <h2 className="text-lg font-semibold text-white">Edit Staff</h2>
-                            <p className="mt-1 text-sm text-white/70">
-                                Update name, email, role, and assigned school.
-                            </p>
-                        </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h2 className="text-lg font-semibold text-white">Staff Directory</h2>
+                <button
+                    type="button"
+                    onClick={() => setShowInactiveStaff((prev) => !prev)}
+                    className="mt-2 rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                >
+                    {showInactiveStaff ? "Hide Inactive Staff" : "Show Inactive Staff"}
+                </button>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <EnrollmentTextField
-                                id="edit-staff-name"
-                                label="Full Name"
-                                value={editingValues.name}
-                                onChange={(value) =>
-                                    setEditingValues((current) => ({ ...current, name: value }))
-                                }
-                                placeholder="Enter full name"
-                                required
-                                disabled={isUpdating}
-                            />
+                <div className="mt-4 space-y-3">
+                    {staffList.length === 0 ? (
+                        <p className="text-sm text-white/50">No staff yet.</p>
+                    ) : (
+                        staffList
+                            .filter((staff) => showInactiveStaff || staff.active)
+                            .map((staff) => (
+                                <div
+                                    key={staff.id}
+                                    className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                >
+                                    <p className="font-semibold text-white">{staff.name}</p>
+                                    <p className="text-xs text-white/60">{staff.email}</p>
+                                    <p className="text-xs text-white/40">
+                                        {staff.role} • {getSchoolLabel(staff.school_slug as never)}
+                                    </p>
 
-                            <EnrollmentTextField
-                                id="edit-staff-email"
-                                label="Email"
-                                value={editingValues.email}
-                                onChange={(value) =>
-                                    setEditingValues((current) => ({ ...current, email: value }))
-                                }
-                                placeholder="Enter email address"
-                                required
-                                disabled={isUpdating}
-                                type="email"
-                            />
+                                    <p className="mt-2 text-xs">
+                                        {staff.active ? (
+                                            <span className="text-green-400">Active</span>
+                                        ) : (
+                                            <span className="text-red-400">Inactive</span>
+                                        )}
+                                    </p>
 
-                            <EnrollmentSelectField
-                                id="edit-staff-role"
-                                label="Role"
-                                value={editingValues.role}
-                                onChange={(value) =>
-                                    setEditingValues((current) => ({ ...current, role: value }))
-                                }
-                                options={STAFF_ROLE_OPTIONS}
-                                placeholder="Select role"
-                                required
-                                disabled={isUpdating}
-                            />
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => startEditingStaff(staff)}
+                                            className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                        >
+                                            Edit Staff
+                                        </button>
 
-                            <EnrollmentSearchSelectField
-                                id="edit-staff-school"
-                                label="Assigned School"
-                                value={editingValues.school}
-                                onChange={(value) =>
-                                    setEditingValues((current) => ({ ...current, school: value }))
-                                }
-                                options={SCHOOL_OPTIONS}
-                                placeholder="Search school..."
-                                required
-                                disabled={isUpdating}
-                            />
-                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleResendInvite(staff)}
+                                            className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
+                                        >
+                                            Send Invite
+                                        </button>
 
-                        <div className="mt-6 flex justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={cancelEditingStaff}
-                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                            >
-                                Cancel Edit
-                            </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleStaffActive(staff)}
+                                            disabled={isTogglingStaffId === staff.id}
+                                            className="rounded-md bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
+                                        >
+                                            {isTogglingStaffId === staff.id
+                                                ? "Updating..."
+                                                : staff.active
+                                                  ? "Deactivate"
+                                                  : "Activate"}
+                                        </button>
 
-                            <button
-                                type="button"
-                                onClick={handleUpdateStaff}
-                                disabled={isUpdating}
-                                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {isUpdating ? "Saving..." : "Save Staff Changes"}
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="text-lg font-semibold text-white">Staff Directory</h2>
-                    <button
-                        type="button"
-                        onClick={() => setShowInactiveStaff((prev) => !prev)}
-                        className="mt-2 rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
-                    >
-                        {showInactiveStaff ? "Hide Inactive Staff" : "Show Inactive Staff"}
-                    </button>
-                    <div className="mt-4 space-y-3">
-                        {staffList.length === 0 ? (
-                            <p className="text-sm text-white/50">No staff yet.</p>
-                        ) : (
-                            staffList
-                                .filter((staff) => showInactiveStaff || staff.active)
-                                .map((staff) => (
-                                    <div
-                                        key={staff.id}
-                                        className="rounded-xl border border-white/10 bg-black/40 p-4"
-                                    >
-                                        <p className="font-semibold text-white">{staff.name}</p>
-                                        <p className="text-xs text-white/60">{staff.email}</p>
-                                        <p className="text-xs text-white/40">
-                                            {staff.role} • {getSchoolLabel(staff.school_slug as never)}
-                                        </p>
-
-                                        <p className="mt-2 text-xs">
-                                            {staff.active ? (
-                                                <span className="text-green-400">Active</span>
-                                            ) : (
-                                                <span className="text-red-400">Inactive</span>
-                                            )}
-                                        </p>
-
-                                        <div className="mt-3 flex flex-wrap gap-2">
+                                        {!staff.active && (
                                             <button
                                                 type="button"
-                                                onClick={() => startEditingStaff(staff)}
-                                                className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                                onClick={() => handleDeleteStaff(staff)}
+                                                className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
                                             >
-                                                Edit Staff
+                                                Delete Staff
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleResendInvite(staff)}
-                                                className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
-                                            >
-                                                Send Invite
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleToggleStaffActive(staff)}
-                                                disabled={isTogglingStaffId === staff.id}
-                                                className="rounded-md bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
-                                            >
-                                                {isTogglingStaffId === staff.id
-                                                    ? "Updating..."
-                                                    : staff.active
-                                                        ? "Deactivate"
-                                                        : "Activate"}
-                                            </button>
-                                            {!staff.active && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteStaff(staff)}
-                                                    className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
-                                                >
-                                                    Delete Staff
-                                                </button>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
-                                ))
-                        )}
-                    </div>
+                                </div>
+                            ))
+                    )}
                 </div>
+            </div>
         </EnrollmentPageShell>
     );
 }
