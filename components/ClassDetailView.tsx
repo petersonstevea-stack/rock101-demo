@@ -34,7 +34,7 @@ type ClassDetailViewProps = {
   onUpdateSongProgress: (song: string, readiness: SongReadinessValue) => void;
   directorFeedback: string;
   onDirectorFeedbackChange: (value: string) => void;
-  onSaveDirectorFeedback: () => void;
+  onSaveDirectorFeedback: () => Promise<boolean>;
 };
 
 function getSongReadinessLabel(readiness?: number) {
