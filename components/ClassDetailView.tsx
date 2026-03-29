@@ -63,7 +63,7 @@ export default function ClassDetailView({
   onDirectorFeedbackChange,
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
-  const [feedbackSaved, setFeedbackSaved] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
     rockClass.instructorEmail ||
@@ -252,20 +252,21 @@ export default function ClassDetailView({
 
               if (!didSave) return;
 
-              setFeedbackSaved(true);
-
-              setTimeout(() => {
-                setFeedbackSaved(false);
-              }, 2000);
+              setLastSavedAt(new Date().toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              }));
             }}
             className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
           >
             Save Director Feedback
           </button>
 
-          {feedbackSaved && (
+          {lastSavedAt && (
             <span className="text-sm text-green-400">
-              Saved ✓
+              Saved {lastSavedAt}
             </span>
           )}
         </div>
