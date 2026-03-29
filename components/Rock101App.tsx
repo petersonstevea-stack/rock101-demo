@@ -809,16 +809,12 @@ export default function Rock101App() {
             return;
         }
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from("students")
             .update({
                 primary_instructor_email: instructorEmail || null,
             })
-            .eq("id", targetStudent.id)
-            .select("id, first_name, last_initial, primary_instructor_email")
-            .single();
-
-        console.log("INSTRUCTOR UPDATE RESULT:", data);
+            .eq("id", targetStudent.id);
 
         if (error) {
             console.error("Supabase instructor update failed:", error);
