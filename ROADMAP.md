@@ -83,10 +83,13 @@ Partially complete — school-specific data removed; instrument/program/role con
 Intentionally deferred to Phase 2:
 - 🔜 `data/songLibrary.ts` — 1 caller (`ClassSetupView`); approved songs list is hardcoded; should become DB-managed (target: `songs` table per ARCHITECTURE.md); deferred — not blocking pilot
 
-### Step 1.10 — Remove Legacy Director Role References
-- Audit all "director" role checks and UI labels
-- Replace with assignment-based logic (Show Director = staff assigned to session)
-- Clean up `components/Rock101App.tsx` `defaultCurriculumState` hardcoded fallback
+### ✅ Step 1.10 — Remove Legacy Director Role References
+Complete:
+- All UI labels updated: "Director" → "Class Instructor" across `ClassDetailView`, `ClassSetupView`, `ClassSelectorView`, `GraduationRequirementsView`, `NotesPanel`, `WorkflowBanner`, `CertificateView`, `Rock101App`, `lib/roles.ts`, `lib/progress.ts`
+- Class Director assignment dropdown now shows all staff at the school, not just role === "director"
+- Variable names, function names, role value strings, permission logic, and workflow field names left unchanged
+
+⚠️ Role value rename (`director` → `music_director`, `gm` → `general_manager`) remains future work — blocked on RLS policy updates. Do not rename until all RLS policies and role checks in code are updated to use new values first.
 
 ### Step 1.11 — Migrate Song Readiness to Session-Level Tables
 - Create `session_song_readiness` table (student grade per song per session)
