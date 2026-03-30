@@ -41,11 +41,28 @@ had two typos, was never reachable). `@vercel/kv` dependency removed.
 - Verify data in Supabase
 - Delete `data/methodLessons.ts`
 
-### Step 1.7 — Design and Create Curriculum Structure Table(s)
-- Review `data/rock101Curriculum.ts` structure (~1000 lines)
-- Design schema (may fold into `method_lessons` or need separate table)
-- Write migration SQL and seeding script
-- Verify, then delete local file
+### ✅ Step 1.7 — Design and Create Curriculum Structure Table(s)
+Seeding complete. Three tables created and populated:
+- `rock101_graduation_requirements` — 49 rows
+- `rock101_rehearsal_behaviors` — 6 rows
+- `rock101_method_lesson_months` — 155 rows
+
+`data/methodLessons.ts` deletion is blocked — still imported by `data/rock101Curriculum.ts`.
+`data/rock101Curriculum.ts` deletion is blocked — 6 active callers still read from it at runtime.
+Both files can only be deleted after Step 1.7b is complete.
+
+### Step 1.7b — Migrate Curriculum Callers to Supabase
+Before `data/rock101Curriculum.ts` (and `data/methodLessons.ts`) can be deleted,
+the following 6 files must be rewritten to query the new Supabase tables instead:
+
+- `components/Rock101App.tsx`
+- `components/CertificateView.tsx` — uses `getPrivateLessonSections`, `getGroupRehearsalSections`
+- `components/GraduationRequirementsView.tsx` — uses `getAllCurriculumItems`, `ROCK101_MONTH_LABELS`
+- `components/GroupRehearsalView.tsx` — uses curriculum data
+- `components/PrivateLessonView.tsx` — uses curriculum data
+- `lib/progress.ts` — uses `getAllCurriculumItems`, `getGroupRehearsalSections`, `getPrivateLessonSections`
+
+After all 6 are migrated: delete `data/rock101Curriculum.ts` and `data/methodLessons.ts`.
 
 ### Step 1.8 — Delete Superseded Local Data Files
 After confirming Supabase has all data:
