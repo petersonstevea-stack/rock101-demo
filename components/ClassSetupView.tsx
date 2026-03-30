@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RockClass } from "@/types/class";
-import { getSavedClasses, getClassesBySchool, saveClasses } from "@/lib/classes";
+import { saveClasses } from "@/lib/classes";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
 import { schools, type SchoolId } from "@/data/schools";
@@ -20,6 +20,7 @@ type ClassSetupViewProps = {
     mode?: "create" | "edit";
     classToEdit?: RockClass | null;
     onClassSaved?: () => void;
+    defaultSchoolId?: SchoolId;
 };
 
 export default function ClassSetupView({
@@ -28,12 +29,13 @@ export default function ClassSetupView({
     mode = "create",
     classToEdit = null,
     onClassSaved,
+    defaultSchoolId,
 }: ClassSetupViewProps) {
 
     const [classes, setClasses] = useState<RockClass[]>([]);
     const [editingClassId, setEditingClassId] = useState<string | null>(null);
     const [directorEmail, setDirectorEmail] = useState("");
-    const [schoolId, setSchoolId] = useState<SchoolId>(schools[0].id);
+    const [schoolId, setSchoolId] = useState<SchoolId>(defaultSchoolId ?? schools[0].id);
     const [className, setClassName] = useState("");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
     const [time, setTime] = useState("");
@@ -59,6 +61,51 @@ export default function ClassSetupView({
         setPerformanceTitle(classToEdit.performanceTitle ?? "");
         setPerformanceDate(classToEdit.performanceDate ?? "");
     }, [mode, classToEdit]);
+
+    useEffect(() => {
+        if (defaultSchoolId) {
+            setSchoolId(defaultSchoolId);
+        }
+    }, [defaultSchoolId]);
+
+    useEffect(() => {
+        async function loadClasses() {
+            console.log("ClassSetupView loadClasses — schoolId:", schoolId);
+
+            const { data, error } = await supabase
+                .from("rock_classes")
+                .select("*")
+                .eq("school_id", schoolId);
+
+            console.log("ClassSetupView loadClasses — data:", data, "error:", error);
+
+            if (error) {
+                console.error("Error loading classes:", error);
+                return;
+            }
+
+            const loaded: RockClass[] = (data ?? []).map((c: any) => ({
+                id: c.id,
+                schoolId: c.school_id ?? "",
+                name: c.name ?? "Unnamed Class",
+                dayOfWeek: c.day_of_week ?? "Monday",
+                time: c.time ?? "",
+                directorEmail: c.director_email ?? "",
+                instructorEmail: c.instructor_email ?? "",
+                studentIds: c.student_ids ?? [],
+                studentNames: c.student_names ?? [],
+                songs: c.songs ?? [],
+                songProgress: c.song_progress ?? {},
+                performanceTitle: c.performance_title ?? "",
+                performanceDate: c.performance_date ?? "",
+            }));
+
+            setClasses(loaded);
+        }
+
+        loadClasses();
+    }, [schoolId]);
+
     const schoolUsers = useMemo(() => {
     console.log("CURRENT schoolId:", schoolId);
     console.log("ALL USERS BEFORE FILTER:", users);

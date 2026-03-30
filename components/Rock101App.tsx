@@ -2130,6 +2130,7 @@ export default function Rock101App() {
                         users={filteredUsersBySchool}
                         mode={editingClass ? "edit" : "create"}
                         classToEdit={editingClass}
+                        defaultSchoolId={currentUser?.schoolId as SchoolId | undefined}
                         onClassSaved={() => {
 
                             setEditingClass(null);

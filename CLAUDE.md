@@ -31,12 +31,27 @@ All other programs (Little Wing, Rookies, Summer Camps) are **future phase**. Re
 ### Per-School Roles
 ```
 Owner (= Franchise Owner)
-└── General Manager
-    └── Music Director
-        └── Instructor
-            └── Parent (login, no management)
-                └── Student (no login — future phase may add student login)
+└── General Manager  (peer authority with Music Director)
+└── Music Director   (peer authority with General Manager)
+    └── Instructor
+        └── Parent (login, no management)
+            └── Student (no login — future phase may add student login)
 ```
+
+### Actual Role Values in Database (use these exactly in RLS policies and role checks)
+| Display Name | DB Value | Notes |
+|---|---|---|
+| Owner | `owner` | Franchise owner |
+| General Manager | `gm` | Pending rename to `general_manager` |
+| Music Director | `director` | Pending rename to `music_director` |
+| Instructor | `instructor` | Stable |
+
+### ⚠️ Pending Role Value Migration
+The following `staff.role` values need to be renamed before going to multi-school production:
+- `gm` → `general_manager`
+- `director` → `music_director`
+
+Do NOT run this migration until all RLS policies and role checks in the codebase have been updated to use the new values first. Current RLS policies use the old values (`gm`, `director`, `owner`).
 
 ### Critical Role Rules
 - **The "Director" role has been eliminated.** Any references to a standalone "Director" role in the codebase are legacy and must be refactored out.
@@ -126,7 +141,40 @@ Scope examples: `global`, `franchise_rollup`, `franchise_region`, `franchise_gro
 
 ---
 
-## Student Progress Architecture
+## Class + Session Architecture
+
+### Two Tables — Distinct Purposes
+- **`rock_classes`** — the standing class template. Describes a recurring class: school, day/time, enrolled students, songs, show info. Think of it as the permanent class roster card.
+- **`class_sessions`** — a specific dated occurrence of a class. Tracks date, start/end time, status, and director feedback. One `rock_class` → many `class_sessions`.
+
+### Foreign Key
+`class_sessions.class_id` → `rock_classes.id`
+
+### Session Design Intent
+Sessions are intentionally designed as **archivable instances**:
+- Each session has its own date, instructor assignment, and notes
+- Sessions can be closed/archived after they occur
+- This structure supports future Pike 13 integration (see below)
+
+### ⚠️ Legacy Fields in rock_classes
+- `school` — legacy duplicate of `school_id`, flagged for cleanup
+- `director_email` / `director_user_id` — legacy "director" role fields, should eventually be renamed to reflect "show director" assignment (any staff member)
+
+---
+
+## Pike 13 Integration (Future Phase)
+Pike 13 is School of Rock's school management system — it handles scheduling, instructor assignments, and student enrollment at the school operations level.
+
+**Vision:** Pike 13 will eventually write into or override `class_sessions` instances independently, including:
+- Assigning substitute instructors per session
+- Adding/removing students per session (without changing the master `rock_classes` roster)
+- Pushing scheduled class dates automatically
+
+**Architecture implication:** Never flatten session data back into `rock_classes`. Keep `class_sessions` as the authoritative instance-level record. All session-level data (instructor, students present, notes, feedback) must live in `class_sessions`, not in the parent `rock_classes` template.
+
+**Do not build the Pike 13 integration now** — but every decision about class and session data structure should be made with this future integration in mind.
+
+---
 - Lesson progress lives in `students.curriculum` as jsonb
 - Structure: `{ [lessonKey]: { done: bool, signed: bool, date: string, fistBumps: int } }`
 - Workflow state lives in `students.workflow` as jsonb
@@ -144,6 +192,130 @@ Scope examples: `global`, `franchise_rollup`, `franchise_region`, `franchise_gro
 - **No big rewrites** — surgical changes only
 - **Always verify Git is clean** before starting any structural refactor
 - **Production data safety is the top priority**
+
+---
+
+## Performance Program — Early Work Exists
+There are folders in the codebase containing early Performance Program work (approximately 5% complete). Before doing any Performance Program build work, Claude Code must first audit these folders and produce an inventory of:
+- What files exist and what they do
+- What is functional vs scaffolding vs abandoned
+- What conflicts or overlaps with the existing Supabase schema
+- What is safe to build on vs safe to delete
+
+Do not assume these files are correct or complete. Do not build on top of them without auditing first.
+
+**Audit prompt to run at start of Performance Program phase:**
+```
+Audit all files related to the Performance Program in this codebase.
+List every file, what it does, its current state (functional/scaffolding/incomplete),
+and whether it conflicts with the Supabase schema. Do not make any changes.
+Produce a clear inventory before we decide what to keep.
+```
+
+---
+
+## RLS (Row Level Security) Policies
+Some Supabase tables already have RLS policies in place. Before any migration or schema change, Claude Code must check whether the affected table has RLS policies that could break after the change.
+
+**Before touching any table, run this SQL to check its policies:**
+```sql
+SELECT tablename, policyname, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'public'
+AND tablename = '[table_name]'
+ORDER BY tablename, policyname;
+```
+
+**To see all RLS policies across the entire database:**
+```sql
+SELECT tablename, policyname, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
+```
+
+Never disable or modify RLS policies without explicit confirmation. If a migration would affect a table with RLS, flag it before proceeding.
+
+### Current RLS Policies (as of March 2026)
+
+| Table | Policy | Type | Rule Summary |
+|---|---|---|---|
+| `rock_classes` | Classes can be read by school | SELECT | `school_id` must match `staff.school_slug` for logged-in user |
+| `schools` | Allow read access to schools | SELECT | Public read — anyone can read |
+| `staff` | Allow insert for staff | INSERT | Open insert |
+| `staff` | Staff can only see their school | SELECT | Currently set to `true` — effectively open read |
+| `staff` | Staff can update their school | UPDATE | `school_slug` must match logged-in user's school |
+| `students` | Students can only see their school | SELECT | `school` must match staff's `school_slug` |
+| `students` | Students can update their school | UPDATE | `school` must match staff's `school_slug` |
+| `users` | Users can read their own record | SELECT | `auth.uid()` must match `auth_id` |
+
+### ⚠️ RLS Warnings — Review Before Migrating
+
+**1. `rock_classes` uses `school_id` — localStorage migration risk**
+The RLS policy filters `rock_classes` by `school_id`. If `saveClasses()` in `lib/classes.ts` is not correctly setting `school_id` on every write, records written to Supabase may become invisible to the logged-in user due to RLS filtering. Verify `school_id` is always populated before migrating classes off localStorage.
+
+**2. `staff` SELECT policy is effectively open (`true`)**
+The "Staff can only see their school" SELECT policy has `qual = true`, meaning it allows all reads. This may be intentional for now but should be tightened before going to production at scale.
+
+**3. `students` and `rock_classes` both rely on `staff.school_slug`**
+Both policies look up the logged-in user's school via `staff.school_slug`. If a staff member exists in `users` or `profiles` but not in `staff`, these queries will return no results. During the session/auth migration (Phase 1, Step 1.3), ensure every authenticated user has a corresponding `staff` record or these policies will silently break data visibility.
+
+**4. No RLS on most tables**
+The following tables have no RLS policies yet: `programs`, `program_enrollments`, `class_sessions`, `parents`, `parent_student_links`, `show_group_instances`, `cast_slot_types`, and all other tables. This is acceptable for pilot but must be addressed before multi-school production rollout.
+
+---
+
+## Break/Fix Recovery Protocol
+If a refactor breaks something, follow this exact sequence. Do not skip steps.
+
+### Step 1 — Stop Immediately
+Do not try to fix forward by writing more code. Stop and assess.
+
+### Step 2 — Identify the Blast Radius
+Run this in Claude Code:
+```
+Something broke after the last change. Before trying to fix it,
+tell me exactly what changed, what is now broken, and what files
+were touched. Do not write any new code yet.
+```
+
+### Step 3 — Check Git First
+```bash
+git status          # see what changed
+git diff            # see exact line changes
+git log --oneline   # find the last clean commit
+```
+
+### Step 4 — Decide: Fix Forward or Roll Back
+- If the break is small and cause is clear → fix forward with Claude Code
+- If the break is large or cause is unclear → roll back to last clean commit:
+```bash
+git stash           # save any work in progress
+git checkout [last-clean-commit-hash]
+```
+
+### Step 5 — If Rolling Back
+After rolling back, tell Claude Code:
+```
+We rolled back to [commit]. Here is what broke and why.
+Before we try again, explain what we should do differently
+to avoid the same problem. Do not write code yet.
+```
+
+### Step 6 — Prevention Going Forward
+After any recovery, Claude Code should:
+- Explain what caused the break in plain English
+- Propose a safer approach before writing any new code
+- Confirm a Git commit exists before starting the retry
+
+### Common Break Scenarios
+| Scenario | First Action |
+|---|---|
+| Page/component crashes | Check browser console for exact error, share with Claude Code |
+| Supabase query returns nothing | Check RLS policies on that table first |
+| Login broken | Check `lib/session.ts` and `staff`/`users` table queries |
+| Progress not saving | Check `students.curriculum` write path in Supabase |
+| Build fails on Vercel | Check for TypeScript errors locally first with `npm run build` |
 
 ---
 
