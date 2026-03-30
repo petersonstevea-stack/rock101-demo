@@ -171,7 +171,7 @@ export default function Rock101App() {
 
             if (!data) return;
             const formatted = data.map((s: any) => {
-                const schoolId = mapSchoolNameToId(s.school);
+                const schoolId = (s.school_id as SchoolId) ?? mapSchoolNameToId(s.school);
 
                 return {
                     id: s.id,
