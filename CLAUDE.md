@@ -1,3 +1,4 @@
+<!-- DO NOT OVERWRITE THIS FILE — restore from git if blank: git checkout HEAD -- CLAUDE.md -->
 # CLAUDE.md — Stage Ready / School of Rock LMS
 ## Project Briefing for Claude Code
 
