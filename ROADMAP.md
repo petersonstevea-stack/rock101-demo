@@ -91,11 +91,13 @@ Complete:
 
 ⚠️ Role value rename (`director` → `music_director`, `gm` → `general_manager`) remains future work — blocked on RLS policy updates. Do not rename until all RLS policies and role checks in code are updated to use new values first.
 
-### Step 1.11 — Migrate Song Readiness to Session-Level Tables
-- Create `session_song_readiness` table (student grade per song per session)
-- Create `session_group_song_readiness` table (class grade per song per session)
-- Migrate off `rock_classes.songProgress` jsonb blob
-- Preserves weekly progression history per song
+### ✅ Step 1.11 — Migrate Song Readiness to Session-Level Tables
+Complete:
+- `session_song_readiness` table created — individual student grade per song per session
+- `session_group_song_readiness` table created — whole-class grade per song per session
+- Both tables use `song_name text` for now; `song_id` foreign key to be added in Phase 2 when `songs` table is built
+- `rock_classes.song_progress` jsonb blob superseded — existing test data discarded, new tables are the system of record going forward
+- `rock_classes.song_progress` column left in place until new UI is writing to new tables successfully
 
 ### ✅ Step 1.12 — Add required_high_fives to Rehearsal Behaviors
 Complete. `required_high_fives` integer column added to `rock101_rehearsal_behaviors` table with `DEFAULT 10`. Per-behavior threshold is now configurable without a code change.
