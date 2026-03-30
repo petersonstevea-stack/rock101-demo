@@ -1,8 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { AppUser } from "@/types/user";
 
-const SESSION_KEY = "rock101-session";
-const CREATED_USERS_KEY = "rock101-created-users";
 const TAB_KEY = "rock101-tab";
 
 export type SessionUser = {
@@ -26,67 +24,6 @@ type StaffSchoolRoleRow = {
     active: boolean | null;
 };
 
-export function saveSession(user: SessionUser) {
-    // removed — Supabase Auth is source of truth
-}
-
-export function getSavedSession(): SessionUser | null {
-    // removed — Supabase Auth is source of truth
-    return null;
-}
-
-export function clearSavedSession() {
-    if (typeof window === "undefined") return;
-}
-
-export function getCreatedUsers(): AppUser[] {
-    if (typeof window === "undefined") return [];
-
-    const raw = localStorage.getItem(CREATED_USERS_KEY);
-
-    if (!raw) return [];
-
-    try {
-        return JSON.parse(raw) as AppUser[];
-    } catch {
-        return [];
-    }
-}
-
-export function saveCreatedUsers(usersToSave: AppUser[]) {
-    if (typeof window === "undefined") return;
-
-    localStorage.setItem(CREATED_USERS_KEY, JSON.stringify(usersToSave));
-}
-
-export function getAllUsers(): AppUser[] {
-    return getCreatedUsers();
-}
-
-export function findUserByEmail(email: string): SessionUser | null {
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const matchedUser = getAllUsers().find(
-        (user) => user.email.toLowerCase() === normalizedEmail
-    );
-
-    if (!matchedUser) return null;
-    if (matchedUser.status !== "active") return null;
-
-    const legacySchoolId =
-        "schoolId" in matchedUser
-            ? String(matchedUser.schoolId)
-            : "school" in matchedUser
-                ? String(matchedUser.school)
-                : "";
-
-    return {
-        email: matchedUser.email,
-        name: matchedUser.name,
-        role: matchedUser.role,
-        schoolId: legacySchoolId,
-    };
-}
 
 export async function findStaffUserByEmail(
     email: string
@@ -132,6 +69,11 @@ export async function findStaffUserByEmail(
         role: primaryRole.role,
         schoolId: primaryRole.school_slug,
     };
+}
+
+export function clearSavedSession() {
+    // localStorage session removed — Supabase Auth is source of truth
+    // kept as a no-op so logout callers don't need updating yet
 }
 
 export function saveSelectedTab(tab: string) {

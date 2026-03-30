@@ -36,7 +36,6 @@ import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import {
     clearSavedSession,
-    getAllUsers,
     saveSelectedTab,
     getSavedTab,
     clearSavedTab,
