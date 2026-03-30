@@ -568,8 +568,6 @@ export default function Rock101App() {
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
         selectedStudent.workflow.directorSubmitted &&
-        selectedStudent.workflow.graduationDirectorSubmitted &&
-        selectedStudent.workflow.graduationInstructorSubmitted &&
         !selectedStudent.workflow.parentSubmitted
         : false;
     const workflowMissingMessage = !selectedStudent
@@ -579,10 +577,8 @@ export default function Rock101App() {
             : !selectedStudent.workflow.instructorSubmitted
                 ? "Waiting on instructor weekly feedback."
                 : !selectedStudent.workflow.directorSubmitted
-                    ? "Waiting on director weekly feedback."
-                    : !selectedStudent.workflow.graduationDirectorSubmitted
-                        ? "Waiting on director graduation signoff."
-                        : undefined;
+                    ? "Waiting on class instructor weekly feedback."
+                    : undefined;
     function handleSetTab(nextTab: Tab) {
         setTab(nextTab);
         saveSelectedTab(nextTab);
@@ -1183,6 +1179,20 @@ export default function Rock101App() {
             if (!response.ok) {
                 alert(`Parent email failed. Status: ${response.status}`);
                 return;
+            }
+
+            const { error: workflowError } = await supabase
+                .from("students")
+                .update({
+                    workflow: {
+                        ...selectedStudent.workflow,
+                        parentSubmitted: true,
+                    },
+                })
+                .eq("id", selectedStudent.id);
+
+            if (workflowError) {
+                console.error("Failed to persist parentSubmitted:", workflowError);
             }
 
             updateSelectedStudent((student) => ({

@@ -15,13 +15,6 @@ export default function WorkflowBanner({
     canSubmit = true,
     missingMessage,
 }: WorkflowBannerProps) {
-    console.log("WorkflowBanner render:", {
-        ready,
-        submitted,
-        studentName,
-        canSubmit,
-    });
-
     if (submitted) {
         return (
             <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-white">
@@ -31,8 +24,6 @@ export default function WorkflowBanner({
     }
 
     if (!ready) {
-        console.log("WorkflowBanner NOT ready");
-
         if (!missingMessage) {
             return null;
         }
@@ -48,8 +39,6 @@ export default function WorkflowBanner({
             </div>
         );
     }
-
-    console.log("WorkflowBanner READY + showing button");
 
     return (
         <div className="mb-6 rounded-2xl border border-red-500/40 bg-red-950/20 p-4">
@@ -67,11 +56,7 @@ export default function WorkflowBanner({
                 {canSubmit ? (
                     <button
                         type="button"
-                        onClick={() => {
-                            console.log("🔥 Submit button clicked");
-                            alert("BUTTON CLICKED");
-                            onSubmit();
-                        }}
+                        onClick={onSubmit}
                         className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500"
                     >
                         Submit to Parent
