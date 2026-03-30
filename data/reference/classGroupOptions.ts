@@ -14,12 +14,12 @@ export const CLASS_GROUP_OPTIONS: ClassGroupOption[] = [
   {
     value: "del_mar_monday_madness",
     label: "Monday Madness",
-    school: "del_mar",
+    school: "del-mar",
   },
   {
     value: "del_mar_tuesday_titans",
     label: "Tuesday Titans",
-    school: "del_mar",
+    school: "del-mar",
   },
   {
     value: "encinitas_wednesday_warriors",
@@ -29,6 +29,6 @@ export const CLASS_GROUP_OPTIONS: ClassGroupOption[] = [
   {
     value: "scripps_ranch_thursday_thunder",
     label: "Thursday Thunder",
-    school: "scripps_ranch",
+    school: "scripps-ranch",
   },
 ];

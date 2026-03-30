@@ -1,6 +1,6 @@
 export type SchoolType = "franchise" | "corporate";
 
-export type SchoolSlug = "del_mar" | "encinitas" | "scripps_ranch";
+export type SchoolSlug = "del-mar" | "encinitas" | "scripps-ranch";
 
 export type ProgramId =
   | "rock101"
@@ -24,9 +24,9 @@ export const SCHOOL_TYPE_OPTIONS: Option<SchoolType>[] = [
 ];
 
 export const SCHOOL_OPTIONS: Option<SchoolSlug>[] = [
-  { value: "del_mar", label: "Del Mar" },
+  { value: "del-mar", label: "Del Mar" },
   { value: "encinitas", label: "Encinitas" },
-  { value: "scripps_ranch", label: "Scripps Ranch" },
+  { value: "scripps-ranch", label: "Scripps Ranch" },
 ];
 
 export const PROGRAM_OPTIONS: Option<ProgramId>[] = [
