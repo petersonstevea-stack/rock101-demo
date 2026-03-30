@@ -1,7 +1,6 @@
 import type {
   InstrumentId,
   ProgramId,
-  SchoolSlug,
   SchoolType,
   StaffRole,
 } from "@/data/reference/enrollmentOptions";
@@ -12,14 +11,14 @@ export type StaffFormValues = {
   name: string;
   email: string;
   role: StaffRole | "";
-  school: SchoolSlug | "";
+  school: string;
   schoolType: SchoolType | "";
 };
 
 export type StudentEnrollmentFormValues = {
   firstName: string;
   lastName: string;
-  school: SchoolSlug | "";
+  school: string;
   primaryProgramId: ProgramId | "";
   instrument: InstrumentId | "";
   instructorId: string;
@@ -34,7 +33,7 @@ export type ParentFormValues = {
 
 export type EnrollmentWizardState = {
   schoolType: SchoolType | "";
-  school: SchoolSlug | "";
+  school: string;
   userType: EnrollmentUserType | "";
   staff: StaffFormValues;
   parent: ParentFormValues;

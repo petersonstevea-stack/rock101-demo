@@ -8,7 +8,6 @@ import StudentEnrollmentForm from "@/components/enrollment/StudentEnrollmentForm
 import {
     getInstrumentLabel,
     getProgramLabel,
-    getSchoolLabel,
 } from "@/data/reference/enrollmentOptions";
 import { supabase } from "@/lib/supabaseClient";
 import type {
@@ -102,6 +101,18 @@ export default function EnrollmentPage() {
     const [studentList, setStudentList] = useState<StudentRow[]>([]);
     const [parentList, setParentList] = useState<ParentRow[]>([]);
     const [rockClassList, setRockClassList] = useState<RockClassRow[]>([]);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
 
     async function loadStaff() {
         const { data, error } = await supabase
@@ -493,7 +504,7 @@ export default function EnrollmentPage() {
                                 <p className="text-sm font-semibold text-white">{staff.name}</p>
                                 <p className="text-xs text-white/60">{staff.email}</p>
                                 <p className="mt-1 text-xs text-white/50">
-                                    {staff.role} • {getSchoolLabel(staff.school_slug as any)} • {staff.school_type}
+                                    {staff.role} • {schoolList.find((s) => s.id === staff.school_slug)?.name ?? staff.school_slug} • {staff.school_type}
                                 </p>
                             </div>
                         ))
@@ -544,7 +555,7 @@ export default function EnrollmentPage() {
                                             : "No instrument"}
                                         {" • "}
                                         {student.school
-                                            ? getSchoolLabel(student.school as any)
+                                            ? schoolList.find((s) => s.id === student.school)?.name ?? student.school
                                             : "No school"}
                                     </p>
                                     <p className="mt-1 text-xs text-white/50">
