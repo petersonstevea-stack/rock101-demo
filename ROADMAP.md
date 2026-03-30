@@ -47,36 +47,30 @@ Seeding complete. Three tables created and populated:
 `data/rock101Curriculum.ts` deletion is blocked — 6 active callers still read from it at runtime.
 Both files can only be deleted after Step 1.7b is complete.
 
-### Step 1.7b — Migrate Curriculum Callers to Supabase
-Before `data/rock101Curriculum.ts` (and `data/methodLessons.ts`) can be deleted,
-the following 6 files must be rewritten to query the new Supabase tables instead:
+### ✅ Step 1.7b — Migrate Curriculum Callers to Supabase
+Complete. All 6 direct callers and 3 indirect callers migrated to `lib/curriculumQueries.ts`.
+`data/rock101Curriculum.ts` and `data/methodLessons.ts` deleted. Build is clean.
 
+Migrated files:
 - `components/Rock101App.tsx`
-- `components/CertificateView.tsx` — uses `getPrivateLessonSections`, `getGroupRehearsalSections`
-- `components/GraduationRequirementsView.tsx` — uses `getAllCurriculumItems`, `ROCK101_MONTH_LABELS`
-- `components/GroupRehearsalView.tsx` — uses curriculum data
-- `components/PrivateLessonView.tsx` — uses curriculum data
-- `lib/progress.ts` — uses `getAllCurriculumItems`, `getGroupRehearsalSections`, `getPrivateLessonSections`
-
-Additional indirect callers via `lib/progress.ts` — these components call `getOverallProgress()`
-which chains into `getPrivateLessonSections` / `getGroupRehearsalSections` from the local file:
-- `components/RoleShell.tsx` — dead code, not currently rendered, but will block the build
-- `components/PipelineView.tsx` — graduation pipeline view, calls `getOverallProgress` per student
-- `components/BandsDashboard.tsx` — band health view, calls `getOverallProgress` per student
-
-All three must be updated as part of the `lib/progress.ts` migration.
-
-After all callers are migrated: delete `data/rock101Curriculum.ts` and `data/methodLessons.ts`.
+- `components/CertificateView.tsx`
+- `components/GraduationRequirementsView.tsx`
+- `components/GroupRehearsalView.tsx`
+- `components/PrivateLessonView.tsx`
+- `lib/progress.ts`
+- `components/RoleShell.tsx` — dead code, minimal fix only
+- `components/PipelineView.tsx`
+- `components/BandsDashboard.tsx`
 
 **Note — method_lesson_programs junction table:**
 This junction table (linking `method_lessons` to `programs`) needs to be created and seeded,
 but is blocked until the `programs` table primary key type is confirmed. Do not seed until confirmed.
 
-### Step 1.8 — Delete Superseded Local Data Files
-After confirming Supabase has all data:
-- Delete `data/students.ts`
-- Delete `data/users.ts`
-- Delete `data/schools.ts`
+### 🔶 Step 1.8 — Delete Superseded Local Data Files
+Partially complete:
+- ✅ `data/students.ts` — deleted (superseded by Supabase `students` table)
+- ✅ `data/users.ts` — deleted (superseded by Supabase `staff`/`users` tables)
+- ⏳ `data/schools.ts` — blocked pending Step 1.9 decision (4 active callers; may become DB-managed)
 
 ### Step 1.9 — Evaluate Static Reference Data
 Decide which of these become DB-managed vs remain static config:
