@@ -203,6 +203,20 @@ export default function EnrollmentPage() {
             return;
         }
 
+        const { error: ssrError } = await supabase
+            .from("staff_school_roles")
+            .insert({
+                staff_id: data.id,
+                school_slug: staffValues.school,
+                role: staffValues.role,
+                is_primary: true,
+                active: true,
+            });
+
+        if (ssrError) {
+            console.error("staff_school_roles insert failed (non-blocking):", ssrError);
+        }
+
         setSubmittedValues(staffValues);
         setStatusType("success");
         setStatusMessage(`Staff member saved: ${data.name}`);

@@ -6,9 +6,7 @@ import EnrollmentSelectField from "@/components/enrollment/fields/EnrollmentSele
 import EnrollmentSearchSelectField from "@/components/enrollment/fields/EnrollmentSearchSelectField";
 import EnrollmentTextField from "@/components/enrollment/fields/EnrollmentTextField";
 import {
-    SCHOOL_OPTIONS,
     STAFF_ROLE_OPTIONS,
-    getSchoolLabel,
 } from "@/data/reference/enrollmentOptions";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -56,6 +54,18 @@ export default function StaffEnrollmentPage() {
     const [isTogglingStaffId, setIsTogglingStaffId] = useState<string | null>(
         null
     );
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
 
     async function loadStaff() {
         const { data, error } = await supabase
@@ -136,6 +146,20 @@ export default function StaffEnrollmentPage() {
             setStatusMessage(error.message);
             setIsSaving(false);
             return;
+        }
+
+        const { error: ssrError } = await supabase
+            .from("staff_school_roles")
+            .insert({
+                staff_id: data.id,
+                school_slug: values.school,
+                role: values.role,
+                is_primary: true,
+                active: true,
+            });
+
+        if (ssrError) {
+            console.error("staff_school_roles insert failed (non-blocking):", ssrError);
         }
 
         const { error: userError } = await supabase
@@ -619,7 +643,7 @@ export default function StaffEnrollmentPage() {
                                     <p className="font-semibold text-white">{staff.name}</p>
                                     <p className="text-xs text-white/60">{staff.email}</p>
                                     <p className="text-xs text-white/40">
-                                        {staff.role} • {getSchoolLabel(staff.school_slug as never)}
+                                        {staff.role} • {schoolList.find((s) => s.id === staff.school_slug)?.name ?? staff.school_slug}
                                     </p>
 
                                     <p className="mt-2 text-xs">
