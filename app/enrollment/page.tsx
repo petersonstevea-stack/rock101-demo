@@ -5,7 +5,6 @@ import EnrollmentPageShell from "@/components/enrollment/EnrollmentPageShell";
 import ParentEnrollmentForm from "@/components/enrollment/ParentEnrollmentForm";
 import StaffEnrollmentForm from "@/components/enrollment/StaffEnrollmentForm";
 import StudentEnrollmentForm from "@/components/enrollment/StudentEnrollmentForm";
-import { CLASS_GROUP_OPTIONS } from "@/data/reference/classGroupOptions";
 import {
     getInstrumentLabel,
     getProgramLabel,
@@ -53,6 +52,12 @@ type ParentRow = {
     created_at: string | null;
 };
 
+type RockClassRow = {
+    id: string;
+    name: string;
+    school_id: string;
+};
+
 const initialStaffValues: StaffFormValues = {
     name: "",
     email: "",
@@ -96,6 +101,7 @@ export default function EnrollmentPage() {
     const [staffList, setStaffList] = useState<StaffRow[]>([]);
     const [studentList, setStudentList] = useState<StudentRow[]>([]);
     const [parentList, setParentList] = useState<ParentRow[]>([]);
+    const [rockClassList, setRockClassList] = useState<RockClassRow[]>([]);
 
     async function loadStaff() {
         const { data, error } = await supabase
@@ -130,10 +136,22 @@ export default function EnrollmentPage() {
         }
     }
 
+    async function loadRockClasses() {
+        const { data, error } = await supabase
+            .from("rock_classes")
+            .select("id, name, school_id")
+            .order("name");
+
+        if (!error && data) {
+            setRockClassList(data as RockClassRow[]);
+        }
+    }
+
     useEffect(() => {
         loadStaff();
         loadStudents();
         loadParents();
+        loadRockClasses();
     }, []);
 
     async function handleStaffSubmit() {
@@ -245,8 +263,8 @@ export default function EnrollmentPage() {
         setStatusType("idle");
         setStatusMessage("");
 
-        const selectedClassGroup = CLASS_GROUP_OPTIONS.find(
-            (option) => option.value === studentValues.classAssignmentId
+        const selectedClassGroup = rockClassList.find(
+            (rc) => rc.id === studentValues.classAssignmentId
         );
 
         const payload = {
@@ -254,7 +272,7 @@ export default function EnrollmentPage() {
             last_initial: normalizedLastInitial,
             instrument: studentValues.instrument,
             school: studentValues.school,
-            class_name: selectedClassGroup?.label ?? null,
+            class_name: selectedClassGroup?.name ?? null,
             parent_email: selectedParent.email,
             primary_instructor_email: instructor.email,
             program: studentValues.primaryProgramId,
@@ -338,14 +356,14 @@ export default function EnrollmentPage() {
         label: `${parent.name} (${parent.email})`,
     }));
 
-    const classGroupOptions: SelectOption[] = CLASS_GROUP_OPTIONS
+    const classGroupOptions: SelectOption[] = rockClassList
         .filter(
-            (option) =>
-                !studentValues.school || option.school === studentValues.school
+            (rc) =>
+                !studentValues.school || rc.school_id === studentValues.school
         )
-        .map((option) => ({
-            value: option.value,
-            label: option.label,
+        .map((rc) => ({
+            value: rc.id,
+            label: rc.name,
         }));
 
     const selectedInstructor =
