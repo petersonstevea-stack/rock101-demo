@@ -102,10 +102,11 @@ Complete:
 ### ✅ Step 1.12 — Add required_high_fives to Rehearsal Behaviors
 Complete. `required_high_fives` integer column added to `rock101_rehearsal_behaviors` table with `DEFAULT 10`. Per-behavior threshold is now configurable without a code change.
 
-### Step 1.13 — Rename fistBumps to highFives
-- Rename `fistBumps` → `highFives` in all TypeScript types, component references, and jsonb key names
-- Requires data migration on `students.curriculum` jsonb to rename the key in all existing records
-- Do after Phase 1 is otherwise complete
+### ✅ Step 1.13 — Rename fistBumps to highFives
+Complete. `fistBumps` → `highFives` renamed in all TypeScript types, component references, and jsonb field reads/writes across 15 files. DB migration completed prior to code update.
+
+### ✅ Step 1.13b — Rename directorSubmitted to classInstructorSubmitted
+Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all TypeScript types and component references (10 files). `graduationDirectorSubmitted` left unchanged. DB migration completed prior to code update.
 
 ---
 
