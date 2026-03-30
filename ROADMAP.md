@@ -109,10 +109,7 @@ Intentionally deferred to Phase 2:
 - **ClassSetupView student picker:** Shows all students as available even if
   already enrolled in another class. Filter out students whose name appears
   in `studentNames` of any existing `rock_classes` record.
-- **staff_school_roles gap:** Any new staff member created through the UI must
-  also get a corresponding `staff_school_roles` row or RLS will block all their
-  data. The staff creation flow needs to INSERT into `staff_school_roles`
-  automatically when a new staff record is created.
+- ✅ **staff_school_roles gap:** Fixed. Both `app/enrollment/staff/page.tsx` and `app/enrollment/page.tsx` now auto-insert a `staff_school_roles` row immediately after a successful staff INSERT. SSR failure is logged but non-blocking — staff record takes priority.
 
 ---
 
