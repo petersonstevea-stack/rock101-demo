@@ -159,13 +159,6 @@ export default function Rock101App() {
                 .select("*")
                 .eq("program", "rock101");
 
-            console.log("DIAG students query result:", {
-                count: data?.length,
-                error: error?.message,
-                currentUserEmail: currentUser?.email,
-                currentUserSchoolId: currentUser?.schoolId
-            });
-
             if (error) {
                 console.error("SUPABASE LOAD STUDENTS ERROR:", error);
                 return;
