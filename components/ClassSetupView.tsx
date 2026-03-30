@@ -70,14 +70,10 @@ export default function ClassSetupView({
 
     useEffect(() => {
         async function loadClasses() {
-            console.log("ClassSetupView loadClasses — schoolId:", schoolId);
-
             const { data, error } = await supabase
                 .from("rock_classes")
                 .select("*")
                 .eq("school_id", schoolId);
-
-            console.log("ClassSetupView loadClasses — data:", data, "error:", error);
 
             if (error) {
                 console.error("Error loading classes:", error);
