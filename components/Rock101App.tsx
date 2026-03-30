@@ -36,7 +36,6 @@ import { getThisWeeksSessions } from "@/lib/classes";
 import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import {
-    saveSession,
     clearSavedSession,
     getAllUsers,
     saveSelectedTab,
@@ -139,7 +138,6 @@ export default function Rock101App() {
                         schoolId: mapSchoolNameToId(dbUser.school_slug),
                     };
                     setCurrentUser(sessionUser);
-                    saveSession(sessionUser);
                 }
             }
         };
@@ -1224,7 +1222,6 @@ export default function Rock101App() {
                         schoolId: mapSchoolNameToId(user.schoolId),
                     };
 
-                    saveSession(normalizedUser);
                     setCurrentUser(normalizedUser);
 
                     const defaultTab: Tab =

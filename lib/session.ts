@@ -27,29 +27,16 @@ type StaffSchoolRoleRow = {
 };
 
 export function saveSession(user: SessionUser) {
-    if (typeof window === "undefined") return;
-
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    // removed — Supabase Auth is source of truth
 }
 
 export function getSavedSession(): SessionUser | null {
-    if (typeof window === "undefined") return null;
-
-    const raw = localStorage.getItem(SESSION_KEY);
-
-    if (!raw) return null;
-
-    try {
-        return JSON.parse(raw) as SessionUser;
-    } catch {
-        return null;
-    }
+    // removed — Supabase Auth is source of truth
+    return null;
 }
 
 export function clearSavedSession() {
     if (typeof window === "undefined") return;
-
-    localStorage.removeItem(SESSION_KEY);
 }
 
 export function getCreatedUsers(): AppUser[] {

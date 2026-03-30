@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SessionUser, saveSession } from "@/lib/session";
+import { SessionUser } from "@/lib/session";
 import { supabase } from "@/lib/supabaseClient";
 import BrandedBackground from "@/components/BrandedBackground";
 import { schools } from "@/data/schools";
@@ -136,7 +136,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             schoolId: resolvedSchoolId,
         };
 
-        saveSession(sessionUser);
         onLogin(sessionUser);
     }
 
@@ -191,7 +190,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                                 schoolId,
                                             };
 
-                                            saveSession(resolvedUser);
                                             onLogin(resolvedUser);
                                         }}
                                     >
