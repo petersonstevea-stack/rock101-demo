@@ -97,9 +97,8 @@ Complete:
 - Migrate off `rock_classes.songProgress` jsonb blob
 - Preserves weekly progression history per song
 
-### Step 1.12 — Add required_high_fives to Rehearsal Behaviors
-- Add `required_high_fives` integer NOT NULL DEFAULT 10 to `rock101_rehearsal_behaviors` table
-- Allows per-behavior threshold to be configured without a code change
+### ✅ Step 1.12 — Add required_high_fives to Rehearsal Behaviors
+Complete. `required_high_fives` integer column added to `rock101_rehearsal_behaviors` table with `DEFAULT 10`. Per-behavior threshold is now configurable without a code change.
 
 ### Step 1.13 — Rename fistBumps to highFives
 - Rename `fistBumps` → `highFives` in all TypeScript types, component references, and jsonb key names
