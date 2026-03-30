@@ -20,7 +20,6 @@ import BandsDashboard from "@/components/BandsDashboard";
 import PipelineView from "@/components/PipelineView";
 import CertificateView from "@/components/CertificateView";
 import ClassSetupView from "@/components/ClassSetupView";
-import DirectorAccountsView from "@/components/DirectorAccountsView";
 import {
     canEditGroupRehearsal,
     canSubmitParentUpdate,
@@ -55,7 +54,6 @@ type Tab =
     | "performanceDashboard"
     | "bandsDashboard"
     | "pipeline"
-    | "accounts"
     | "admin";
 
 type CurriculumState = {
@@ -1821,17 +1819,6 @@ export default function Rock101App() {
 
                             <button
                                 type="button"
-                                onClick={() => handleSetTab("accounts")}
-                                className={`rounded-lg px-4 py-2 ${tab === "accounts"
-                                    ? "bg-red-600"
-                                    : "bg-zinc-800 hover:bg-zinc-700"
-                                    }`}
-                            >
-                                Accounts
-                            </button>
-
-                            <button
-                                type="button"
                                 onClick={() => handleSetTab("admin")}
                                 className={`rounded-lg px-4 py-2 ${tab === "admin"
                                     ? "bg-red-600"
@@ -2045,9 +2032,6 @@ export default function Rock101App() {
                     <PipelineView students={filteredStudentsBySchool} />
                 )}
 
-                {tab === "accounts" && canManageRock101 && (
-                    <DirectorAccountsView currentUserEmail={currentUser.email} />
-                )}
 
                 {tab === "admin" && canManageRock101 && (
                     <AdminView
