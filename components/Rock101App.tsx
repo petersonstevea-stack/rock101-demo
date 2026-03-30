@@ -32,10 +32,9 @@ import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 
 import { supabase } from "@/lib/supabaseClient";
-import { getSavedClasses, getThisWeeksSessions } from "@/lib/classes";
+import { getThisWeeksSessions } from "@/lib/classes";
 import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
-import { saveClasses } from "@/lib/classes";
 import {
     saveSession,
     getSavedSession,
@@ -714,31 +713,35 @@ export default function Rock101App() {
         setClassesVersion((prev) => prev + 1);
     }
 
-    function handleRemoveStudentFromClass(studentId: string) {
+    async function handleRemoveStudentFromClass(studentId: string) {
+        console.log("handleRemoveStudentFromClass called", { studentId, selectedClassId: selectedClass?.id });
         if (!selectedClass) return;
 
-        const updatedClasses = filteredClassesBySchool.map((rockClass) => {
-            if (rockClass.id !== selectedClass.id) return rockClass;
+        const nextStudentIds = selectedClass.studentIds.filter(
+            (id: string) => id !== studentId
+        );
 
-            const nextStudentIds = rockClass.studentIds.filter(
-                (id: string) => id !== studentId
+        const nextStudentNames = selectedClass.studentNames.filter((name: string) => {
+            const matchingStudent = students.find(
+                (student) => student.name === name
             );
-
-            const nextStudentNames = rockClass.studentNames.filter((name: string) => {
-                const matchingStudent = students.find(
-                    (student) => student.name === name
-                );
-                return matchingStudent?.id !== studentId;
-            });
-
-            return {
-                ...rockClass,
-                studentIds: nextStudentIds,
-                studentNames: nextStudentNames,
-            };
+            return matchingStudent?.id !== studentId;
         });
 
-        saveClasses(updatedClasses);
+        const { error } = await supabase
+            .from("rock_classes")
+            .update({
+                student_ids: nextStudentIds,
+                student_names: nextStudentNames,
+            })
+            .eq("id", selectedClass.id);
+
+        if (error) {
+            console.error("SUPABASE REMOVE STUDENT ERROR:", error);
+            alert(`Error removing student: ${error.message}`);
+            return;
+        }
+
         setClassesVersion((prev) => prev + 1);
         setSelectedClassId(selectedClass.id);
     }
