@@ -132,6 +132,20 @@ export default function ClassSetupView({
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);
     }, [students, schoolId]);
+
+    const enrolledElsewhere = useMemo(() => {
+        const ids = new Set<string>();
+        classes.forEach((cls) => {
+            if (cls.id === editingClassId) return;
+            cls.studentIds?.forEach((id) => ids.add(id));
+        });
+        return ids;
+    }, [classes, editingClassId]);
+
+    const availableStudents = schoolStudents.filter(
+        (s) => !enrolledElsewhere.has(s.id)
+    );
+
     const filteredClasses = classes
         .filter((c) => c.schoolId === schoolId)
         .filter(
@@ -424,7 +438,7 @@ export default function ClassSetupView({
                 <div>
                     <label className="mb-2 block text-sm text-zinc-400">Select Students</label>
                     <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                        {schoolStudents.map((student) => (
+                        {availableStudents.map((student) => (
                             <label
                                 key={student.id}
                                 className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
