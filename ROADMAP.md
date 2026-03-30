@@ -73,15 +73,15 @@ Complete:
 - ✅ `data/schools.ts` — deleted; all 6 callers migrated to live `schools` Supabase query; `SchoolId` type replaced with `string` throughout
 
 ### 🔶 Step 1.9 — Evaluate Static Reference Data
-Partially complete:
+Partially complete — school-specific data removed; instrument/program/role config intentionally kept static:
 - ✅ `data/curriculum.ts` — deleted (orphaned dead code, zero callers)
 - ✅ `data/reference/classGroupOptions.ts` — deleted; replaced with live `rock_classes` query in `app/enrollment/page.tsx`
 - ✅ `data/schools.ts` — deleted; see Step 1.8
-- ✅ Slug format mismatch fixed: `enrollmentOptions.ts` `SchoolSlug` and `SCHOOL_OPTIONS` corrected from underscore to hyphen format (`del_mar` → `del-mar`, `scripps_ranch` → `scripps-ranch`) to match live database values
+- ✅ Slug format mismatch fixed: `enrollmentOptions.ts` corrected from underscore to hyphen format to match live database values
+- ✅ `data/reference/enrollmentOptions.ts` — school-specific parts removed: `SchoolSlug` type, `SCHOOL_OPTIONS` constant, and `getSchoolLabel` function deleted; all callers replaced with live Supabase `schoolList` lookups; remaining content (instruments, programs, roles, school types) is stable system config that can remain static long-term
 
-Still pending — decision needed on each:
-- ⏳ `data/songLibrary.ts` — 1 caller (`ClassSetupView`); approved songs list currently hardcoded; should eventually become DB-managed (target: `songs` table per ARCHITECTURE.md); low urgency — not blocking pilot
-- ⏳ `data/reference/enrollmentOptions.ts` — 8 callers; mixed content: stable system config (instruments, programs, role labels) that can remain static long-term, plus `SCHOOL_OPTIONS` which is school-specific and will eventually come from DB; leave as static for now, revisit after pilot
+Intentionally deferred to Phase 2:
+- 🔜 `data/songLibrary.ts` — 1 caller (`ClassSetupView`); approved songs list is hardcoded; should become DB-managed (target: `songs` table per ARCHITECTURE.md); deferred — not blocking pilot
 
 ### Step 1.10 — Remove Legacy Director Role References
 - Audit all "director" role checks and UI labels
