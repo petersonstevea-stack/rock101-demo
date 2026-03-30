@@ -1,5 +1,3 @@
-import type { SchoolId } from "@/data/schools";
-
 export type UserRole =
   | "owner"
   | "generalManager"
@@ -14,7 +12,7 @@ export type AppUser = {
   name: string;
   role: UserRole;
   status: UserStatus;
-  schoolId?: SchoolId;
+  schoolId?: string;
   invitedAt?: string;
   invitedBy?: string;
 };

@@ -4,13 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { RockClass } from "@/types/class";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
-import { schools, type SchoolId } from "@/data/schools";
 import { supabase } from "@/lib/supabaseClient";
 
 type Student = {
     id: string;
     name: string;
-    schoolId: SchoolId;
+    schoolId: string;
 };
 
 type ClassSetupViewProps = {
@@ -19,7 +18,7 @@ type ClassSetupViewProps = {
     mode?: "create" | "edit";
     classToEdit?: RockClass | null;
     onClassSaved?: () => void;
-    defaultSchoolId?: SchoolId;
+    defaultSchoolId?: string;
 };
 
 export default function ClassSetupView({
@@ -34,7 +33,8 @@ export default function ClassSetupView({
     const [classes, setClasses] = useState<RockClass[]>([]);
     const [editingClassId, setEditingClassId] = useState<string | null>(null);
     const [directorEmail, setDirectorEmail] = useState("");
-    const [schoolId, setSchoolId] = useState<SchoolId>(defaultSchoolId ?? schools[0].id);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+    const [schoolId, setSchoolId] = useState<string>(defaultSchoolId ?? "");
     const [className, setClassName] = useState("");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
     const [time, setTime] = useState("");
@@ -60,6 +60,22 @@ export default function ClassSetupView({
         setPerformanceTitle(classToEdit.performanceTitle ?? "");
         setPerformanceDate(classToEdit.performanceDate ?? "");
     }, [mode, classToEdit]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) {
+                    setSchoolList(data);
+                    if (!defaultSchoolId && !schoolId) {
+                        setSchoolId(data[0]?.id ?? "");
+                    }
+                }
+            });
+    }, []);
 
     useEffect(() => {
         if (defaultSchoolId) {
@@ -125,7 +141,7 @@ export default function ClassSetupView({
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
-        setSchoolId(schools[0].id);
+        setSchoolId(schoolList[0]?.id ?? "");
         setClassName("");
         setDayOfWeek("Monday");
         setTime("");
@@ -308,14 +324,14 @@ export default function ClassSetupView({
                         <select
                             value={schoolId}
                             onChange={(e) => {
-                                const nextSchoolId = e.target.value as SchoolId;
+                                const nextSchoolId = e.target.value;
                                 setSchoolId(nextSchoolId);
                                 setDirectorEmail("");
                                 setSelectedStudentIds([]);
                             }}
                             className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
-                            {schools.map((school) => (
+                            {schoolList.map((school) => (
                                 <option key={school.id} value={school.id}>
                                     {school.name}
                                 </option>
@@ -471,7 +487,7 @@ export default function ClassSetupView({
                                     ?.name ?? rockClass.instructorEmail;
 
                             const schoolName =
-                                schools.find((school) => school.id === rockClass.schoolId)?.name ??
+                                schoolList.find((school) => school.id === rockClass.schoolId)?.name ??
                                 rockClass.schoolId;
 
                             return (

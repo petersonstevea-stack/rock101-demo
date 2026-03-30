@@ -32,7 +32,6 @@ import ClassDetailView from "@/components/ClassDetailView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
-import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import {
     clearSavedSession,
@@ -69,10 +68,10 @@ const defaultCurriculumState: CurriculumState = {
     fistBumps: 0,
 };
 
-type SchoolFilter = "all" | SchoolId;
+type SchoolFilter = "all" | string;
 type ManagementLandingView = "classes" | "students";
 
-function mapSchoolNameToId(schoolName?: string | null): SchoolId {
+function mapSchoolNameToId(schoolName?: string | null): string {
     const normalized = (schoolName ?? "")
         .toLowerCase()
         .replace(/_/g, " ");
@@ -106,6 +105,19 @@ export default function Rock101App() {
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
     const [editingClass, setEditingClass] = useState<any | null>(null);
     const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
+
     useEffect(() => {
         const checkUser = async () => {
             const { data } = await supabase.auth.getUser();
@@ -167,7 +179,7 @@ export default function Rock101App() {
 
             if (!data) return;
             const formatted = data.map((s: any) => {
-                const schoolId = (s.school_id as SchoolId) ?? mapSchoolNameToId(s.school);
+                const schoolId = s.school_id ?? mapSchoolNameToId(s.school);
 
                 return {
                     id: s.id,
@@ -290,7 +302,7 @@ export default function Rock101App() {
         if (isOwner) return selectedSchoolId;
 
         if (currentUser && "schoolId" in currentUser && currentUser.schoolId) {
-            return currentUser.schoolId as SchoolId;
+            return currentUser.schoolId;
         }
 
         return "del-mar";
@@ -496,7 +508,7 @@ export default function Rock101App() {
     const parentDashboardData = useMemo(() => {
         if (!selectedStudent) return null;
 
-        const matchedSchool = schools.find(
+        const matchedSchool = schoolList.find(
             (school) => school.id === selectedStudent.schoolId
         );
 
@@ -1283,7 +1295,7 @@ export default function Rock101App() {
                                 className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
                             >
                                 <option value="all">All Schools</option>
-                                {schools.map((school) => (
+                                {schoolList.map((school) => (
                                     <option key={school.id} value={school.id}>
                                         {school.name}
                                     </option>
@@ -1342,7 +1354,7 @@ export default function Rock101App() {
                             className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
                         >
                             <option value="all">All Schools</option>
-                            {schools.map((school) => (
+                            {schoolList.map((school) => (
                                 <option key={school.id} value={school.id}>
                                     {school.name}
                                 </option>
@@ -1572,7 +1584,7 @@ export default function Rock101App() {
                                                 {student.instrument}
                                             </div>
                                             <div className="mt-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-                                                {schools.find(
+                                                {schoolList.find(
                                                     (school) => school.id === student.schoolId
                                                 )?.name ?? "School of Rock"}
                                             </div>
@@ -2009,7 +2021,7 @@ export default function Rock101App() {
                         users={filteredUsersBySchool}
                         mode={editingClass ? "edit" : "create"}
                         classToEdit={editingClass}
-                        defaultSchoolId={currentUser?.schoolId as SchoolId | undefined}
+                        defaultSchoolId={currentUser?.schoolId}
                         onClassSaved={() => {
 
                             setEditingClass(null);

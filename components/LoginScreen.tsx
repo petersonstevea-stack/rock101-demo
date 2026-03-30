@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SessionUser } from "@/lib/session";
 import { supabase } from "@/lib/supabaseClient";
 import BrandedBackground from "@/components/BrandedBackground";
-import { schools } from "@/data/schools";
 
 type LoginScreenProps = {
     onLogin: (user: SessionUser) => void;
@@ -17,6 +16,18 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     const [pendingUser, setPendingUser] = useState<SessionUser | null>(null);
     const [schoolChoices, setSchoolChoices] = useState<string[]>([]);
     const [isResetMode, setIsResetMode] = useState(false);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
 
     async function handleForgotPassword() {
         setIsResetMode(true);
@@ -168,7 +179,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
                             {schoolChoices.map((schoolId) => {
                                 const schoolName =
-                                    schools.find((school) => school.id === schoolId)?.name ??
+                                    schoolList.find((school) => school.id === schoolId)?.name ??
                                     schoolId;
 
                                 return (

@@ -1,9 +1,8 @@
-import type { SchoolId } from "@/data/schools";
 import type { SongReadinessEntry } from "@/types/songReadiness";
 
 export type RockClass = {
   id: string;
-  schoolId: SchoolId;
+  schoolId: string;
 
   name: string;
   dayOfWeek: string;

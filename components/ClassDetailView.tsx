@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
-import { schools } from "@/data/schools";
+import { supabase } from "@/lib/supabaseClient";
 import PageHero from "@/components/PageHero";
 import {
   SONG_READINESS_LEVELS,
@@ -64,6 +64,18 @@ export default function ClassDetailView({
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("schools")
+      .select("id, name")
+      .eq("is_sandbox", false)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setSchoolList(data);
+      });
+  }, []);
   const instructorName =
     users.find((user) => user.email === rockClass.instructorEmail)?.name ||
     rockClass.instructorEmail ||
@@ -75,7 +87,7 @@ export default function ClassDetailView({
     "Not assigned";
 
   const schoolName =
-    schools.find((school) => school.id === rockClass.schoolId)?.name ||
+    schoolList.find((school) => school.id === rockClass.schoolId)?.name ||
     rockClass.schoolId;
 
   const availableStudents = allStudents.filter(
