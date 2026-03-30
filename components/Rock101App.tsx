@@ -298,9 +298,10 @@ export default function Rock101App() {
     const filteredStudentsBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return students;
 
-        return students.filter((student) => {
+        const result = students.filter((student) => {
             return student.schoolId === effectiveSchoolFilter;
         });
+        return result;
     }, [students, effectiveSchoolFilter]);
 
     const filteredUsersBySchool = useMemo(() => {
@@ -360,11 +361,12 @@ export default function Rock101App() {
                 return filteredStudentsBySchool;
             }
 
-            return filteredStudentsBySchool.filter((student) => {
+            const myStudents = filteredStudentsBySchool.filter((student) => {
                 const studentEmail = student.primaryInstructorEmail?.trim().toLowerCase();
                 const userEmail = currentUser.email?.trim().toLowerCase();
                 return studentEmail === userEmail;
             });
+            return myStudents;
         }
 
         if (canManageRock101) {
