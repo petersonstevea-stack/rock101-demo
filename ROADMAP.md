@@ -138,3 +138,12 @@ Decide which of these become DB-managed vs remain static config:
 - Git commit before every structural change
 - Never delete a working file until its replacement is confirmed live
 - Explain every change in plain English before writing code
+### Known Bugs — Fix Before Phase 2
+- **ClassSetupView student picker:** Shows all students as available even if
+  already enrolled in another class. Filter out students whose name appears
+  in `studentNames` of any existing `rock_classes` record.
+- **staff_school_roles gap:** Any new staff member created
+  through the UI must also get a corresponding staff_school_roles
+  row or RLS will block all their data. The staff creation flow
+  needs to INSERT into staff_school_roles automatically when
+  a new staff record is created.
