@@ -33,13 +33,9 @@ deleted — all were orphaned localStorage code never connected to the live Supa
 Complete. Broken API route deleted (`app/api/student-progress/[studentId/rout.ts` —
 had two typos, was never reachable). `@vercel/kv` dependency removed.
 
-### Step 1.6 — Design and Create method_lessons Table
-- Review `data/methodLessons.ts` structure (~1100 lines)
-- Design `method_lessons` table schema
-- Write and run migration SQL in Supabase
-- Write seeding script to populate from local file
-- Verify data in Supabase
-- Delete `data/methodLessons.ts`
+### ✅ Step 1.6 — Design and Create method_lessons Table
+Complete. `method_lessons` table created and seeded with 155 rows from `data/methodLessons.ts`.
+Deletion of `data/methodLessons.ts` blocked until Step 1.7b is complete (co-dependent with `rock101Curriculum.ts`).
 
 ### ✅ Step 1.7 — Design and Create Curriculum Structure Table(s)
 Seeding complete. Three tables created and populated:
@@ -62,7 +58,19 @@ the following 6 files must be rewritten to query the new Supabase tables instead
 - `components/PrivateLessonView.tsx` — uses curriculum data
 - `lib/progress.ts` — uses `getAllCurriculumItems`, `getGroupRehearsalSections`, `getPrivateLessonSections`
 
-After all 6 are migrated: delete `data/rock101Curriculum.ts` and `data/methodLessons.ts`.
+Additional indirect callers via `lib/progress.ts` — these components call `getOverallProgress()`
+which chains into `getPrivateLessonSections` / `getGroupRehearsalSections` from the local file:
+- `components/RoleShell.tsx` — dead code, not currently rendered, but will block the build
+- `components/PipelineView.tsx` — graduation pipeline view, calls `getOverallProgress` per student
+- `components/BandsDashboard.tsx` — band health view, calls `getOverallProgress` per student
+
+All three must be updated as part of the `lib/progress.ts` migration.
+
+After all callers are migrated: delete `data/rock101Curriculum.ts` and `data/methodLessons.ts`.
+
+**Note — method_lesson_programs junction table:**
+This junction table (linking `method_lessons` to `programs`) needs to be created and seeded,
+but is blocked until the `programs` table primary key type is confirmed. Do not seed until confirmed.
 
 ### Step 1.8 — Delete Superseded Local Data Files
 After confirming Supabase has all data:
@@ -81,6 +89,21 @@ Decide which of these become DB-managed vs remain static config:
 - Audit all "director" role checks and UI labels
 - Replace with assignment-based logic (Show Director = staff assigned to session)
 - Clean up `components/Rock101App.tsx` `defaultCurriculumState` hardcoded fallback
+
+### Step 1.11 — Migrate Song Readiness to Session-Level Tables
+- Create `session_song_readiness` table (student grade per song per session)
+- Create `session_group_song_readiness` table (class grade per song per session)
+- Migrate off `rock_classes.songProgress` jsonb blob
+- Preserves weekly progression history per song
+
+### Step 1.12 — Add required_high_fives to Rehearsal Behaviors
+- Add `required_high_fives` integer NOT NULL DEFAULT 10 to `rock101_rehearsal_behaviors` table
+- Allows per-behavior threshold to be configured without a code change
+
+### Step 1.13 — Rename fistBumps to highFives
+- Rename `fistBumps` → `highFives` in all TypeScript types, component references, and jsonb key names
+- Requires data migration on `students.curriculum` jsonb to rename the key in all existing records
+- Do after Phase 1 is otherwise complete
 
 ---
 
