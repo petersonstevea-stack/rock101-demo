@@ -2,9 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-    getPrivateLessonSections,
-    getGroupRehearsalSections,
-} from "@/data/rock101Curriculum";
+    fetchAllCurriculumItems,
+    type CurriculumItem,
+} from "@/lib/curriculumQueries";
 import GraduationRequirementsView from "@/components/GraduationRequirementsView";
 import ParentDashboardOverview from "@/components/ParentDashboardOverview";
 import { buildParentDashboardData } from "@/lib/parentDashboard";
@@ -105,6 +105,7 @@ export default function Rock101App() {
     const [weeklySessions, setWeeklySessions] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
     const [editingClass, setEditingClass] = useState<any | null>(null);
+    const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
     useEffect(() => {
         const checkUser = async () => {
             const { data } = await supabase.auth.getUser();
@@ -415,6 +416,11 @@ export default function Rock101App() {
         );
     }, [visibleStudents, selectedStudentName]);
 
+    useEffect(() => {
+        if (!selectedStudent?.instrument) return;
+        fetchAllCurriculumItems(selectedStudent.instrument).then(setCurriculumItems);
+    }, [selectedStudent?.instrument]);
+
     const activeClassForSelectedStudent = useMemo(() => {
         if (selectedClass) return selectedClass;
         if (!selectedStudent) return null;
@@ -484,7 +490,7 @@ export default function Rock101App() {
     }, [effectiveSchoolFilter]);
 
     const earnedBadges: Set<string> = selectedStudent
-        ? getEarnedBadges(selectedStudent)
+        ? getEarnedBadges(selectedStudent, curriculumItems)
         : new Set<string>();
 
     const parentDashboardData = useMemo(() => {
@@ -494,13 +500,13 @@ export default function Rock101App() {
             (school) => school.id === selectedStudent.schoolId
         );
 
-        const privateLessonItems = getPrivateLessonSections(
-            selectedStudent.instrument
-        ).flatMap((section) => section.items);
+        const privateLessonItems = curriculumItems.filter(
+            (item) => item.location === "privateLesson"
+        );
 
-        const groupRehearsalItems = getGroupRehearsalSections(
-            selectedStudent.instrument
-        ).flatMap((section) => section.items);
+        const groupRehearsalItems = curriculumItems.filter(
+            (item) => item.location === "groupRehearsal"
+        );
 
         const dashboardClass =
             activeClassForSelectedStudent ?? selectedClass ?? null;
@@ -545,7 +551,7 @@ export default function Rock101App() {
             classFeedback,
             badges: [],
         });
-    }, [selectedStudent, selectedClass, activeClassForSelectedStudent]);
+    }, [selectedStudent, selectedClass, activeClassForSelectedStudent, curriculumItems]);
 
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
@@ -760,9 +766,7 @@ export default function Rock101App() {
         if (!selectedStudent) return;
 
         const student = selectedStudent;
-        const privateSections = getPrivateLessonSections(student.instrument);
-        const allPrivateItems = privateSections.flatMap((section: any) => section.items ?? []);
-        const matchedItem = allPrivateItems.find((i: any) => i.id === item);
+        const matchedItem = curriculumItems.find((i) => i.id === item);
         const itemArea = matchedItem?.area ?? null;
         const existing = student.curriculum[item] ?? defaultCurriculumState;
 
@@ -892,9 +896,7 @@ export default function Rock101App() {
         if (!selectedStudent) return;
 
         const student = selectedStudent;
-        const privateSections = getPrivateLessonSections(student.instrument);
-        const allPrivateItems = privateSections.flatMap((section: any) => section.items ?? []);
-        const matchedItem = allPrivateItems.find((i: any) => i.id === item);
+        const matchedItem = curriculumItems.find((i) => i.id === item);
         const itemArea = matchedItem?.area ?? null;
         const existing = student.curriculum[item] ?? defaultCurriculumState;
         const nextSigned = !existing.signed;

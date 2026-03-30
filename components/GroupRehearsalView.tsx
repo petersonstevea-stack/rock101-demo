@@ -1,6 +1,7 @@
 "use client";
 
-import { getGroupRehearsalSections } from "@/data/rock101Curriculum";
+import { useState, useEffect } from "react";
+import { fetchRehearsalBehaviors, type CurriculumItem } from "@/lib/curriculumQueries";
 import ChecklistSection from "@/components/ChecklistSection";
 import PageHero from "@/components/PageHero";
 import {
@@ -84,17 +85,18 @@ export default function GroupRehearsalView({
     canEdit,
     canSign,
 }: GroupRehearsalViewProps) {
-    const sections = getGroupRehearsalSections(student.instrument);
-    const section = sections[0] ?? null;
+    const [rehearsalItems, setRehearsalItems] = useState<CurriculumItem[]>([]);
+
+    useEffect(() => {
+        fetchRehearsalBehaviors().then(setRehearsalItems);
+    }, []);
 
     const activeSongReadiness = classId
         ? (student.songReadiness?.[classId] ?? {})
         : {};
 
     const songHeader = splitRehearsalTitle("Song Readiness");
-    const rehearsalHeader = splitRehearsalTitle(
-        section?.title ?? "Rehearsal Readiness"
-    );
+    const rehearsalHeader = splitRehearsalTitle("Rehearsal Readiness");
 
     return (
         <div className="mt-8 space-y-6">
@@ -175,7 +177,7 @@ export default function GroupRehearsalView({
                     </div>
                 </div>
 
-                {section && (
+                {rehearsalItems.length > 0 && (
                     <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
                         <div className="sor-finish-card rounded-2xl p-5">
                             <div>
@@ -195,8 +197,8 @@ export default function GroupRehearsalView({
 
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
                             <ChecklistSection
-                                title={section.title}
-                                items={section.items}
+                                title="Rehearsal Readiness"
+                                items={rehearsalItems}
                                 curriculum={student.curriculum}
                                 onToggleDone={onToggleDone}
                                 onToggleSigned={onToggleSigned}

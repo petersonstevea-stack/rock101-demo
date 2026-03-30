@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { fetchAllCurriculumItems, type CurriculumItem } from "@/lib/curriculumQueries";
 import { getOverallProgress } from "@/lib/progress";
 
 type DashboardStudent = {
@@ -29,11 +33,29 @@ type BandsDashboardProps = {
 };
 
 export default function BandsDashboard({ students }: BandsDashboardProps) {
+  const [curriculumByInstrument, setCurriculumByInstrument] = useState<Record<string, CurriculumItem[]>>({});
+
+  useEffect(() => {
+    const instruments = Array.from(new Set(students.map((s) => s.instrument.toLowerCase())));
+    Promise.all(
+      instruments.map(async (instrument) => {
+        const items = await fetchAllCurriculumItems(instrument);
+        return [instrument, items] as const;
+      })
+    ).then((entries) => {
+      setCurriculumByInstrument(Object.fromEntries(entries));
+    });
+  }, [students]);
+
+  function getProgress(student: DashboardStudent) {
+    return getOverallProgress(student, curriculumByInstrument[student.instrument.toLowerCase()] ?? []);
+  }
+
   const bandNames = Array.from(new Set(students.map((student) => student.band)));
 
   const bands = bandNames.map((bandName) => {
     const members = students.filter((student) => student.band === bandName);
-    const progresses = members.map((student) => getOverallProgress(student));
+    const progresses = members.map((student) => getProgress(student));
     const avgProgress = progresses.length
       ? Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length)
       : 0;
@@ -91,7 +113,7 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
 
           <div className="mt-4 grid gap-2">
             {band.members.map((member) => {
-              const progress = getOverallProgress(member);
+              const progress = getProgress(member);
 
               return (
                 <div

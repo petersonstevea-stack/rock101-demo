@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { fetchAllCurriculumItems, type CurriculumItem } from "@/lib/curriculumQueries";
 import { getOverallProgress } from "@/lib/progress";
 
 type PipelineStudent = {
@@ -29,22 +33,40 @@ type PipelineViewProps = {
 };
 
 export default function PipelineView({ students }: PipelineViewProps) {
+  const [curriculumByInstrument, setCurriculumByInstrument] = useState<Record<string, CurriculumItem[]>>({});
+
+  useEffect(() => {
+    const instruments = Array.from(new Set(students.map((s) => s.instrument.toLowerCase())));
+    Promise.all(
+      instruments.map(async (instrument) => {
+        const items = await fetchAllCurriculumItems(instrument);
+        return [instrument, items] as const;
+      })
+    ).then((entries) => {
+      setCurriculumByInstrument(Object.fromEntries(entries));
+    });
+  }, [students]);
+
+  function getProgress(student: PipelineStudent) {
+    return getOverallProgress(student, curriculumByInstrument[student.instrument.toLowerCase()] ?? []);
+  }
+
   const performanceReady = students.filter(
-    (student) => getOverallProgress(student) >= 85
+    (student) => getProgress(student) >= 85
   ).length;
 
   const stageReady = students.filter((student) => {
-    const progress = getOverallProgress(student);
+    const progress = getProgress(student);
     return progress >= 60 && progress < 85;
   }).length;
 
   const developing = students.filter((student) => {
-    const progress = getOverallProgress(student);
+    const progress = getProgress(student);
     return progress >= 25 && progress < 60;
   }).length;
 
   const newStudents = students.filter(
-    (student) => getOverallProgress(student) < 25
+    (student) => getProgress(student) < 25
   ).length;
 
   const bandNames = Array.from(new Set(students.map((student) => student.band)));
@@ -89,7 +111,7 @@ export default function PipelineView({ students }: PipelineViewProps) {
                 {students
                   .filter((student) => student.band === bandName)
                   .map((student) => {
-                    const progress = getOverallProgress(student);
+                    const progress = getProgress(student);
 
                     return (
                       <div

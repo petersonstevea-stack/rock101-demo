@@ -1,11 +1,16 @@
 "use client";
 
-import {
-    getAllCurriculumItems,
-    ROCK101_MONTH_LABELS,
-} from "@/data/rock101Curriculum";
+import { useState, useEffect } from "react";
+import { fetchMethodLessonsWithMonths, type CurriculumItem } from "@/lib/curriculumQueries";
 import ChecklistSection from "@/components/ChecklistSection";
 import PageHero from "@/components/PageHero";
+
+const ROCK101_MONTH_LABELS: Record<1 | 2 | 3 | 4, string> = {
+    1: "Month 1 - Foundations",
+    2: "Month 2 - Musical Skills",
+    3: "Month 3 - Performance Readiness",
+    4: "Month 4 - Graduation",
+};
 
 type LessonStudent = {
     name: string;
@@ -39,25 +44,13 @@ type PrivateLessonViewProps = {
     canSign: boolean;
 };
 
-type LessonItem = {
-    id: string;
-    label: string;
-    description?: string;
-    area: "graduation" | "requiredLessons" | "rehearsalReadiness";
-    location: "privateLesson" | "groupRehearsal";
-    allowedSigner: "instructor" | "director" | "either";
-    required: boolean;
-    month?: 1 | 2 | 3 | 4;
-    monthLabel?: string;
-};
-
 type MonthGroup = {
     month: 1 | 2 | 3 | 4;
     title: string;
-    requiredLessonItems: LessonItem[];
+    requiredLessonItems: CurriculumItem[];
 };
 
-function groupMethodLessonsByMonth(items: LessonItem[]): MonthGroup[] {
+function groupMethodLessonsByMonth(items: CurriculumItem[]): MonthGroup[] {
     const monthGroups: MonthGroup[] = ([1, 2, 3, 4] as const).map((month) => ({
         month,
         title: ROCK101_MONTH_LABELS[month],
@@ -119,7 +112,12 @@ export default function PrivateLessonView({
     canEdit,
     canSign,
 }: PrivateLessonViewProps) {
-    const allItems = getAllCurriculumItems(student.instrument) as LessonItem[];
+    const [allItems, setAllItems] = useState<CurriculumItem[]>([]);
+
+    useEffect(() => {
+        fetchMethodLessonsWithMonths(student.instrument).then(setAllItems);
+    }, [student.instrument]);
+
     const monthGroups = groupMethodLessonsByMonth(allItems);
     const currentMonth = getCurrentMonth(monthGroups, student.curriculum);
 

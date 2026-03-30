@@ -35,7 +35,7 @@ export default function RoleShell({
   student,
   onLogout,
 }: RoleShellProps) {
-  const progress = getOverallProgress(student);
+  const progress = getOverallProgress(student, []);
   const stage = getStageLabel(progress);
 
   return (

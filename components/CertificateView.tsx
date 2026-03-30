@@ -1,8 +1,13 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import PageHero from "@/components/PageHero";
 import {
-  getPrivateLessonSections,
-  getGroupRehearsalSections,
-} from "@/data/rock101Curriculum";
+  fetchGraduationRequirements,
+  fetchMethodLessonsWithMonths,
+  fetchRehearsalBehaviors,
+  type CurriculumItem,
+} from "@/lib/curriculumQueries";
 import { getStageLabel } from "@/lib/progress";
 
 type CertificateStudent = {
@@ -68,22 +73,15 @@ function isItemEarned(
   return Boolean(progress.done || progress.signed);
 }
 
-function getCertificateProgress(student: CertificateStudent) {
-  const privateLessonItems = getPrivateLessonSections(student.instrument).flatMap(
-    (section) => section.items
-  );
-
-  const groupRehearsalItems = getGroupRehearsalSections(student.instrument).flatMap(
-    (section) => section.items
-  );
-
-  const allTrackedItems = [...privateLessonItems, ...groupRehearsalItems];
-
-  const completed = allTrackedItems.filter((item) =>
-    isItemEarned(item, student.curriculum[item.id])
+function computeCertificateProgress(
+  allItems: CurriculumItem[],
+  curriculum: CertificateStudent["curriculum"]
+) {
+  const completed = allItems.filter((item) =>
+    isItemEarned(item, curriculum[item.id])
   ).length;
 
-  const total = allTrackedItems.length;
+  const total = allItems.length;
 
   if (total === 0) return 0;
 
@@ -107,7 +105,19 @@ function splitCertificateTitle(title: string) {
 }
 
 export default function CertificateView({ student }: CertificateViewProps) {
-  const progress = getCertificateProgress(student);
+  const [allItems, setAllItems] = useState<CurriculumItem[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetchGraduationRequirements(student.instrument),
+      fetchMethodLessonsWithMonths(student.instrument),
+      fetchRehearsalBehaviors(),
+    ]).then(([grad, lessons, rehearsal]) => {
+      setAllItems([...grad, ...lessons, ...rehearsal]);
+    });
+  }, [student.instrument]);
+
+  const progress = computeCertificateProgress(allItems, student.curriculum);
   const stage = getStageLabel(progress);
   const unlocked = progress >= 100;
   const instrumentLabel = formatInstrumentLabel(student.instrument);

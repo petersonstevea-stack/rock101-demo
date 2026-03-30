@@ -1,8 +1,4 @@
-import {
-  getAllCurriculumItems,
-  getGroupRehearsalSections,
-  getPrivateLessonSections,
-} from "@/data/rock101Curriculum";
+import { type CurriculumItem } from "@/lib/curriculumQueries";
 
 type ProgressStudent = {
   instrument?: string;
@@ -27,18 +23,11 @@ const FIST_BUMP_BADGES: Record<string, string> = {
 
 const FIST_BUMP_ITEM_IDS = Object.keys(FIST_BUMP_BADGES);
 
-function getNormalizedInstrument(student: ProgressStudent) {
-  return student.instrument?.toLowerCase() ?? "guitar";
-}
-
-function getCurriculumItemsForSection(student: ProgressStudent, sectionType: "privateLesson" | "groupRehearsal") {
-  const instrument = getNormalizedInstrument(student);
-
-  if (sectionType === "privateLesson") {
-    return getPrivateLessonSections(instrument).flatMap((section) => section.items);
-  }
-
-  return getGroupRehearsalSections(instrument).flatMap((section) => section.items);
+function getCurriculumItemsForSection(
+  curriculumItems: CurriculumItem[],
+  sectionType: "privateLesson" | "groupRehearsal"
+) {
+  return curriculumItems.filter((item) => item.location === sectionType);
 }
 
 function isCompleted(
@@ -58,8 +47,11 @@ export function getCompletedCount(
   return itemIds.filter((itemId) => isCompleted(student, itemId)).length;
 }
 
-export function getPrivateLessonProgress(student: ProgressStudent) {
-  const items = getCurriculumItemsForSection(student, "privateLesson");
+export function getPrivateLessonProgress(
+  student: ProgressStudent,
+  curriculumItems: CurriculumItem[]
+) {
+  const items = getCurriculumItemsForSection(curriculumItems, "privateLesson");
   if (items.length === 0) return 0;
 
   const completed = getCompletedCount(
@@ -70,8 +62,11 @@ export function getPrivateLessonProgress(student: ProgressStudent) {
   return Math.round((completed / items.length) * 100);
 }
 
-export function getGroupRehearsalProgress(student: ProgressStudent) {
-  const items = getCurriculumItemsForSection(student, "groupRehearsal");
+export function getGroupRehearsalProgress(
+  student: ProgressStudent,
+  curriculumItems: CurriculumItem[]
+) {
+  const items = getCurriculumItemsForSection(curriculumItems, "groupRehearsal");
   if (items.length === 0) return 0;
 
   const completed = getCompletedCount(
@@ -91,9 +86,12 @@ export function getFistBumpProgress(student: ProgressStudent) {
   );
 }
 
-export function getOverallProgress(student: ProgressStudent) {
-  const privateLessonProgress = getPrivateLessonProgress(student);
-  const groupRehearsalProgress = getGroupRehearsalProgress(student);
+export function getOverallProgress(
+  student: ProgressStudent,
+  curriculumItems: CurriculumItem[]
+) {
+  const privateLessonProgress = getPrivateLessonProgress(student, curriculumItems);
+  const groupRehearsalProgress = getGroupRehearsalProgress(student, curriculumItems);
   const fistBumpProgress = getFistBumpProgress(student);
 
   return Math.round(
@@ -109,11 +107,12 @@ export function getTotalFistBumps(student: ProgressStudent) {
   }, 0);
 }
 
-export function getEarnedBadges(student: ProgressStudent) {
+export function getEarnedBadges(
+  student: ProgressStudent,
+  curriculumItems: CurriculumItem[]
+) {
   const badges = new Set<string>();
-  const instrument = getNormalizedInstrument(student);
-  const allCurriculumItems = getAllCurriculumItems(instrument);
-  const totalProgress = getOverallProgress(student);
+  const totalProgress = getOverallProgress(student, curriculumItems);
 
   FIST_BUMP_ITEM_IDS.forEach((itemId) => {
     const fistBumps = student.curriculum[itemId]?.fistBumps || 0;
@@ -123,18 +122,9 @@ export function getEarnedBadges(student: ProgressStudent) {
     }
   });
 
-  const privateLessonItems = getPrivateLessonSections(instrument).flatMap(
-    (section) => section.items
-  );
-  const requiredLessonItems = privateLessonItems.filter(
-    (item) => item.area === "requiredLessons"
-  );
-  const graduationItems = privateLessonItems.filter(
-    (item) => item.area === "graduation"
-  );
-  const rehearsalItems = getGroupRehearsalSections(instrument).flatMap(
-    (section) => section.items
-  );
+  const requiredLessonItems = curriculumItems.filter((item) => item.area === "requiredLessons");
+  const graduationItems = curriculumItems.filter((item) => item.area === "graduation");
+  const rehearsalItems = curriculumItems.filter((item) => item.area === "rehearsalReadiness");
 
   if (
     requiredLessonItems.length > 0 &&
@@ -158,8 +148,8 @@ export function getEarnedBadges(student: ProgressStudent) {
   }
 
   if (
-    allCurriculumItems.length > 0 &&
-    allCurriculumItems.every(
+    curriculumItems.length > 0 &&
+    curriculumItems.every(
       (item) => !item.required || student.curriculum[item.id]?.signed
     )
   ) {
@@ -179,6 +169,7 @@ export function getStageLabel(progress: number) {
   if (progress < 100) return "Stage Ready";
   return "Performance Ready";
 }
+
 export function getSectionProgress(
   student: ProgressStudent,
   sectionKey:
@@ -186,14 +177,15 @@ export function getSectionProgress(
     | "assignments"
     | "concepts"
     | "practicePerformance"
-    | "groupBehavior"
+    | "groupBehavior",
+  curriculumItems: CurriculumItem[]
 ) {
   if (sectionKey === "instrument" || sectionKey === "assignments") {
-    return getPrivateLessonProgress(student);
+    return getPrivateLessonProgress(student, curriculumItems);
   }
 
   if (sectionKey === "concepts" || sectionKey === "practicePerformance") {
-    return getGroupRehearsalProgress(student);
+    return getGroupRehearsalProgress(student, curriculumItems);
   }
 
   if (sectionKey === "groupBehavior") {
