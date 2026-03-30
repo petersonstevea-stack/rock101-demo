@@ -4,35 +4,34 @@
 ---
 
 ## Current Status
-- Rock 101 pilot: ~80% complete with real students and schools
+- Rock 101 pilot: ~85% complete with real students and schools
 - Performance Program: schema partially exists, UI not started
 - All other programs: future phase only
 
 ---
 
-## PHASE 1 — Rock 101 Stabilization (Do This First)
+## PHASE 1 — Rock 101 Stabilization (In Progress)
 **Goal:** Make Supabase the single source of truth. No localStorage. No Redis. No local data files.
 
-### Step 1.1 — Git Checkpoint
-Before touching anything, confirm Git is clean and create a commit as a rollback point.
+### ✅ Step 1.1 — Git Checkpoint
+Complete. Clean commit established as rollback point.
 
-### Step 1.2 — Eliminate localStorage (classes)
-- Refactor `lib/classes.ts` — `saveClasses()` and `getSavedClasses()` to use `rock_classes` table
-- Refactor `components/ClassSetupView.tsx` — all saves go to Supabase
-- Verify `rock_classes` reads replace all localStorage reads
+### ✅ Step 1.2 — Eliminate localStorage (classes)
+Complete. `lib/classes.ts` and `ClassSetupView.tsx` write to `rock_classes` table only.
 
-### Step 1.3 — Eliminate localStorage (users/session)
-- Refactor `lib/session.ts` — `saveCreatedUsers()`, `findUserByEmail()`, `findStaffUserByEmail()` to use `staff` / `users` tables only
-- Remove two-tier split (localStorage + Supabase) — Supabase only
+### ✅ Step 1.3 — Eliminate localStorage (users/session)
+Complete. `lib/session.ts` cleaned — all localStorage-backed user functions deleted.
+`DirectorAccountsView` removed (localStorage prototype, superseded by Manage Staff and Manage Families).
+Only remaining localStorage in session.ts: tab preference state (intentional).
 
-### Step 1.4 — Eliminate localStorage (student progress)
-- Refactor `data/studentProgress.ts` — all reads/writes go to `students.curriculum` in Supabase
-- Remove all `localStorage.getItem('rock101-progress')` references
+### ✅ Step 1.4 — Eliminate localStorage (student progress)
+Complete. `data/studentProgress.ts`, `RequiredLessonsChecklist.tsx`, and `ParentWeeklyReview.tsx`
+deleted — all were orphaned localStorage code never connected to the live Supabase system.
+`students.curriculum` jsonb in Supabase is and was the live system.
 
-### Step 1.5 — Eliminate Redis
-- Refactor `app/api/student-progress/[studentId]/route.ts`
-- Replace Upstash Redis with direct Supabase reads/writes to `students.curriculum`
-- No real progress data at risk — clean cutover
+### ✅ Step 1.5 — Eliminate Redis
+Complete. Broken API route deleted (`app/api/student-progress/[studentId/rout.ts` —
+had two typos, was never reachable). `@vercel/kv` dependency removed.
 
 ### Step 1.6 — Design and Create method_lessons Table
 - Review `data/methodLessons.ts` structure (~1100 lines)
@@ -65,6 +64,72 @@ Decide which of these become DB-managed vs remain static config:
 - Audit all "director" role checks and UI labels
 - Replace with assignment-based logic (Show Director = staff assigned to session)
 - Clean up `components/Rock101App.tsx` `defaultCurriculumState` hardcoded fallback
+
+---
+
+### Known Bugs — Fix Before Pilot Launch
+- **ClassSetupView student picker:** Shows all students as available even if
+  already enrolled in another class. Filter out students whose name appears
+  in `studentNames` of any existing `rock_classes` record.
+- **staff_school_roles gap:** Any new staff member created through the UI must
+  also get a corresponding `staff_school_roles` row or RLS will block all their
+  data. The staff creation flow needs to INSERT into `staff_school_roles`
+  automatically when a new staff record is created.
+
+---
+
+### UI Design Review — Do Before Pilot Launch
+**Goal:** Improve aesthetics and usability across all student-facing views.
+
+- Student Dashboard — improve overall layout and visual appeal
+- Private Lesson page — redesign for clarity and invitation
+- Graduation Requirements page — redesign for clarity
+- Group Rehearsal page — redesign for clarity
+- Badges section — hide from UI for now, evaluate later
+  whether to keep or remove permanently
+- Rock 101 song library — audit and update song list
+- General UI polish pass across all views
+
+---
+
+### Parent Email Workflow — Restore Before Pilot Launch
+**Goal:** Restore the two-staff weekly feedback → parent email flow.
+
+How it should work:
+1. Instructor saves weekly lesson notes and progress → marked submitted
+2. Director saves weekly group rehearsal notes → marked submitted
+3. After BOTH have submitted, a "Send to Parent" prompt appears
+   for the second staff member who saved
+4. Clicking send emails the parent the full completed dashboard
+
+Current status: workflow state exists in `students.workflow`
+(`instructorSubmitted`, `directorSubmitted`) but the Send to Parent
+trigger is not appearing correctly after both submit.
+
+Fix before pilot launch.
+
+---
+
+### Profile Pages — Phased Build
+**Goal:** Give staff and students their own profile pages.
+
+**Phase A — Instructor Profile Page (build soon)**
+- Each instructor has a profile page showing their info,
+  assigned students, and school
+- Accessible to the instructor themselves and to owners/GMs
+
+**Phase B — Student Profile Page (Performance Program phase only)**
+- Student profile page scoped to Performance Program students
+- Not needed for Rock 101 pilot
+
+**Phase C — Platform Vision (long term)**
+- The platform should eventually feel like one TV set with
+  multiple channels but the same remote control
+- Each program (Rock 101, Performance, Little Wing, Rookies)
+  is a channel — consistent navigation and design language
+  across all of them
+- Do not build for this yet — keep it in mind for every
+  UI decision made today
 
 ---
 
@@ -138,12 +203,3 @@ Decide which of these become DB-managed vs remain static config:
 - Git commit before every structural change
 - Never delete a working file until its replacement is confirmed live
 - Explain every change in plain English before writing code
-### Known Bugs — Fix Before Phase 2
-- **ClassSetupView student picker:** Shows all students as available even if
-  already enrolled in another class. Filter out students whose name appears
-  in `studentNames` of any existing `rock_classes` record.
-- **staff_school_roles gap:** Any new staff member created
-  through the UI must also get a corresponding staff_school_roles
-  row or RLS will block all their data. The staff creation flow
-  needs to INSERT into staff_school_roles automatically when
-  a new staff record is created.
