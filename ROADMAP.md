@@ -138,11 +138,21 @@ How it should work:
    for the second staff member who saved
 4. Clicking send emails the parent the full completed dashboard
 
-Current status: workflow state exists in `students.workflow`
-(`instructorSubmitted`, `directorSubmitted`) but the Send to Parent
-trigger is not appearing correctly after both submit.
+**Frontend fixes complete (commit 248ca81):**
+- `workflowReady` condition fixed — no longer requires graduation signoffs
+- `workflowMissingMessage` simplified — only checks instructor + class instructor submitted
+- `parentSubmitted: true` now persisted to Supabase after successful email send
+- Debug `console.log` and `alert("BUTTON CLICKED")` removed from `WorkflowBanner`
 
-Fix before pilot launch.
+**Edge function built, not yet deployed (commit ec80643):**
+- `supabase/functions/send-parent-update/index.ts` created — sends HTML email via Resend
+- `RESEND_API_KEY` must be set in Supabase Dashboard → Edge Functions → Secrets
+- Deployment blocked pending Resend domain verification for `rock101stageready.com`
+  (DNS propagation in progress — check Resend dashboard to confirm `Verified` status)
+
+**Next steps once domain shows Verified in Resend:**
+1. Deploy: `supabase functions deploy send-parent-update`
+2. Test end to end with a real student record
 
 ---
 
