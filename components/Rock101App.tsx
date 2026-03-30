@@ -158,6 +158,7 @@ export default function Rock101App() {
 
     useEffect(() => {
         async function loadStudents() {
+            if (!currentUser) return; 
             const { data, error } = await supabase
                 .from("students")
                 .select("*")
@@ -169,7 +170,6 @@ export default function Rock101App() {
             }
 
             if (!data) return;
-
             const formatted = data.map((s: any) => {
                 const schoolId = mapSchoolNameToId(s.school);
 
@@ -207,7 +207,6 @@ export default function Rock101App() {
                     songReadiness: {},
                 };
             });
-
             const safeStudents = isOwner
                 ? formatted
                 : formatted.filter(
