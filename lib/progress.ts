@@ -8,7 +8,7 @@ type ProgressStudent = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
 };
@@ -103,7 +103,7 @@ export function getOverallProgress(
 
 export function getTotalFistBumps(student: ProgressStudent) {
   return FIST_BUMP_ITEM_IDS.reduce((sum, itemId) => {
-    return sum + (student.curriculum[itemId]?.fistBumps || 0);
+    return sum + (student.curriculum[itemId]?.highFives || 0);
   }, 0);
 }
 
@@ -115,9 +115,9 @@ export function getEarnedBadges(
   const totalProgress = getOverallProgress(student, curriculumItems);
 
   FIST_BUMP_ITEM_IDS.forEach((itemId) => {
-    const fistBumps = student.curriculum[itemId]?.fistBumps || 0;
+    const highFives = student.curriculum[itemId]?.highFives || 0;
 
-    if (fistBumps >= 10) {
+    if (highFives >= 10) {
       badges.add(FIST_BUMP_BADGES[itemId]);
     }
   });

@@ -17,7 +17,7 @@ type ChecklistSectionProps = {
             done: boolean;
             signed: boolean;
             date: string | null;
-            fistBumps: number;
+            highFives: number;
         }
     >;
     onToggleDone: (item: string) => void;
@@ -36,12 +36,12 @@ function isItemEarned(
         done: boolean;
         signed: boolean;
         date: string | null;
-        fistBumps: number;
+        highFives: number;
     }
 ) {
     if (!state) return false;
 
-    if (item.location === "groupRehearsal" && state.fistBumps >= FIST_BUMPS_TO_EARN) {
+    if (item.location === "groupRehearsal" && state.highFives >= FIST_BUMPS_TO_EARN) {
         return true;
     }
 
@@ -95,10 +95,10 @@ export default function ChecklistSection({
                 {items.map((item, index) => {
                     const state = curriculum[item.id];
                     const earned = isItemEarned(item, state);
-                    const fistBumps = state?.fistBumps ?? 0;
+                    const highFives = state?.highFives ?? 0;
                     const earnedByFistBumps =
                         item.location === "groupRehearsal" &&
-                        fistBumps >= FIST_BUMPS_TO_EARN &&
+                        highFives >= FIST_BUMPS_TO_EARN &&
                         !state?.signed;
 
                     return (
@@ -135,7 +135,7 @@ export default function ChecklistSection({
                                             onClick={() => onAddFistBump(item.id)}
                                             className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                                         >
-                                            🙌 High Fives {fistBumps}/{FIST_BUMPS_TO_EARN}
+                                            🙌 High Fives {highFives}/{FIST_BUMPS_TO_EARN}
                                         </button>
                                     )}
 

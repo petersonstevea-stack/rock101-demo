@@ -391,7 +391,7 @@ export default function ParentDashboardOverview({
                 />
 
                 <StatCard
-                    {...data.stats.fistBumps}
+                    {...data.stats.highFives}
                     label="High Fives!"
                 />
             </section>

@@ -1,6 +1,6 @@
 export type WorkflowState = {
   instructorSubmitted: boolean;
-  directorSubmitted: boolean;
+  classInstructorSubmitted: boolean;
   graduationInstructorSubmitted: boolean;
   graduationDirectorSubmitted: boolean;
   parentSubmitted: boolean;
@@ -8,7 +8,7 @@ export type WorkflowState = {
 
 export const createEmptyWorkflowState = (): WorkflowState => ({
   instructorSubmitted: false,
-  directorSubmitted: false,
+  classInstructorSubmitted: false,
   graduationInstructorSubmitted: false,
   graduationDirectorSubmitted: false,
   parentSubmitted: false,
@@ -17,7 +17,7 @@ export const createEmptyWorkflowState = (): WorkflowState => ({
 export const isReadyToSendToParents = (workflow: WorkflowState): boolean => {
   return (
     workflow.instructorSubmitted &&
-    workflow.directorSubmitted &&
+    workflow.classInstructorSubmitted &&
     workflow.graduationDirectorSubmitted &&
     !workflow.parentSubmitted
   );
@@ -35,7 +35,7 @@ export const resetDirectorWorkflow = (
   workflow: WorkflowState
 ): WorkflowState => ({
   ...workflow,
-  directorSubmitted: false,
+  classInstructorSubmitted: false,
   parentSubmitted: false,
 });
 

@@ -10,7 +10,7 @@ type CurriculumProgressRecord = Record<
     done: boolean;
     signed: boolean;
     date: string | null;
-    fistBumps: number;
+    highFives: number;
   }
 >;
 
@@ -65,14 +65,14 @@ function isItemEarned(
     done: boolean;
     signed: boolean;
     date: string | null;
-    fistBumps: number;
+    highFives: number;
   },
 ) {
   if (!progress) return false;
 
   if (
     item.location === "groupRehearsal" &&
-    (progress.fistBumps ?? 0) >= FIST_BUMPS_TO_EARN
+    (progress.highFives ?? 0) >= FIST_BUMPS_TO_EARN
   ) {
     return true;
   }
@@ -159,7 +159,7 @@ function getCertificateStatus(
 
 function getFistBumps(curriculum: CurriculumProgressRecord) {
   return Object.values(curriculum).reduce(
-    (sum, item) => sum + (item?.fistBumps ?? 0),
+    (sum, item) => sum + (item?.highFives ?? 0),
     0,
   );
 }
@@ -415,7 +415,7 @@ export function buildParentDashboardData({
     ? clampPercent((totalCompleted / totalPossible) * 100)
     : 0;
 
-  const fistBumps = getFistBumps(curriculum);
+  const highFives = getFistBumps(curriculum);
   const badgesEarned = badges.filter((badge) => badge.earned).length;
 
   const recentActivity = buildRecentActivity(
@@ -491,9 +491,9 @@ export function buildParentDashboardData({
         value: `${badgesEarned}`,
         sublabel: `${badges.length} available`,
       },
-      fistBumps: {
+      highFives: {
         label: "Fist Bumps",
-        value: `${fistBumps}`,
+        value: `${highFives}`,
         sublabel: "Positive rehearsal moments",
       },
     },

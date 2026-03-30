@@ -2,7 +2,7 @@ export type CurriculumItem = {
   done: boolean;
   signed: boolean;
   date: string | null;
-  fistBumps: number;
+  highFives: number;
 };
 
 export type StudentNotes = {
@@ -12,7 +12,7 @@ export type StudentNotes = {
 
 export type WorkflowState = {
   instructorSubmitted: boolean;
-  directorSubmitted: boolean;
+  classInstructorSubmitted: boolean;
   parentSubmitted: boolean;
 };
 

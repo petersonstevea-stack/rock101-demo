@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabaseClient";
 import {
     INSTRUMENT_OPTIONS,
     PROGRAM_OPTIONS,
-    SCHOOL_OPTIONS,
 } from "@/data/reference/enrollmentOptions";
 
 type StaffRow = {
@@ -62,6 +61,18 @@ export default function FamiliesEnrollmentPage() {
         "idle"
     );
     const [isSaving, setIsSaving] = useState(false);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
 
     useEffect(() => {
         async function loadInitialData() {
@@ -349,7 +360,7 @@ export default function FamiliesEnrollmentPage() {
                                         label="School"
                                         value={student.school}
                                         onChange={(value) => updateStudent(index, "school", value)}
-                                        options={SCHOOL_OPTIONS}
+                                        options={schoolList.map((s) => ({ value: s.id, label: s.name }))}
                                         required
                                     />
 

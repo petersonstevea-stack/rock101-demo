@@ -14,7 +14,7 @@ type PipelineStudent = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
   notes: {
@@ -23,7 +23,7 @@ type PipelineStudent = {
   };
   workflow: {
     instructorSubmitted: boolean;
-    directorSubmitted: boolean;
+    classInstructorSubmitted: boolean;
     parentSubmitted: boolean;
   };
 };

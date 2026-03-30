@@ -22,7 +22,7 @@ type LessonStudent = {
             done: boolean;
             signed: boolean;
             date: string | null;
-            fistBumps: number;
+            highFives: number;
         }
     >;
     notes: {
@@ -31,7 +31,7 @@ type LessonStudent = {
     };
     workflow: {
         instructorSubmitted: boolean;
-        directorSubmitted: boolean;
+        classInstructorSubmitted: boolean;
         parentSubmitted: boolean;
     };
 };

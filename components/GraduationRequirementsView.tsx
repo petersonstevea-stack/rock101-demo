@@ -22,7 +22,7 @@ type LessonStudent = {
             done: boolean;
             signed: boolean;
             date: string | null;
-            fistBumps: number;
+            highFives: number;
         }
     >;
 };

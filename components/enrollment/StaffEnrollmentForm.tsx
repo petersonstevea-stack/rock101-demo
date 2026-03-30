@@ -1,12 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import EnrollmentSelectField from "@/components/enrollment/fields/EnrollmentSelectField";
 import EnrollmentTextField from "@/components/enrollment/fields/EnrollmentTextField";
 import {
-  SCHOOL_OPTIONS,
   SCHOOL_TYPE_OPTIONS,
   STAFF_ROLE_OPTIONS,
 } from "@/data/reference/enrollmentOptions";
+import { supabase } from "@/lib/supabaseClient";
 import type { StaffFormValues } from "@/types/enrollment";
 
 type StaffEnrollmentFormProps = {
@@ -24,6 +25,19 @@ export default function StaffEnrollmentForm({
   submitLabel = "Save Staff Member",
   disabled = false,
 }: StaffEnrollmentFormProps) {
+  const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("schools")
+      .select("id, name")
+      .eq("is_sandbox", false)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setSchoolList(data);
+      });
+  }, []);
+
   function updateField<K extends keyof StaffFormValues>(
     field: K,
     value: StaffFormValues[K]
@@ -108,7 +122,7 @@ export default function StaffEnrollmentForm({
           onChange={(value) =>
             updateField("school", value as StaffFormValues["school"])
           }
-          options={SCHOOL_OPTIONS}
+          options={schoolList.map((s) => ({ value: s.id, label: s.name }))}
           placeholder="Select school"
           required
           disabled={disabled}

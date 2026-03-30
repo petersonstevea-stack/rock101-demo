@@ -58,14 +58,14 @@ type CurriculumState = {
     done: boolean;
     signed: boolean;
     date: string | null;
-    fistBumps: number;
+    highFives: number;
 };
 
 const defaultCurriculumState: CurriculumState = {
     done: false,
     signed: false,
     date: null,
-    fistBumps: 0,
+    highFives: 0,
 };
 
 type SchoolFilter = "all" | string;
@@ -205,7 +205,7 @@ export default function Rock101App() {
                     },
                     workflow: {
                         instructorSubmitted: s.workflow?.instructorSubmitted ?? false,
-                        directorSubmitted: s.workflow?.directorSubmitted ?? false,
+                        classInstructorSubmitted: s.workflow?.classInstructorSubmitted ?? false,
                         graduationInstructorSubmitted:
                             s.workflow?.graduationInstructorSubmitted ?? false,
                         graduationDirectorSubmitted:
@@ -567,7 +567,7 @@ export default function Rock101App() {
 
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
-        selectedStudent.workflow.directorSubmitted &&
+        selectedStudent.workflow.classInstructorSubmitted &&
         !selectedStudent.workflow.parentSubmitted
         : false;
     const workflowMissingMessage = !selectedStudent
@@ -576,7 +576,7 @@ export default function Rock101App() {
             ? undefined
             : !selectedStudent.workflow.instructorSubmitted
                 ? "Waiting on instructor weekly feedback."
-                : !selectedStudent.workflow.directorSubmitted
+                : !selectedStudent.workflow.classInstructorSubmitted
                     ? "Waiting on class instructor weekly feedback."
                     : undefined;
     function handleSetTab(nextTab: Tab) {
@@ -797,10 +797,10 @@ export default function Rock101App() {
                     ? false
                     : student.workflow.instructorSubmitted,
 
-            directorSubmitted:
+            classInstructorSubmitted:
                 canManageRock101
                     ? false
-                    : student.workflow.directorSubmitted,
+                    : student.workflow.classInstructorSubmitted,
 
             graduationInstructorSubmitted:
                 itemArea === "graduation"
@@ -927,10 +927,10 @@ export default function Rock101App() {
                     ? false
                     : student.workflow.instructorSubmitted,
 
-            directorSubmitted:
+            classInstructorSubmitted:
                 canManageRock101
                     ? false
-                    : student.workflow.directorSubmitted,
+                    : student.workflow.classInstructorSubmitted,
 
             // ✅ NEW: GRADUATION WORKFLOW RESET
             graduationInstructorSubmitted:
@@ -977,13 +977,13 @@ export default function Rock101App() {
             ...student.curriculum,
             [item]: {
                 ...existing,
-                fistBumps: (existing.fistBumps || 0) + 1,
+                highFives: (existing.highFives || 0) + 1,
             },
         };
 
         const nextWorkflow = {
             ...student.workflow,
-            directorSubmitted: false,
+            classInstructorSubmitted: false,
             parentSubmitted: false,
         };
 
@@ -1030,7 +1030,7 @@ export default function Rock101App() {
 
         const nextWorkflow = {
             ...student.workflow,
-            directorSubmitted: false,
+            classInstructorSubmitted: false,
             parentSubmitted: false,
         };
 
@@ -1071,10 +1071,10 @@ export default function Rock101App() {
                     roleType === "instructor"
                         ? false
                         : student.workflow.instructorSubmitted,
-                directorSubmitted:
+                classInstructorSubmitted:
                     roleType === "director"
                         ? false
-                        : student.workflow.directorSubmitted,
+                        : student.workflow.classInstructorSubmitted,
                 parentSubmitted: false,
             },
         }));
@@ -1110,10 +1110,10 @@ export default function Rock101App() {
                 roleType === "instructor"
                     ? true
                     : student.workflow.instructorSubmitted,
-            directorSubmitted:
+            classInstructorSubmitted:
                 roleType === "director"
                     ? true
-                    : student.workflow.directorSubmitted,
+                    : student.workflow.classInstructorSubmitted,
         };
 
         const { error } = await supabase
@@ -1144,10 +1144,10 @@ export default function Rock101App() {
                     roleType === "instructor"
                         ? true
                         : student.workflow.instructorSubmitted,
-                directorSubmitted:
+                classInstructorSubmitted:
                     roleType === "director"
                         ? true
-                        : student.workflow.directorSubmitted,
+                        : student.workflow.classInstructorSubmitted,
             },
         }));
     }
@@ -1979,7 +1979,7 @@ export default function Rock101App() {
                                         studentName={selectedStudent.name}
                                         context="rehearsal"
                                         value={selectedStudent.notes.director}
-                                        saved={selectedStudent.workflow.directorSubmitted}
+                                        saved={selectedStudent.workflow.classInstructorSubmitted}
                                         onChange={(v) => handleNoteChange("director", v)}
                                         onSave={() => handleSaveFeedback("director")}
                                         canEdit={role === "owner" || role === "generalManager" || role === "director"}

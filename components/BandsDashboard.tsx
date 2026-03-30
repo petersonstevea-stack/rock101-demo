@@ -14,7 +14,7 @@ type DashboardStudent = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
   notes: {
@@ -23,7 +23,7 @@ type DashboardStudent = {
   };
   workflow: {
     instructorSubmitted: boolean;
-    directorSubmitted: boolean;
+    classInstructorSubmitted: boolean;
     parentSubmitted: boolean;
   };
 };

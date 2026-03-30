@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabaseClient";
 import {
     INSTRUMENT_OPTIONS,
     PROGRAM_OPTIONS,
-    SCHOOL_OPTIONS,
 } from "@/data/reference/enrollmentOptions";
 
 type Student = {
@@ -103,7 +102,20 @@ export default function AdminView({
     );
     const [isSavingParent, setIsSavingParent] = useState(false);
     const [showInactiveStudents, setShowInactiveStudents] = useState(false);
+    const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const inactiveStudentCount = students.filter((student) => !student.active).length;
+
+    useEffect(() => {
+        supabase
+            .from("schools")
+            .select("id, name")
+            .eq("is_sandbox", false)
+            .order("name")
+            .then(({ data }) => {
+                if (data) setSchoolList(data);
+            });
+    }, []);
+
     useEffect(() => {
         async function loadAdminData() {
             const { data: staffData, error: staffError } = await supabase
@@ -440,9 +452,9 @@ export default function AdminView({
                                                             className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         >
                                                             <option value="">Select school</option>
-                                                            {SCHOOL_OPTIONS.map((option) => (
-                                                                <option key={option.value} value={option.value}>
-                                                                    {option.label}
+                                                            {schoolList.map((s) => (
+                                                                <option key={s.id} value={s.id}>
+                                                                    {s.name}
                                                                 </option>
                                                             ))}
                                                         </select>

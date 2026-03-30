@@ -1,13 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import EnrollmentSearchSelectField from "@/components/enrollment/fields/EnrollmentSearchSelectField";
 import EnrollmentSelectField from "@/components/enrollment/fields/EnrollmentSelectField";
 import EnrollmentTextField from "@/components/enrollment/fields/EnrollmentTextField";
 import {
   INSTRUMENT_OPTIONS,
   PROGRAM_OPTIONS,
-  SCHOOL_OPTIONS,
 } from "@/data/reference/enrollmentOptions";
+import { supabase } from "@/lib/supabaseClient";
 import type { SelectOption, StudentEnrollmentFormValues } from "@/types/enrollment";
 
 type StudentEnrollmentFormProps = {
@@ -31,6 +32,19 @@ export default function StudentEnrollmentForm({
   submitLabel = "Save Student",
   disabled = false,
 }: StudentEnrollmentFormProps) {
+  const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("schools")
+      .select("id, name")
+      .eq("is_sandbox", false)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setSchoolList(data);
+      });
+  }, []);
+
   function updateField<K extends keyof StudentEnrollmentFormValues>(
     field: K,
     value: StudentEnrollmentFormValues[K]
@@ -90,7 +104,7 @@ export default function StudentEnrollmentForm({
           onChange={(value) =>
             updateField("school", value as StudentEnrollmentFormValues["school"])
           }
-          options={SCHOOL_OPTIONS}
+          options={schoolList.map((s) => ({ value: s.id, label: s.name }))}
           placeholder="Select school"
           required
           disabled={disabled}

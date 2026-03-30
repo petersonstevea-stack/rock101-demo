@@ -8,7 +8,7 @@ type SelectorStudent = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
   notes: {
@@ -17,7 +17,7 @@ type SelectorStudent = {
   };
   workflow: {
     instructorSubmitted: boolean;
-    directorSubmitted: boolean;
+    classInstructorSubmitted: boolean;
     parentSubmitted: boolean;
   };
 };

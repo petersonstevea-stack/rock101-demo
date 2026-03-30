@@ -20,7 +20,7 @@ type RehearsalStudent = {
             done: boolean;
             signed: boolean;
             date: string | null;
-            fistBumps: number;
+            highFives: number;
         }
     >;
     songReadiness?: Record<string, Record<string, SongReadinessEntry>>;
@@ -30,7 +30,7 @@ type RehearsalStudent = {
     };
     workflow: {
         instructorSubmitted: boolean;
-        directorSubmitted: boolean;
+        classInstructorSubmitted: boolean;
         parentSubmitted: boolean;
     };
 };

@@ -20,7 +20,7 @@ type CertificateStudent = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
   notes: {
@@ -29,7 +29,7 @@ type CertificateStudent = {
   };
   workflow: {
     instructorSubmitted: boolean;
-    directorSubmitted: boolean;
+    classInstructorSubmitted: boolean;
     parentSubmitted: boolean;
   };
 };
@@ -58,14 +58,14 @@ function isItemEarned(
     done: boolean;
     signed: boolean;
     date: string | null;
-    fistBumps: number;
+    highFives: number;
   }
 ) {
   if (!progress) return false;
 
   if (
     item.location === "groupRehearsal" &&
-    progress.fistBumps >= FIST_BUMPS_TO_EARN
+    progress.highFives >= FIST_BUMPS_TO_EARN
   ) {
     return true;
   }

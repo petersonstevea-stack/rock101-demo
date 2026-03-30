@@ -11,7 +11,7 @@ type GroupBehaviorSectionProps = {
       done: boolean;
       signed: boolean;
       date: string | null;
-      fistBumps: number;
+      highFives: number;
     }
   >;
   onAddFistBump: (item: string) => void;
@@ -23,7 +23,7 @@ export default function GroupBehaviorSection({
   onAddFistBump,
 }: GroupBehaviorSectionProps) {
   const totalFistBumps = items.reduce(
-    (sum, item) => sum + (curriculum[item.id]?.fistBumps || 0),
+    (sum, item) => sum + (curriculum[item.id]?.highFives || 0),
     0
   );
 
@@ -36,8 +36,8 @@ export default function GroupBehaviorSection({
 
       <div className="grid gap-2">
         {items.map((item) => {
-          const fistBumps = curriculum[item.id]?.fistBumps || 0;
-          const earnedBadge = fistBumps >= 10;
+          const highFives = curriculum[item.id]?.highFives || 0;
+          const earnedBadge = highFives >= 10;
 
           return (
             <div
@@ -48,7 +48,7 @@ export default function GroupBehaviorSection({
                 <div>
                   <div className="font-medium text-white">{item.label}</div>
                   <div className="mt-1 text-sm text-zinc-400">
-                    {fistBumps} fist bump{fistBumps === 1 ? "" : "s"}
+                    {highFives} fist bump{highFives === 1 ? "" : "s"}
                   </div>
                   {earnedBadge && (
                     <div className="mt-1 text-xs font-medium text-red-300">
