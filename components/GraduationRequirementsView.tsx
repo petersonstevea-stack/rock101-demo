@@ -139,7 +139,7 @@ export default function GraduationRequirementsView({
                         </span>
                     </div>
                     <div>
-                        Director graduation signoff:{" "}
+                        Class Instructor graduation signoff:{" "}
                         <span className="font-medium text-white">
                             {workflow.graduationDirectorSubmitted ? "Submitted" : "Not submitted"}
                         </span>
@@ -175,8 +175,8 @@ export default function GraduationRequirementsView({
                             }`}
                     >
                         {workflow.graduationDirectorSubmitted
-                            ? "Director Signoff Complete"
-                            : "Director Graduation Signoff"}
+                            ? "Class Instructor Signoff Complete"
+                            : "Class Instructor Graduation Signoff"}
                     </button>
                 </div>
             </div>

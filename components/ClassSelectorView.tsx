@@ -89,7 +89,7 @@ export default function ClassSelectorView({
                   </div>
 
                   <div className="mt-2 text-sm text-zinc-300">
-                    Director: {directorName}
+                    Class Instructor: {directorName}
                   </div>
 
                   <div className="mt-2 space-y-1 text-sm text-zinc-400">

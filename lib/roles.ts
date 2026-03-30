@@ -11,7 +11,7 @@ export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: "Owner",
   generalManager: "General Manager",
-  director: "Director",
+  director: "Class Instructor",
   instructor: "Instructor",
   parent: "Parent",
 };

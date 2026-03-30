@@ -163,7 +163,7 @@ export default function ClassDetailView({
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
-            <div className="text-sm text-zinc-400">Director</div>
+            <div className="text-sm text-zinc-400">Class Instructor</div>
             <div className="mt-2 font-semibold text-white">{directorName}</div>
           </div>
 
@@ -245,7 +245,7 @@ export default function ClassDetailView({
         )}
       </div>
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
-        <h3 className="text-xl font-semibold text-white">Director Weekly Feedback</h3>
+        <h3 className="text-xl font-semibold text-white">Class Instructor Weekly Feedback</h3>
 
         <div className="mt-4">
           <textarea
@@ -273,7 +273,7 @@ export default function ClassDetailView({
             }}
             className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
           >
-            Save Director Feedback
+            Save Class Instructor Feedback
           </button>
 
           {lastSavedAt && (

@@ -1958,10 +1958,10 @@ export default function Rock101App() {
                             role === "director") && (
                                 <>
                                     <div className="mb-2 text-lg font-semibold text-white">
-                                        Director Weekly Feedback
+                                        Class Instructor Weekly Feedback
                                     </div>
                                     <div className="mb-2 text-lg font-semibold text-white">
-                                        Director Weekly Feedback
+                                        Class Instructor Weekly Feedback
                                     </div>
                                     <NotesPanel
                                         role="director"

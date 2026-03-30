@@ -17,7 +17,7 @@ const FIST_BUMP_BADGES: Record<string, string> = {
   learnedSongs: "Learned Songs Star",
   practicedSongs: "Practice Champ",
   noNoodling: "No Noodling Pro",
-  listenedToDirector: "Director Listener",
+  listenedToDirector: "Class Instructor Listener",
   respectedBandmates: "Great Bandmate",
 };
 

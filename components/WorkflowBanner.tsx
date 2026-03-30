@@ -59,7 +59,7 @@ export default function WorkflowBanner({
                         Weekly report ready 🚀
                     </div>
                     <div className="mt-1 text-white">
-                        Both instructor and Rock 101 Director feedback have been saved. This
+                        Both instructor and Rock 101 Class Instructor feedback have been saved. This
                         weekly report is ready to be sent to the parent.
                     </div>
                 </div>

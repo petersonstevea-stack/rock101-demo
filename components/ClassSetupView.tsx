@@ -124,9 +124,7 @@ export default function ClassSetupView({
 }, [users, schoolId]);
 
     const directorUsers = useMemo(() => {
-    return schoolUsers.filter((user) => {
-        return user.role?.toLowerCase() === "director";
-    });
+    return schoolUsers;
 }, [schoolUsers]);
 
     const schoolStudents = useMemo(() => {
@@ -365,7 +363,7 @@ export default function ClassSetupView({
 
                     <div>
                         <label className="mb-2 block text-sm text-zinc-400">
-                            Class Director
+                            Class Instructor
                         </label>
 
                         <select
@@ -373,7 +371,7 @@ export default function ClassSetupView({
                             onChange={(e) => setDirectorEmail(e.target.value)}
                             className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
-                            <option value="">Select director</option>
+                            <option value="">Select instructor</option>
 
                             {directorUsers.map((user) => (
                                 <option key={user.email} value={user.email}>

@@ -273,7 +273,7 @@ export default function CertificateView({ student }: CertificateViewProps) {
                   <div className="text-center">
                     <div className="mx-auto h-px w-40 bg-zinc-600" />
                     <div className="mt-3 text-sm uppercase tracking-[0.25em] text-zinc-400">
-                      Rock 101 Director
+                      Rock 101 Class Instructor
                     </div>
                   </div>
                 </div>

@@ -34,8 +34,8 @@ export default function NotesPanel({
         ? `Instructor ${contextLabel} notes`
         : "Instructor Notes"
       : contextLabel
-        ? `Director ${contextLabel} notes`
-        : "Rock 101 Director Notes";
+        ? `Class Instructor ${contextLabel} notes`
+        : "Rock 101 Class Instructor Notes";
 
   const title =
     authorName && studentName
@@ -68,14 +68,14 @@ export default function NotesPanel({
         >
           {role === "instructor"
             ? "Save Instructor Feedback"
-            : "Save Director Feedback"}
+            : "Save Class Instructor Feedback"}
         </button>
 
         {saved && (
           <div className="rounded-full bg-zinc-800 px-3 py-2 text-sm text-white">
             {role === "instructor"
               ? "Instructor feedback saved"
-              : "Director feedback saved"}
+              : "Class Instructor feedback saved"}
           </div>
         )}
 
@@ -83,7 +83,7 @@ export default function NotesPanel({
           <div className="text-sm text-red-300">
             {role === "instructor"
               ? "Instructor notes are required before saving weekly feedback."
-              : "Rock 101 Director notes are required before saving weekly feedback."}
+              : "Rock 101 Class Instructor notes are required before saving weekly feedback."}
           </div>
         )}
 
