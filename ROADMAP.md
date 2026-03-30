@@ -72,12 +72,16 @@ Partially complete:
 - ✅ `data/users.ts` — deleted (superseded by Supabase `staff`/`users` tables)
 - ⏳ `data/schools.ts` — blocked pending Step 1.9 decision (4 active callers; may become DB-managed)
 
-### Step 1.9 — Evaluate Static Reference Data
-Decide which of these become DB-managed vs remain static config:
-- `data/songLibrary.ts`
-- `data/curriculum.ts`
-- `data/reference/enrollmentOptions.ts`
-- `data/reference/classGroupOptions.ts`
+### 🔶 Step 1.9 — Evaluate Static Reference Data
+Partially complete:
+- ✅ `data/curriculum.ts` — deleted (orphaned dead code, zero callers)
+- ✅ `data/reference/classGroupOptions.ts` — deleted; replaced with live `rock_classes` query in `app/enrollment/page.tsx`
+- ✅ Slug format mismatch fixed: `enrollmentOptions.ts` `SchoolSlug` and `SCHOOL_OPTIONS` corrected from underscore to hyphen format (`del_mar` → `del-mar`, `scripps_ranch` → `scripps-ranch`) to match live database values
+
+Still pending — decision needed on each:
+- ⏳ `data/schools.ts` — 6 callers; DB-managed is the right long-term answer (`schools` table exists), but migration requires resolving `SchoolId` type usage across the codebase
+- ⏳ `data/songLibrary.ts` — 1 caller (`ClassSetupView`); should become DB-managed (ARCHITECTURE.md `songs` table), low urgency
+- ⏳ `data/reference/enrollmentOptions.ts` — 8 callers; contains a mix of stable config (instruments, programs, staff roles) and school-specific data (`SCHOOL_OPTIONS`); school-specific parts should eventually come from DB, stable config may remain static
 
 ### Step 1.10 — Remove Legacy Director Role References
 - Audit all "director" role checks and UI labels
