@@ -37,7 +37,6 @@ import { schools, type SchoolId } from "@/data/schools";
 import { getEarnedBadges } from "@/lib/progress";
 import {
     saveSession,
-    getSavedSession,
     clearSavedSession,
     getAllUsers,
     saveSelectedTab,
@@ -112,29 +111,15 @@ export default function Rock101App() {
     const [editingClass, setEditingClass] = useState<any | null>(null);
     useEffect(() => {
         const checkUser = async () => {
-            console.log("CHECK USER FUNCTION RUNNING");
             const { data } = await supabase.auth.getUser();
-            console.log("FULL AUTH OBJECT:", data);
 
             if (data?.user) {
-                console.log("User is logged in:", data.user.email);
-                console.log("AUTH EMAIL:", data.user.email);
-
                 const authEmail = data.user.email?.trim().toLowerCase();
-                const authId = data.user.id;
 
-                console.log("AUTH USER ID:", authId);
-                console.log("AUTH USER EMAIL RAW:", data.user.email);
-                console.log("AUTH USER EMAIL NORMALIZED:", authEmail);
-
-                const { data: staffMatches, error: staffError } = await supabase
+                const { data: staffMatches } = await supabase
                     .from("staff")
                     .select("id, email, name, role, school_slug")
                     .eq("email", authEmail);
-
-                console.log("STAFF LOOKUP ERROR:", staffError);
-                console.log("STAFF LOOKUP RESULTS:", staffMatches);
-                console.log("STAFF LOOKUP COUNT:", staffMatches?.length ?? 0);
 
                 let dbUser = null;
 
@@ -146,8 +131,6 @@ export default function Rock101App() {
                     console.error("No staff row found for email:", authEmail);
                 }
 
-                console.log("DB USER:", dbUser);
-
                 if (dbUser) {
                     const sessionUser: SessionUser = {
                         email: dbUser.email,
@@ -155,26 +138,16 @@ export default function Rock101App() {
                         role: dbUser.role ?? "owner",
                         schoolId: mapSchoolNameToId(dbUser.school_slug),
                     };
-                    console.log("SESSION USER CREATED:", sessionUser);
                     setCurrentUser(sessionUser);
                     saveSession(sessionUser);
-                } else {
-                    console.log("No user logged in");
                 }
-            } else {
-                console.log("No auth user found");
             }
         };
 
         checkUser();
     }, []);
     useEffect(() => {
-        const savedUser = getSavedSession();
         const savedTab = getSavedTab();
-
-        if (savedUser) {
-            console.log("FOUND SAVED SESSION (waiting for auth):", savedUser);
-        }
 
         if (role === "director") {
             setTab("groupRehearsal");  // Directors always land on Group Rehearsal
@@ -191,15 +164,13 @@ export default function Rock101App() {
                 .eq("program", "rock101");
 
             if (error) {
-                console.log("SUPABASE LOAD STUDENTS ERROR RAW:", error);
-                console.log("SUPABASE LOAD STUDENTS ERROR JSON:", JSON.stringify(error, null, 2));
+                console.error("SUPABASE LOAD STUDENTS ERROR:", error);
                 return;
             }
 
             if (!data) return;
 
             const formatted = data.map((s: any) => {
-                console.log("SUPABASE STUDENT ROW", s);
                 const schoolId = mapSchoolNameToId(s.school);
 
                 return {
@@ -242,16 +213,7 @@ export default function Rock101App() {
                 : formatted.filter(
                     (student) => student.schoolId === currentUser?.schoolId
                 );
-            console.log("STUDENT DEBUG", {
-                currentUser,
-                isOwner,
-                rawStudentCount: data?.length ?? 0,
-                formattedCount: formatted.length,
-                safeStudentsCount: safeStudents.length,
-                programs: [...new Set((data ?? []).map((s: any) => s.program))],
-            });
             setStudents(safeStudents);
-            console.log("FORMATTED STUDENTS:", safeStudents);
 
             if (currentUser?.role === "parent") {
                 const matchedStudent = formatted.find(
@@ -274,8 +236,7 @@ export default function Rock101App() {
                 .eq("school_id", selectedSchoolId ?? currentUser?.schoolId ?? "");
 
             if (error) {
-                console.log("SUPABASE LOAD CLASSES ERROR RAW:", error);
-                console.log("SUPABASE LOAD CLASSES ERROR JSON:", JSON.stringify(error, null, 2));
+                console.error("SUPABASE LOAD CLASSES ERROR:", error);
                 setSavedClasses([]);
                 return;
             }
@@ -286,10 +247,7 @@ export default function Rock101App() {
                     id: c.id,
                     name: c.name,
                     schoolId: c.school_id ?? "",
-                    directorEmail:
-                        c.director_email === "director@delmar.com"
-                            ? "director.delmar@rock101.com"
-                            : (c.director_email ?? ""),
+                    directorEmail: c.director_email ?? "",
                     instructorEmail: c.instructor_email ?? "",
                     dayOfWeek: c.day_of_week ?? "Monday",
                     time: c.time ?? "",
@@ -319,7 +277,6 @@ export default function Rock101App() {
             if (!currentUser?.schoolId) return;
 
             const sessions = await getThisWeeksSessions(currentUser.schoolId);
-            console.log("WEEKLY SESSIONS:", sessions);
             setWeeklySessions(sessions);
         }
 
@@ -345,26 +302,10 @@ export default function Rock101App() {
     }, [isOwner, selectedSchoolId, currentUser]);
 
     const filteredStudentsBySchool = useMemo(() => {
-        console.log("SCHOOL FILTER DEBUG", {
-            currentUser,
-            effectiveSchoolFilter,
-            studentCount: students.length,
-            studentSchoolIds: students.map((student) => student.schoolId),
-        });
-
         if (effectiveSchoolFilter === "all") return students;
 
         return students.filter((student) => {
-            const matches = student.schoolId === effectiveSchoolFilter;
-
-            console.log("SCHOOL MATCH CHECK", {
-                studentName: student.name,
-                studentSchoolId: student.schoolId,
-                effectiveSchoolFilter,
-                matches,
-            });
-
-            return matches;
+            return student.schoolId === effectiveSchoolFilter;
         });
     }, [students, effectiveSchoolFilter]);
 
@@ -421,39 +362,14 @@ export default function Rock101App() {
         }
 
         if (currentUser.role === "instructor") {
-            console.log("STUDENT VIEW FILTER VALUE:", studentViewFilter);
-
             if (studentViewFilter === "allStudents") {
-                console.log("ALL STUDENTS MODE ACTIVE — BYPASSING INSTRUCTOR FILTER");
                 return filteredStudentsBySchool;
             }
 
             return filteredStudentsBySchool.filter((student) => {
-                console.log("RAW STUDENT OBJECT:", student);
-
                 const studentEmail = student.primaryInstructorEmail?.trim().toLowerCase();
                 const userEmail = currentUser.email?.trim().toLowerCase();
-
-                console.log("EMAIL COMPARISON", {
-                    studentName: student.name,
-                    studentEmail,
-                    userEmail,
-                    match: studentEmail === userEmail,
-                });
-
-                const assigned = studentEmail === userEmail;
-
-                console.log("INSTRUCTOR STUDENT CHECK", {
-                    studentName: student.name,
-                    primaryInstructorEmail: student.primaryInstructorEmail,
-                    currentUserEmail: currentUser.email,
-                    assigned,
-                    schoolId: student.schoolId,
-                    effectiveSchoolFilter,
-                    currentUserSchoolId: currentUser.schoolId,
-                });
-
-                return assigned;
+                return studentEmail === userEmail;
             });
         }
 
@@ -552,8 +468,6 @@ export default function Rock101App() {
             }
 
             if (data) {
-                console.log("ALL USERS FROM SUPABASE:", data);
-
                 const formattedUsers = data.map((u) => ({
                     name: u.name,
                     email: u.email,
@@ -714,7 +628,6 @@ export default function Rock101App() {
     }
 
     async function handleRemoveStudentFromClass(studentId: string) {
-        console.log("handleRemoveStudentFromClass called", { studentId, selectedClassId: selectedClass?.id });
         if (!selectedClass) return;
 
         const nextStudentIds = selectedClass.studentIds.filter(
@@ -807,8 +720,6 @@ export default function Rock101App() {
             (student) => student.name === studentName
         );
 
-        console.log("TARGET STUDENT FOR INSTRUCTOR UPDATE:", targetStudent);
-
         if (!targetStudent) {
             alert("Student not found");
             return;
@@ -826,9 +737,6 @@ export default function Rock101App() {
             })
             .eq("id", targetStudent.id)
             .select("id, primary_instructor_email");
-
-        console.log("INSTRUCTOR UPDATE MATCHED ROWS:", data);
-        console.log("INSTRUCTOR UPDATE ERROR:", error);
 
         if (error) {
             console.error("Supabase instructor update failed:", error);
@@ -860,7 +768,6 @@ export default function Rock101App() {
         const allPrivateItems = privateSections.flatMap((section: any) => section.items ?? []);
         const matchedItem = allPrivateItems.find((i: any) => i.id === item);
         const itemArea = matchedItem?.area ?? null;
-        console.log("TOGGLE ITEM AREA:", item, itemArea);
         const existing = student.curriculum[item] ?? defaultCurriculumState;
 
         const nextDone = !existing.done;
@@ -874,7 +781,6 @@ export default function Rock101App() {
                 date: nextDone ? existing.date : null,
             },
         };
-        console.log("TOGGLE DONE DEBUG:", item, existing, nextCurriculum[item]);
         const nextWorkflow = {
             ...student.workflow,
 
@@ -1006,7 +912,6 @@ export default function Rock101App() {
                 date: nextSigned ? new Date().toLocaleDateString() : null,
             },
         };
-        console.log("TOGGLE SIGNED DEBUG:", item, existing, nextCurriculum[item]);
         const nextWorkflow = {
             ...student.workflow,
 
@@ -1170,11 +1075,6 @@ export default function Rock101App() {
     }
 
     async function handleSaveFeedback(roleType: "instructor" | "director") {
-        console.log("handleSaveFeedback called", {
-            roleType,
-            selectedStudentName,
-        });
-
         if (!selectedStudent) return;
 
         const student = selectedStudent;
@@ -1253,9 +1153,6 @@ export default function Rock101App() {
         }
 
         try {
-            console.log("SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-            console.log("HAS ANON KEY:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-parent-update`,
                 {
@@ -1272,10 +1169,6 @@ export default function Rock101App() {
                     }),
                 }
             );
-
-            const resultText = await response.text();
-            console.log("Parent update response status:", response.status);
-            console.log("Parent update response body:", resultText);
 
             if (!response.ok) {
                 alert(`Parent email failed. Status: ${response.status}`);
@@ -2231,20 +2124,14 @@ export default function Rock101App() {
 
                         }}
                         onToggleStudentActive={(studentId, nextActive) => {
-                            console.log("TOGGLE:", studentId, nextActive);
-
-                            setStudents((prev) => {
-                                const updated = prev.map((student) => {
+                            setStudents((prev) =>
+                                prev.map((student) => {
                                     if (String(student.id) === String(studentId)) {
-                                        console.log("MATCH FOUND:", student);
                                         return { ...student, active: nextActive };
                                     }
                                     return student;
-                                });
-
-                                console.log("UPDATED STUDENTS:", updated);
-                                return updated;
-                            });
+                                })
+                            );
                         }}
 
                         onUpdateStudentInstructor={(studentName, instructorEmail) => {

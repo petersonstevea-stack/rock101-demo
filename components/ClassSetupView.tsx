@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RockClass } from "@/types/class";
-import { saveClasses } from "@/lib/classes";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
 import { schools, type SchoolId } from "@/data/schools";
@@ -103,20 +102,13 @@ export default function ClassSetupView({
     }, [schoolId]);
 
     const schoolUsers = useMemo(() => {
-    console.log("CURRENT schoolId:", schoolId);
-    console.log("ALL USERS BEFORE FILTER:", users);
-
     return users.filter((user) => {
-        console.log("COMPARING:", user.schoolId, "vs", schoolId);
         return user.schoolId === schoolId;
     });
 }, [users, schoolId]);
 
     const directorUsers = useMemo(() => {
-    console.log("ALL SCHOOL USERS:", schoolUsers);
-
     return schoolUsers.filter((user) => {
-        console.log("CHECKING ROLE:", user.role);
         return user.role?.toLowerCase() === "director";
     });
 }, [schoolUsers]);
@@ -130,7 +122,6 @@ export default function ClassSetupView({
             (rockClass, index, arr) =>
                 arr.findIndex((c) => c.id === rockClass.id) === index
         );
-    console.log("CLASSES DEBUG:", classes);
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
@@ -182,7 +173,6 @@ export default function ClassSetupView({
                 ? classToEdit.id
                 : crypto.randomUUID(),
             name: className.trim(),
-            school: schoolId,
             school_id: schoolId,
             director_email: directorEmail.trim().toLowerCase(),
             day_of_week: dayOfWeek,
@@ -239,7 +229,6 @@ export default function ClassSetupView({
         }
 
         setClasses(updatedClasses);
-        saveClasses(updatedClasses);
         resetForm();
         alert("Class saved!");
     }
