@@ -47,7 +47,7 @@ function StatCard({
     sublabel?: string;
 }) {
     return (
-        <div className="sor-finish-card rounded-2xl p-5">
+        <div className="sor-finish-card rounded-none p-5">
             <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
                 {label}
             </div>
@@ -71,8 +71,8 @@ function SectionCard({
     const { firstPart, secondPart } = splitSectionTitle(title);
 
     return (
-        <section className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-            <div className="sor-finish-card rounded-2xl p-5">
+        <section className="space-y-5 rounded-none p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
+            <div className="sor-finish-card rounded-none p-5">
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <h2 className="sor-display text-4xl md:text-5xl leading-none text-white">
@@ -84,7 +84,7 @@ function SectionCard({
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-sm">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 shadow-sm">
                 {children}
             </div>
         </section>
@@ -101,7 +101,7 @@ function PriorityPill({ priority }: { priority: "high" | "medium" | "low" }) {
 
     return (
         <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${classes}`}
+            className={`rounded-none px-2.5 py-1 text-xs font-semibold uppercase ${classes}`}
         >
             {priority}
         </span>
@@ -123,7 +123,7 @@ function ProgressNavCard({
         <button
             type="button"
             onClick={onClick}
-            className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
+            className="w-full rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -132,9 +132,9 @@ function ProgressNavCard({
                         <span className="shrink-0 text-zinc-400">{meta}</span>
                     </div>
 
-                    <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-800">
+                    <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-zinc-800">
                         <div
-                            className="h-full rounded-full bg-red-600 transition-all"
+                            className="h-full rounded-none bg-red-600 transition-all"
                             style={{ width: `${value}%` }}
                         />
                     </div>
@@ -204,7 +204,7 @@ function NotesPanelCard({
             : formatted;
     }
     return (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-base font-semibold text-white">{title}</div>
             <div className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500">
                 {formatLastUpdatedLabel(lastUpdated, authorName)}
@@ -215,7 +215,7 @@ function NotesPanelCard({
                     {value}
                 </div>
             ) : (
-                <div className="mt-4 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-500">
+                <div className="mt-4 rounded-none border border-dashed border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-500">
                     {emptyText}
                 </div>
             )}
@@ -249,13 +249,13 @@ function RecentActivityCard({
                     return (
                         <div
                             key={item.id}
-                            className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+                            className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span
-                                            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${accent}`}
+                                            className={`rounded-none px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${accent}`}
                                         >
                                             {label}
                                         </span>
@@ -275,7 +275,7 @@ function RecentActivityCard({
                     );
                 })
             ) : (
-                <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
+                <div className="rounded-none border border-dashed border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
                     No recent activity has been recorded yet.
                 </div>
             )}
@@ -307,30 +307,27 @@ export default function ParentDashboardOverview({
     }
     return (
         <div className="mt-8 space-y-6">
-            <section className="sor-finish-card overflow-hidden rounded-3xl p-6 shadow-lg">
+            <section className="sor-finish-card overflow-hidden rounded-none p-6 shadow-lg">
                 <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr] xl:items-end">
                     <div>
-                        <div className="text-sm uppercase tracking-[0.2em] text-zinc-400">
-                            Parent Dashboard
-                        </div>
                         <h1 className="sor-display mt-2 text-4xl leading-none md:text-6xl">
                             <span className="text-white">{data.student.name}</span>
                         </h1>
                         <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-200">
-                            <span className="rounded-full bg-white/10 px-3 py-1">
+                            <span className="rounded-none bg-white/10 px-3 py-1">
                                 {data.student.instrument}
                             </span>
-                            <span className="rounded-full bg-white/10 px-3 py-1">
+                            <span className="rounded-none bg-white/10 px-3 py-1">
                                 {data.student.className}
                             </span>
-                            <span className="rounded-full bg-white/10 px-3 py-1">
+                            <span className="rounded-none bg-white/10 px-3 py-1">
                                 {data.student.schoolName}
                             </span>
                         </div>
                     </div>
 
                     <div className="grid flex-1 gap-4 md:grid-cols-3">
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+                        <div className="rounded-none border border-zinc-800 bg-zinc-950/80 p-4">
                             <div className="text-sm text-zinc-400">Rock 101 Graduation Certificate</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.certificate.earned ? "Earned" : "Not yet earned"}
@@ -340,7 +337,7 @@ export default function ParentDashboardOverview({
                             </div>
                         </div>
 
-                        <div className={`rounded-2xl border p-4 transition-all duration-300 ${urgencyClass}`}>
+                        <div className={`rounded-none border p-4 transition-all duration-300 ${urgencyClass}`}>
                             <div className="text-sm text-zinc-400">Countdown to the Stage</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.rehearsalsToShow !== null
@@ -354,7 +351,7 @@ export default function ParentDashboardOverview({
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+                        <div className="rounded-none border border-zinc-800 bg-zinc-950/80 p-4">
                             <div className="text-sm text-zinc-400">Next Performance</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.student.nextPerformanceDate ?? "Not scheduled"}
@@ -404,7 +401,7 @@ export default function ParentDashboardOverview({
                     title="Progress"
                     rightSlot={
                         <span
-                            className={`rounded-full px-3 py-1 text-sm font-semibold uppercase ${data.rehearsalReady.ready
+                            className={`rounded-none px-3 py-1 text-sm font-semibold uppercase ${data.rehearsalReady.ready
                                 ? "bg-emerald-500/20 text-emerald-300"
                                 : "bg-amber-500/20 text-amber-300"
                                 }`}
@@ -433,7 +430,7 @@ export default function ParentDashboardOverview({
                                         key={item.song}
                                         type="button"
                                         onClick={() => onNavigate?.(item.targetTab)}
-                                        className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
+                                        className="w-full rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
                                     >
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
@@ -446,9 +443,9 @@ export default function ParentDashboardOverview({
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-800">
+                                        <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-zinc-800">
                                             <div
-                                                className="h-full rounded-full bg-red-600 transition-all"
+                                                className="h-full rounded-none bg-red-600 transition-all"
                                                 style={{ width: `${(item.readiness / 5) * 100}%` }}
                                             />
                                         </div>
@@ -521,7 +518,7 @@ export default function ParentDashboardOverview({
                         />
 
                         {/* ✅ SUMMARY */}
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
                             <div className="text-base font-semibold text-white">
                                 {data.summary.title}
                             </div>
@@ -540,7 +537,7 @@ export default function ParentDashboardOverview({
                         data.whatsNext.map((item) => (
                             <div
                                 key={item.id}
-                                className="rounded-2xl border border-zinc-800 p-4"
+                                className="rounded-none border border-zinc-800 p-4"
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
@@ -559,7 +556,7 @@ export default function ParentDashboardOverview({
                             </div>
                         ))
                     ) : (
-                        <div className="rounded-2xl bg-emerald-500/10 p-4 text-sm text-emerald-300">
+                        <div className="rounded-none bg-emerald-500/10 p-4 text-sm text-emerald-300">
                             Everything currently tracked is complete.
                         </div>
                     )}

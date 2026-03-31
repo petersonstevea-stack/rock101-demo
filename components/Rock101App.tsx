@@ -1298,7 +1298,7 @@ export default function Rock101App() {
                 role={role ?? ""}
             >
                 <div className="p-6">
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                    <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                         <h2 className="text-xl font-bold">No student found</h2>
                         {role === "instructor" ? (
                             <p className="mt-3 text-zinc-300">
@@ -1339,7 +1339,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={() => setStudentViewFilter("myStudents")}
-                            className={`rounded-lg px-4 py-2 ${studentViewFilter === "myStudents"
+                            className={`rounded-none px-4 py-2 ${studentViewFilter === "myStudents"
                                 ? "bg-red-600"
                                 : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
@@ -1350,7 +1350,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={() => setStudentViewFilter("allStudents")}
-                            className="rounded-lg px-4 py-2 transition text-white"
+                            className="rounded-none px-4 py-2 transition text-white"
                             style={{
                                 backgroundColor:
                                     studentViewFilter === "allStudents"
@@ -1376,7 +1376,7 @@ export default function Rock101App() {
                 {role === "instructor" &&
                     studentViewFilter === "myStudents" &&
                     visibleStudents.length === 0 && (
-                        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-300">
+                        <div className="mb-4 rounded-none border border-zinc-800 bg-zinc-900 p-4 text-zinc-300">
                             No students are currently assigned to you. Switch to All Students
                             to view everyone.
                         </div>
@@ -1446,7 +1446,7 @@ export default function Rock101App() {
                     !selectedStudentName && (
                         <>
                             {filteredClassesBySchool.length === 0 ? (
-                                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                                <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                                     <h2 className="text-2xl font-bold text-white">
                                         No Rock 101 classes created yet
                                     </h2>
@@ -1457,7 +1457,7 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => handleSetTab("classSetup")}
-                                        className="mt-5 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+                                        className="mt-5 rounded-none bg-red-600 px-4 py-2 text-white hover:bg-red-500"
                                     >
                                         Create First Class
                                     </button>
@@ -1486,7 +1486,7 @@ export default function Rock101App() {
                     managementLandingView === "students" &&
                     !selectedClass &&
                     !selectedStudentName && (
-                        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                        <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h2 className="text-2xl font-bold text-white">
@@ -1507,7 +1507,7 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => setStudentViewFilter("myStudents")}
-                                        className="rounded-lg px-4 py-2 transition text-white"
+                                        className="rounded-none px-4 py-2 transition text-white"
                                         style={{
                                             backgroundColor:
                                                 studentViewFilter === "myStudents"
@@ -1531,7 +1531,7 @@ export default function Rock101App() {
                                     <button
                                         type="button"
                                         onClick={() => setStudentViewFilter("allStudents")}
-                                        className={`rounded-lg px-4 py-2 ${studentViewFilter === "allStudents"
+                                        className={`rounded-none px-4 py-2 ${studentViewFilter === "allStudents"
                                             ? "bg-red-600"
                                             : "bg-zinc-800 hover:bg-zinc-700"
                                             }`}
@@ -1565,7 +1565,7 @@ export default function Rock101App() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-zinc-300">
+                                <div className="mt-6 rounded-none border border-zinc-800 bg-zinc-950 p-4 text-zinc-300">
                                     No students found for this school.
                                 </div>
                             )}
@@ -1640,7 +1640,7 @@ export default function Rock101App() {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedStudentName("")}
-                                    className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                                    className="rounded-none bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
                                 >
                                     Back to Class Roster
                                 </button>
@@ -1657,7 +1657,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => setSelectedStudentName("")}
-                                className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                                className="rounded-none bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
                             >
                                 Back to Student List
                             </button>
@@ -1671,7 +1671,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("privateLesson")}
-                                className="rounded-lg px-4 py-2 transition text-white"
+                                className="rounded-none px-4 py-2 transition text-white"
                                 style={{
                                     backgroundColor:
                                         tab === "privateLesson"
@@ -1694,7 +1694,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("graduationRequirements")}
-                                className={`rounded-lg px-4 py-2 ${tab === "graduationRequirements"
+                                className={`rounded-none px-4 py-2 ${tab === "graduationRequirements"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1704,7 +1704,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("groupRehearsal")}
-                                className="rounded-lg px-4 py-2 transition text-white"
+                                className="rounded-none px-4 py-2 transition text-white"
                                 style={{
                                     backgroundColor:
                                         tab === "groupRehearsal"
@@ -1728,7 +1728,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("badges")}
-                                className={`rounded-lg px-4 py-2 ${tab === "badges"
+                                className={`rounded-none px-4 py-2 ${tab === "badges"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1739,7 +1739,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("parent")}
-                                className={`rounded-lg px-4 py-2 ${tab === "parent"
+                                className={`rounded-none px-4 py-2 ${tab === "parent"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1750,7 +1750,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("certificate")}
-                                className={`rounded-lg px-4 py-2 ${tab === "certificate"
+                                className={`rounded-none px-4 py-2 ${tab === "certificate"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1765,7 +1765,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("classSetup")}
-                                className={`rounded-lg px-4 py-2 ${tab === "classSetup"
+                                className={`rounded-none px-4 py-2 ${tab === "classSetup"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1776,7 +1776,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("performanceDashboard")}
-                                className={`rounded-lg px-4 py-2 ${tab === "performanceDashboard"
+                                className={`rounded-none px-4 py-2 ${tab === "performanceDashboard"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1787,7 +1787,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("bandsDashboard")}
-                                className={`rounded-lg px-4 py-2 ${tab === "bandsDashboard"
+                                className={`rounded-none px-4 py-2 ${tab === "bandsDashboard"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1798,7 +1798,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("pipeline")}
-                                className={`rounded-lg px-4 py-2 ${tab === "pipeline"
+                                className={`rounded-none px-4 py-2 ${tab === "pipeline"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
@@ -1809,7 +1809,7 @@ export default function Rock101App() {
                             <button
                                 type="button"
                                 onClick={() => handleSetTab("admin")}
-                                className={`rounded-lg px-4 py-2 ${tab === "admin"
+                                className={`rounded-none px-4 py-2 ${tab === "admin"
                                     ? "bg-red-600"
                                     : "bg-zinc-800 hover:bg-zinc-700"
                                     }`}
