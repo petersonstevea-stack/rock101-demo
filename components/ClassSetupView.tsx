@@ -17,6 +17,8 @@ function generateTimeOptions(): string[] {
 }
 
 const TIME_OPTIONS = generateTimeOptions();
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 import { RockClass } from "@/types/class";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
@@ -54,10 +56,13 @@ export default function ClassSetupView({
     const [className, setClassName] = useState("");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
     const [time, setTime] = useState("");
+    const [firstSessionDate, setFirstSessionDate] = useState("");
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
     const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
     const [performanceTitle, setPerformanceTitle] = useState("");
     const [performanceDate, setPerformanceDate] = useState("");
+    const [saveMessage, setSaveMessage] = useState("");
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (mode !== "edit" || !classToEdit) {
@@ -71,10 +76,12 @@ export default function ClassSetupView({
         setClassName(classToEdit.name);
         setDayOfWeek(classToEdit.dayOfWeek);
         setTime(classToEdit.time ?? "");
+        setFirstSessionDate("");
         setSelectedStudentIds(classToEdit.studentIds ?? []);
         setSelectedSongs(classToEdit.songs ?? []);
         setPerformanceTitle(classToEdit.performanceTitle ?? "");
         setPerformanceDate(classToEdit.performanceDate ?? "");
+        setSaveMessage("");
     }, [mode, classToEdit]);
 
     useEffect(() => {
@@ -145,14 +152,14 @@ export default function ClassSetupView({
     }, [schoolId]);
 
     const schoolUsers = useMemo(() => {
-    return users.filter((user) => {
-        return user.schoolId === schoolId;
-    });
-}, [users, schoolId]);
+        return users.filter((user) => {
+            return user.schoolId === schoolId;
+        });
+    }, [users, schoolId]);
 
     const directorUsers = useMemo(() => {
-    return schoolUsers;
-}, [schoolUsers]);
+        return schoolUsers;
+    }, [schoolUsers]);
 
     const schoolStudents = useMemo(() => {
         return students.filter((student) => student.schoolId === schoolId);
@@ -177,6 +184,20 @@ export default function ClassSetupView({
             (rockClass, index, arr) =>
                 arr.findIndex((c) => c.id === rockClass.id) === index
         );
+
+    const firstSessionPreview = useMemo(() => {
+        if (!firstSessionDate) return null;
+        const d = new Date(firstSessionDate + "T00:00:00");
+        const dayName = DAY_NAMES[d.getDay()];
+        const formatted = d.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+        });
+        const timePart = time ? ` at ${time}` : "";
+        return `${dayName}s${timePart} — generating 104 sessions from ${formatted}`;
+    }, [firstSessionDate, time]);
+
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
@@ -184,10 +205,12 @@ export default function ClassSetupView({
         setClassName("");
         setDayOfWeek("Monday");
         setTime("");
+        setFirstSessionDate("");
         setSelectedStudentIds([]);
         setSelectedSongs([]);
         setPerformanceTitle("");
         setPerformanceDate("");
+        setSaveMessage("");
     }
 
     function toggleStudent(studentId: string) {
@@ -219,19 +242,34 @@ export default function ClassSetupView({
             return;
         }
 
+        if (mode === "create" && !firstSessionDate) {
+            alert("Please select a First Session Date.");
+            return;
+        }
+
+        setSaving(true);
+        setSaveMessage("");
+
+        // Derive day_of_week from firstSessionDate if provided
+        const derivedDayOfWeek = firstSessionDate
+            ? DAY_NAMES[new Date(firstSessionDate + "T00:00:00").getDay()]
+            : dayOfWeek;
+
         const selectedStudentRecords = students.filter((student) =>
             selectedStudentIds.includes(student.id)
         );
 
+        const classId = mode === "edit" && classToEdit
+            ? classToEdit.id
+            : crypto.randomUUID();
+
         const supabaseClassData = {
-            id: mode === "edit" && classToEdit
-                ? classToEdit.id
-                : crypto.randomUUID(),
+            id: classId,
             name: className.trim(),
             school: schoolId,
             school_id: schoolId,
             director_email: directorEmail.trim().toLowerCase(),
-            day_of_week: dayOfWeek,
+            day_of_week: derivedDayOfWeek,
             time: time.trim(),
             songs: selectedSongs,
             student_ids: selectedStudentRecords.map((s) => s.id),
@@ -248,8 +286,42 @@ export default function ClassSetupView({
         if (error) {
             console.error("SUPABASE SAVE ERROR:", error);
             alert(`Error saving class: ${error.message}`);
+            setSaving(false);
             return;
         }
+
+        // Generate 104 weekly sessions if firstSessionDate is set
+        let sessionMessage = "";
+        if (firstSessionDate) {
+            const sessionDates: string[] = [];
+            for (let i = 0; i < 104; i++) {
+                const d = new Date(firstSessionDate + "T00:00:00");
+                d.setDate(d.getDate() + i * 7);
+                sessionDates.push(d.toISOString().slice(0, 10));
+            }
+
+            const batchSize = 20;
+            for (let i = 0; i < sessionDates.length; i += batchSize) {
+                const batch = sessionDates.slice(i, i + batchSize);
+                await supabase.from("class_sessions").upsert(
+                    batch.map((date) => ({
+                        class_id: classId,
+                        session_date: date,
+                        status: "scheduled",
+                    })),
+                    { onConflict: "class_id,session_date", ignoreDuplicates: true }
+                );
+            }
+
+            const formattedStart = new Date(firstSessionDate + "T00:00:00").toLocaleDateString(
+                "en-US",
+                { month: "long", day: "numeric", year: "numeric" }
+            );
+            sessionMessage = ` · 104 sessions generated from ${formattedStart}`;
+        }
+
+        setSaving(false);
+        setSaveMessage(`Class saved${sessionMessage}`);
 
         resetForm();
 
@@ -259,10 +331,10 @@ export default function ClassSetupView({
         }
 
         const localClassData: RockClass = {
-            id: supabaseClassData.id,
+            id: classId,
             schoolId,
             name: className.trim(),
-            dayOfWeek,
+            dayOfWeek: derivedDayOfWeek,
             time: time.trim(),
             directorEmail: directorEmail.trim().toLowerCase(),
             instructorEmail: "",
@@ -285,8 +357,6 @@ export default function ClassSetupView({
         }
 
         setClasses(updatedClasses);
-        resetForm();
-        alert("Class saved!");
     }
 
     function handleEditClass(rockClass: RockClass) {
@@ -296,10 +366,12 @@ export default function ClassSetupView({
         setClassName(rockClass.name);
         setDayOfWeek(rockClass.dayOfWeek);
         setTime(rockClass.time ?? "");
+        setFirstSessionDate("");
         setSelectedStudentIds(rockClass.studentIds ?? []);
         setSelectedSongs(rockClass.songs ?? []);
         setPerformanceTitle(rockClass.performanceTitle ?? "");
         setPerformanceDate(rockClass.performanceDate ?? "");
+        setSaveMessage("");
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -390,23 +462,6 @@ export default function ClassSetupView({
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-sm text-zinc-400">Day of Week</label>
-                        <select
-                            value={dayOfWeek}
-                            onChange={(e) => setDayOfWeek(e.target.value)}
-                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
-                        >
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
-                        </select>
-                    </div>
-
-                    <div>
                         <label className="mb-2 block text-sm text-zinc-400">Time</label>
                         <select
                             value={time}
@@ -418,6 +473,21 @@ export default function ClassSetupView({
                                 <option key={t} value={t}>{t}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm text-zinc-400">
+                            First Session Date
+                        </label>
+                        <input
+                            type="date"
+                            value={firstSessionDate}
+                            onChange={(e) => setFirstSessionDate(e.target.value)}
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
+                        />
+                        {firstSessionPreview && (
+                            <p className="mt-2 text-sm text-zinc-400">{firstSessionPreview}</p>
+                        )}
                     </div>
 
                     <div>
@@ -477,13 +547,20 @@ export default function ClassSetupView({
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={handleCreateOrUpdateClass}
-                    className="rounded-none bg-[#cc0000] px-5 py-3 font-semibold text-white hover:bg-[#b30000]"
-                >
-                    {editingClassId ? "Save Changes" : "Create Class"}
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        type="button"
+                        onClick={handleCreateOrUpdateClass}
+                        disabled={saving}
+                        className="rounded-none bg-[#cc0000] px-5 py-3 font-semibold text-white hover:bg-[#b30000] disabled:opacity-50"
+                    >
+                        {saving ? "Saving…" : editingClassId ? "Save Changes" : "Create Class"}
+                    </button>
+
+                    {saveMessage && (
+                        <span className="text-sm text-zinc-300">{saveMessage}</span>
+                    )}
+                </div>
             </div>
 
             <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
