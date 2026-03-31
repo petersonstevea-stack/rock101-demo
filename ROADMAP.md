@@ -247,6 +247,45 @@ How it should work:
 
 ---
 
+## PHASE 6 — Pike 13 Integration
+**Goal:** Connect Stage Ready to Pike 13 (School of Rock's school management system) for staff sync, schedule display, and attendance.
+
+### Step 6.1 — Integration Spec (Design Before Building)
+
+#### Staff Integration
+- Staff enrollment should flow from Pike 13 — when a staff member is added in Pike 13, Stage Ready should auto-create their profile
+- Pike 13 has 3 staff roles: Staff Member, Limited Staff Member, Manager — these do NOT map cleanly to Stage Ready roles (`owner`, `gm`, `director`, `instructor`)
+- Stage Ready must be able to OVERRIDE Pike 13 role designations for its own permission purposes
+  - Design: Pike 13 role stored as a reference field on the staff record; Stage Ready role is the authoritative value for all permission checks in this system
+- Different schools may have the same staff member at different access levels — Stage Ready already supports this via the `staff_school_roles` table
+
+#### Single Login Credential
+- **Goal:** one login that works for both Pike 13 and Stage Ready
+- Investigate whether Pike 13 OAuth2 can be used as the identity provider for Stage Ready login
+- If the same email is used in both systems, Stage Ready can use Pike 13 email as the linking key
+- This requires confirming Pike 13 email matches staff email in the Stage Ready `staff` table
+- **Do not build yet** — investigate feasibility first
+
+#### Schedule Display
+- Stage Ready should be able to display a staff member's schedule pulled from Pike 13
+- Show: upcoming classes, session times, assigned students per session
+- Read-only from Pike 13 — Stage Ready does not write schedule data back to Pike 13
+
+#### Attendance
+- Stage Ready should be able to mark attendance for a class session
+- Write attendance back to Pike 13 via Core API
+- Also display a student's attendance history pulled from Pike 13 Reporting API
+- Attendance data stays in Pike 13 as source of truth — Stage Ready displays and writes but does not store independently
+
+#### Prerequisites to Confirm Before Building
+1. Confirm `students` table primary key type in Supabase
+2. Confirm how sessions currently identify the logged-in user
+3. Confirm whether Pike 13 stores the same email your staff uses in Stage Ready
+4. Investigate Pike 13 OAuth2 as identity provider
+5. Confirm Pike 13 API supports attendance writes via Core API
+
+---
+
 ## General Rules for All Phases
 - One step at a time — stop and confirm after each
 - Git commit before every structural change
