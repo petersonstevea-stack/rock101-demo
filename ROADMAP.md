@@ -4,7 +4,7 @@
 ---
 
 ## Current Status
-- Rock 101 pilot: ~85% complete with real students and schools
+- Rock 101 pilot: live and functional with real students and schools — enrollment, progress tracking, parent email flow all operational
 - Performance Program: schema partially exists, UI not started
 - All other programs: future phase only
 
@@ -108,6 +108,48 @@ Complete. `fistBumps` → `highFives` renamed in all TypeScript types, component
 ### ✅ Step 1.13b — Rename directorSubmitted to classInstructorSubmitted
 Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all TypeScript types and component references (10 files). `graduationDirectorSubmitted` left unchanged. DB migration completed prior to code update.
 
+### ✅ Step 1.14 — Enrollment RLS Fix
+Complete. Student INSERT was failing because the RLS policy checks `school_id` but the enrollment form payload only set the legacy `school` field. Fixed: `school_id` and `primary_instructor_user_id` now included in the student INSERT payload in `app/enrollment/page.tsx`.
+
+### ✅ Step 1.15 — Parent Email: Full Dashboard Snapshot
+Complete. `send-parent-update` edge function rebuilt (v22). Now:
+- Accepts `studentId` only — queries all data server-side using the service role key
+- 4-tile stats row matching the dashboard exactly
+  (Method App Lessons, Graduation Reqs, Group Rehearsal, High Fives)
+- Show countdown with rehearsals remaining (calculated from
+  `day_of_week` + `performance_date`, not logged sessions)
+- Completed This Week — signed method lessons only, no raw IDs
+- Private lesson progress by month (signed status per lesson)
+- Group rehearsal notes
+- Rehearsal behaviors with high fives progress bars
+- Song readiness
+- Graduation requirements by month
+- Automatically reflects dashboard structure — update the edge
+  function when dashboard layout changes
+
+### ✅ Step 1.16 — Pike 13 Schema Prep
+Complete. 7 linking fields and 6 indexes added across 6 tables:
+- `students.pike13_person_id`
+- `staff.pike13_person_id`
+- `parents.pike13_person_id`
+- `schools.pike13_subdomain`
+- `rock_classes.pike13_service_id`
+- `rock_classes.program_id` (FK → `programs.id`)
+- `class_sessions.pike13_event_occurrence_id`
+All nullable, additive, zero impact on existing data.
+Migration: `supabase/migrations/20260331093238_add_pike13_linking_fields.sql`
+
+### 🔜 Step 1.17 — Parent Email Polish Pass
+Deferred. The email is functional and sends correct data but needs
+a full design polish day:
+- Reduce visual clutter — fewer sections or collapsed sections
+- Improve hierarchy and scannability for a parent audience
+- Remove or simplify the full lesson checklist (too detailed for parents)
+- Consider a more summary-focused layout
+- Test on iPhone (known layout issues on mobile)
+- Keep dark Stage Ready design language throughout
+Do not build until Phase 1 functional work is stable.
+
 ---
 
 ### Known Bugs — Fix Before Pilot Launch
@@ -131,31 +173,24 @@ Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all 
 
 ---
 
-### Parent Email Workflow — Restore Before Pilot Launch
-**Goal:** Restore the two-staff weekly feedback → parent email flow.
+### ✅ Parent Email Workflow — Complete
+**Goal:** Two-staff weekly feedback → parent email flow. ✅ Live.
 
-How it should work:
+How it works:
 1. Instructor saves weekly lesson notes and progress → marked submitted
-2. Director saves weekly group rehearsal notes → marked submitted
+2. Class Instructor saves weekly group rehearsal notes → marked submitted
 3. After BOTH have submitted, a "Send to Parent" prompt appears
    for the second staff member who saved
 4. Clicking send emails the parent the full completed dashboard
 
-**Frontend fixes complete (commit 248ca81):**
-- `workflowReady` condition fixed — no longer requires graduation signoffs
-- `workflowMissingMessage` simplified — only checks instructor + class instructor submitted
-- `parentSubmitted: true` now persisted to Supabase after successful email send
-- Debug `console.log` and `alert("BUTTON CLICKED")` removed from `WorkflowBanner`
-
-**Edge function built, not yet deployed (commit ec80643):**
-- `supabase/functions/send-parent-update/index.ts` created — sends HTML email via Resend
-- `RESEND_API_KEY` must be set in Supabase Dashboard → Edge Functions → Secrets
-- Deployment blocked pending Resend domain verification for `rock101stageready.com`
-  (DNS propagation in progress — check Resend dashboard to confirm `Verified` status)
-
-**Next steps once domain shows Verified in Resend:**
-1. Deploy: `supabase functions deploy send-parent-update`
-2. Test end to end with a real student record
+**Complete as of March 2026:**
+- `workflowReady` condition checks `instructorSubmitted && classInstructorSubmitted`
+- `parentSubmitted: true` persisted to Supabase after successful email send
+- Edge function deployed (v22) — queries all data server-side from `studentId`
+- Resend domain `rock101stageready.com` verified
+- `RESEND_API_KEY` set in Supabase Edge Functions secrets
+- See Step 1.15 for full edge function feature list
+- See Step 1.17 for deferred polish work
 
 ---
 
