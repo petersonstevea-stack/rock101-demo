@@ -86,7 +86,14 @@ export default function ClassSetupView({
             .then(({ data }) => {
                 if (data) {
                     setSchoolList(data);
-                    if (!defaultSchoolId && !schoolId) {
+                    if (defaultSchoolId) {
+                        const normalize = (name: string) =>
+                            name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+                        const match = data.find(
+                            (s) => s.id === defaultSchoolId || normalize(s.name) === defaultSchoolId
+                        );
+                        setSchoolId(match?.id ?? defaultSchoolId);
+                    } else if (!schoolId) {
                         setSchoolId(data[0]?.id ?? "");
                     }
                 }
@@ -173,7 +180,7 @@ export default function ClassSetupView({
     function resetForm() {
         setEditingClassId(null);
         setDirectorEmail("");
-        setSchoolId(schoolList[0]?.id ?? "");
+        setSchoolId(defaultSchoolId ?? schoolList[0]?.id ?? "");
         setClassName("");
         setDayOfWeek("Monday");
         setTime("");
