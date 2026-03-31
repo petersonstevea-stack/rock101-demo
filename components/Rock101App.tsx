@@ -1290,7 +1290,10 @@ export default function Rock101App() {
             <AppShell
                 schoolName={currentSchoolName}
                 currentTab={tab}
-                onTabChange={(newTab) => setTab(newTab as Tab)}
+                onTabChange={(newTab) => {
+                    if (newTab === "classSetup") { router.push("/class-setup"); return; }
+                    setTab(newTab as Tab);
+                }}
                 onSignOut={handleLogout}
                 canSeeStudentTabs={canSeeStudentTabs}
                 canSeeManagementTabs={canSeeManagementTabs}
