@@ -156,11 +156,11 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#111111" }}>
       {/* Logo */}
-      <img src="/sor-logo.png" alt="School of Rock" className="w-full px-4 py-4 object-contain" />
+      <img src="/sor-logo.png" alt="School of Rock" className="w-32 mx-auto block py-4 px-2 object-contain" />
 
       {/* Role badge */}
-      <div className="border-b border-zinc-700 bg-zinc-800 px-4 py-2">
-        <div className="text-sm text-white">{getRoleLabel(role)}</div>
+      <div className="border-b border-zinc-300 bg-white px-4 py-2">
+        <div className="text-sm font-normal text-black">{getRoleLabel(role)}</div>
       </div>
 
       {/* School */}
