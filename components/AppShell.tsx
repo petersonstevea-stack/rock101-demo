@@ -201,7 +201,7 @@ function SidebarContent({
       </nav>
 
       {/* Sign out */}
-      <div className="border-t border-zinc-800 px-4 py-4">
+      <div className="border-t border-zinc-800 px-4 pb-16 pt-4 md:pb-4">
         <button
           type="button"
           onClick={onSignOut}

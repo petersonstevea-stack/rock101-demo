@@ -449,8 +449,9 @@ export default function Rock101App() {
     const canSeeStudentTabs =
         !!selectedStudent && (!canManageRock101 || !!selectedStudentName);
 
-    const currentSchoolName =
-        effectiveSchoolFilter !== "all"
+    const currentSchoolName = selectedStudent
+        ? schoolList.find((s) => s.id === selectedStudent.schoolId)?.name ?? "School of Rock"
+        : effectiveSchoolFilter !== "all"
             ? schoolList.find((s) => s.id === effectiveSchoolFilter)?.name ?? "School of Rock"
             : "All Schools";
 
