@@ -124,6 +124,39 @@ h4,
   opacity: 0.95;
 }
 
+/* -------------------------------
+   Range input — square track
+--------------------------------*/
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  border-radius: 0;
+  height: 4px;
+  background: #333333;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #cc0000;
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-track {
+  border-radius: 0;
+  height: 4px;
+  background: #333333;
+}
+
 .sor-finish-card:hover {
   transform: translateY(-2px);
   border-color: rgba(210, 31, 43, 0.45);
