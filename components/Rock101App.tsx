@@ -1327,8 +1327,8 @@ export default function Rock101App() {
     return (
         <AppShell
             schoolName={currentSchoolName}
-            studentName={selectedStudent?.name ?? undefined}
-            instrument={selectedStudent?.instrument ?? undefined}
+            studentName={selectedStudentName || undefined}
+            instrument={selectedStudentName ? selectedStudent?.instrument ?? undefined : undefined}
             programName="Rock 101"
             currentTab={tab}
             onTabChange={(newTab) => setTab(newTab as Tab)}
