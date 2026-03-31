@@ -236,6 +236,7 @@ export default function FamiliesEnrollmentPage() {
                         last_initial: student.lastName.trim().charAt(0),
                         instrument: student.instrument,
                         school: student.school,
+                        school_id: student.school,
                         program: student.program,
                         primary_program_id: student.program,
                         parent_email: normalizedParentEmail,
