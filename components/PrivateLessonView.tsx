@@ -122,7 +122,8 @@ export default function PrivateLessonView({
     const currentMonth = getCurrentMonth(monthGroups, student.curriculum);
 
     return (
-        <div className="mt-8 space-y-6">
+        <div className="min-h-screen bg-white">
+        <div className="p-6 space-y-6">
             <PageHero
                 title="Private Lesson"
                 subtitle={`Focused skill-building for ${student.name} • ${student.instrument}`}
@@ -148,11 +149,11 @@ export default function PrivateLessonView({
                         <div
                             key={group.month}
                             className={`space-y-5 ${group.month === currentMonth
-                                    ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
+                                    ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-none p-2"
                                     : ""
                                 }`}
                         >
-                            <div className="sor-finish-card rounded-2xl p-5 backdrop-blur-sm">
+                            <div className="bg-[#111111] rounded-none p-5">
                                 <div>
                                     <h2 className="sor-display text-4xl leading-none md:text-5xl">
                                         <span className="sor-display-red">{monthPart}</span>
@@ -175,7 +176,7 @@ export default function PrivateLessonView({
                                         </div>
                                     </div>
 
-                                    <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
+                                    <div className="mt-2 h-3 overflow-hidden rounded-none bg-[#333333]">
                                         <div
                                             className="h-full transition-all"
                                             style={{
@@ -189,7 +190,7 @@ export default function PrivateLessonView({
 
                             <div className="grid gap-6 xl:grid-cols-2">
                                 {columns.left.length > 0 && (
-                                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
+                                    <div className="rounded-none border border-zinc-800 bg-zinc-900 p-1">
                                         <ChecklistSection
                                             title="Rock 101 Method App Lessons"
                                             items={columns.left}
@@ -204,7 +205,7 @@ export default function PrivateLessonView({
                                 )}
 
                                 {columns.right.length > 0 && (
-                                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
+                                    <div className="rounded-none border border-zinc-800 bg-zinc-900 p-1">
                                         <ChecklistSection
                                             title="Rock 101 Method App Lessons"
                                             items={columns.right}
@@ -222,6 +223,7 @@ export default function PrivateLessonView({
                     );
                 })}
             </div>
-        </div >
+        </div>
+        </div>
     );
 }
