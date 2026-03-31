@@ -41,19 +41,21 @@ function StatCard({
     label,
     value,
     sublabel,
+    highlight,
 }: {
     label: string;
     value: string;
     sublabel?: string;
+    highlight?: boolean;
 }) {
     return (
-        <div className="sor-finish-card rounded-none p-5">
-            <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+        <div className={`rounded-none p-5 ${highlight ? "bg-[#cc0000]" : "bg-[#111111]"}`}>
+            <div className={`text-xs uppercase tracking-[0.18em] ${highlight ? "text-white/60" : "text-zinc-400"}`}>
                 {label}
             </div>
             <div className="mt-2 text-3xl font-bold text-white">{value}</div>
             {sublabel ? (
-                <div className="mt-1 text-sm text-zinc-400">{sublabel}</div>
+                <div className={`mt-1 text-sm ${highlight ? "text-white/50" : "text-zinc-400"}`}>{sublabel}</div>
             ) : null}
         </div>
     );
@@ -72,7 +74,7 @@ function SectionCard({
 
     return (
         <section className="space-y-5 rounded-none p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-            <div className="sor-finish-card rounded-none p-5">
+            <div className="bg-[#111111] rounded-none p-5">
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <h2 className="sor-display text-4xl md:text-5xl leading-none text-white">
@@ -84,7 +86,7 @@ function SectionCard({
                 </div>
             </div>
 
-            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 shadow-sm">
+            <div className="rounded-none bg-[#111111] p-6">
                 {children}
             </div>
         </section>
@@ -94,9 +96,9 @@ function SectionCard({
 function PriorityPill({ priority }: { priority: "high" | "medium" | "low" }) {
     const classes =
         priority === "high"
-            ? "bg-red-500/20 text-red-300"
+            ? "bg-[#cc0000] text-white"
             : priority === "medium"
-                ? "bg-amber-500/20 text-amber-300"
+                ? "bg-zinc-700 text-zinc-200"
                 : "bg-zinc-700 text-zinc-300";
 
     return (
@@ -123,7 +125,7 @@ function ProgressNavCard({
         <button
             type="button"
             onClick={onClick}
-            className="w-full rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
+            className="w-full rounded-none border border-zinc-800 bg-[#1a1a1a] p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-800"
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -132,9 +134,9 @@ function ProgressNavCard({
                         <span className="shrink-0 text-zinc-400">{meta}</span>
                     </div>
 
-                    <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-zinc-800">
+                    <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-[#333333]">
                         <div
-                            className="h-full rounded-none bg-red-600 transition-all"
+                            className="h-full rounded-none bg-[#cc0000] transition-all"
                             style={{ width: `${value}%` }}
                         />
                     </div>
@@ -204,18 +206,18 @@ function NotesPanelCard({
             : formatted;
     }
     return (
-        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
+        <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
             <div className="text-base font-semibold text-white">{title}</div>
             <div className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500">
                 {formatLastUpdatedLabel(lastUpdated, authorName)}
             </div>
 
             {hasContent ? (
-                <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-zinc-300">
+                <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-zinc-400">
                     {value}
                 </div>
             ) : (
-                <div className="mt-4 rounded-none border border-dashed border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-500">
+                <div className="mt-4 rounded-none border border-dashed border-zinc-700 bg-[#111111] p-4 text-sm text-zinc-500">
                     {emptyText}
                 </div>
             )}
@@ -234,10 +236,10 @@ function RecentActivityCard({
                 items.map((item) => {
                     const accent =
                         item.type === "groupRehearsal"
-                            ? "bg-emerald-500/10 text-emerald-300"
+                            ? "bg-zinc-700 text-emerald-300"
                             : item.type === "badge"
-                                ? "bg-amber-500/10 text-amber-300"
-                                : "bg-red-500/10 text-red-300";
+                                ? "bg-zinc-700 text-amber-300"
+                                : "bg-[#cc0000] text-white";
 
                     const label =
                         item.type === "groupRehearsal"
@@ -249,7 +251,7 @@ function RecentActivityCard({
                     return (
                         <div
                             key={item.id}
-                            className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
+                            className="rounded-none bg-[#1a1a1a] p-4"
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="min-w-0">
@@ -275,7 +277,7 @@ function RecentActivityCard({
                     );
                 })
             ) : (
-                <div className="rounded-none border border-dashed border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-500">
+                <div className="rounded-none border border-dashed border-zinc-700 bg-[#1a1a1a] p-4 text-sm text-zinc-500">
                     No recent activity has been recorded yet.
                 </div>
             )}
@@ -293,41 +295,40 @@ export default function ParentDashboardOverview({
 }: Props) {
     const rehearsals = data.rehearsalsToShow;
 
-    let urgencyClass = "border-zinc-700 bg-zinc-950/80";
+    let urgencyBorder = "border-zinc-800";
 
     if (rehearsals !== null) {
         if (rehearsals <= 3) {
-            urgencyClass =
-                "border-red-500/40 bg-red-950/40 shadow-[0_0_30px_rgba(255,0,0,0.15)]";
+            urgencyBorder = "border-[#cc0000]";
         } else if (rehearsals <= 7) {
-            urgencyClass = "border-orange-400/40 bg-orange-950/30";
+            urgencyBorder = "border-zinc-600";
         } else {
-            urgencyClass = "border-zinc-700 bg-zinc-950/80";
+            urgencyBorder = "border-zinc-800";
         }
     }
     return (
         <div className="mt-8 space-y-6">
-            <section className="sor-finish-card overflow-hidden rounded-none p-6 shadow-lg">
+            <section className="bg-[#111111] overflow-hidden rounded-none p-6">
                 <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr] xl:items-end">
                     <div>
                         <h1 className="sor-display mt-2 text-4xl leading-none md:text-6xl">
                             <span className="text-white">{data.student.name}</span>
                         </h1>
-                        <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-200">
-                            <span className="rounded-none bg-white/10 px-3 py-1">
+                        <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
                                 {data.student.instrument}
                             </span>
-                            <span className="rounded-none bg-white/10 px-3 py-1">
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
                                 {data.student.className}
                             </span>
-                            <span className="rounded-none bg-white/10 px-3 py-1">
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
                                 {data.student.schoolName}
                             </span>
                         </div>
                     </div>
 
                     <div className="grid flex-1 gap-4 md:grid-cols-3">
-                        <div className="rounded-none border border-zinc-800 bg-zinc-950/80 p-4">
+                        <div className="rounded-none border border-zinc-800 bg-[#1a1a1a] p-4">
                             <div className="text-sm text-zinc-400">Rock 101 Graduation Certificate</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.certificate.earned ? "Earned" : "Not yet earned"}
@@ -337,7 +338,7 @@ export default function ParentDashboardOverview({
                             </div>
                         </div>
 
-                        <div className={`rounded-none border p-4 transition-all duration-300 ${urgencyClass}`}>
+                        <div className={`rounded-none border bg-[#1a1a1a] p-4 ${urgencyBorder}`}>
                             <div className="text-sm text-zinc-400">Countdown to the Stage</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.rehearsalsToShow !== null
@@ -351,7 +352,7 @@ export default function ParentDashboardOverview({
                             </div>
                         </div>
 
-                        <div className="rounded-none border border-zinc-800 bg-zinc-950/80 p-4">
+                        <div className="rounded-none border border-zinc-800 bg-[#1a1a1a] p-4">
                             <div className="text-sm text-zinc-400">Next Performance</div>
                             <div className="mt-1 text-lg font-semibold text-white">
                                 {data.student.nextPerformanceDate ?? "Not scheduled"}
@@ -370,6 +371,7 @@ export default function ParentDashboardOverview({
                 <StatCard
                     {...data.stats.privateLessons}
                     label="Method App Lessons Completed"
+                    highlight
                 />
 
                 <StatCard
@@ -402,8 +404,8 @@ export default function ParentDashboardOverview({
                     rightSlot={
                         <span
                             className={`rounded-none px-3 py-1 text-sm font-semibold uppercase ${data.rehearsalReady.ready
-                                ? "bg-emerald-500/20 text-emerald-300"
-                                : "bg-amber-500/20 text-amber-300"
+                                ? "bg-[#cc0000] text-white"
+                                : "bg-zinc-700 text-zinc-200"
                                 }`}
                         >
                             {data.rehearsalReady.label}
@@ -430,7 +432,7 @@ export default function ParentDashboardOverview({
                                         key={item.song}
                                         type="button"
                                         onClick={() => onNavigate?.(item.targetTab)}
-                                        className="w-full rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900/80"
+                                        className="w-full rounded-none border border-zinc-800 bg-[#1a1a1a] p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-800"
                                     >
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
@@ -438,14 +440,14 @@ export default function ParentDashboardOverview({
                                                 <div className="mt-1 text-sm text-zinc-400">{item.label}</div>
                                             </div>
 
-                                            <div className="text-sm font-semibold text-red-300">
+                                            <div className="text-sm font-semibold text-[#cc0000]">
                                                 {item.readiness}/5
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-zinc-800">
+                                        <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-[#333333]">
                                             <div
-                                                className="h-full rounded-none bg-red-600 transition-all"
+                                                className="h-full rounded-none bg-[#cc0000] transition-all"
                                                 style={{ width: `${(item.readiness / 5) * 100}%` }}
                                             />
                                         </div>
@@ -518,11 +520,11 @@ export default function ParentDashboardOverview({
                         />
 
                         {/* ✅ SUMMARY */}
-                        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
+                        <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
                             <div className="text-base font-semibold text-white">
                                 {data.summary.title}
                             </div>
-                            <div className="mt-3 text-sm leading-7 text-zinc-300">
+                            <div className="mt-3 text-sm leading-7 text-zinc-400">
                                 {data.summary.text}
                             </div>
                         </div>
@@ -531,13 +533,13 @@ export default function ParentDashboardOverview({
                 </SectionCard>
             </section>
 
-            <SectionCard title="What’s Next">
+            <SectionCard title="What's Next">
                 <div className="space-y-3">
                     {data.whatsNext.length ? (
                         data.whatsNext.map((item) => (
                             <div
                                 key={item.id}
-                                className="rounded-none border border-zinc-800 p-4"
+                                className="rounded-none bg-[#1a1a1a] p-4"
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
@@ -556,7 +558,7 @@ export default function ParentDashboardOverview({
                             </div>
                         ))
                     ) : (
-                        <div className="rounded-none bg-emerald-500/10 p-4 text-sm text-emerald-300">
+                        <div className="rounded-none bg-[#1a1a1a] p-4 text-sm text-zinc-300">
                             Everything currently tracked is complete.
                         </div>
                     )}
