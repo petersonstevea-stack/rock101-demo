@@ -63,7 +63,7 @@ export default function StudentEnrollmentForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm"
+      className="space-y-6 rounded-none border border-zinc-800 bg-zinc-900 p-6"
     >
       <div className="space-y-1">
         <h2 className="text-xl font-semibold text-white">Student Enrollment</h2>
@@ -183,7 +183,7 @@ export default function StudentEnrollmentForm({
         <button
           type="submit"
           disabled={disabled}
-          className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-none bg-[#cc0000] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#b30000] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitLabel}
         </button>

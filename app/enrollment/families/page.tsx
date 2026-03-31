@@ -280,7 +280,7 @@ export default function FamiliesEnrollmentPage() {
             title="Family Enrollment"
             description="Create a parent and enroll students in a single workflow."
         >
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 space-y-6">
                 <h2 className="text-lg font-semibold text-white">
                     Parent + Student Enrollment
                 </h2>
@@ -320,7 +320,7 @@ export default function FamiliesEnrollmentPage() {
                         return (
                             <div
                                 key={index}
-                                className="rounded-xl border border-white/10 bg-black/30 p-4 space-y-4"
+                                className="rounded-none border border-zinc-800 bg-zinc-950 p-4 space-y-4"
                             >
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-base font-semibold text-white">
@@ -403,7 +403,7 @@ export default function FamiliesEnrollmentPage() {
                     <button
                         type="button"
                         onClick={addAnotherStudent}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10"
+                        className="rounded-none border border-zinc-700 bg-zinc-800 px-4 py-2 text-white transition hover:bg-zinc-700"
                     >
                         + Add Another Student
                     </button>
@@ -412,7 +412,7 @@ export default function FamiliesEnrollmentPage() {
                         type="button"
                         onClick={handleSaveFamily}
                         disabled={isSaving}
-                        className="rounded-xl bg-white px-4 py-2 text-black disabled:opacity-50"
+                        className="rounded-none bg-[#cc0000] px-4 py-2 text-white transition hover:bg-[#b30000] disabled:opacity-50"
                     >
                         {isSaving ? "Saving..." : "Save Family"}
                     </button>
@@ -439,7 +439,7 @@ export default function FamiliesEnrollmentPage() {
                         {recentStudents.map((student) => (
                             <div
                                 key={student.id}
-                                className="rounded-lg border border-white/10 p-3 text-sm text-white/80"
+                                className="rounded-none border border-zinc-800 p-3 text-sm text-white/80"
                             >
                                 {student.first_name} {student.last_initial ?? ""} — {student.school}
                             </div>

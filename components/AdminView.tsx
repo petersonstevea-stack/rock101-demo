@@ -303,7 +303,7 @@ export default function AdminView({
 
     return (
         <div className="mt-8 space-y-8">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-2xl font-bold">Admin Page</h2>
                 <p className="mt-2 text-zinc-400">
                     Manage enrollment, parents, students, and instructor assignments.
@@ -313,7 +313,7 @@ export default function AdminView({
                     <div
                         className={
                             statusType === "success"
-                                ? "mt-4 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-200"
+                                ? "mt-4 rounded-none border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-200"
                                 : "mt-4 rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-3 text-sm text-white"
                         }
                     >
@@ -325,7 +325,7 @@ export default function AdminView({
             <div className="grid gap-4 md:grid-cols-2">
                 <Link
                     href="/enrollment/staff"
-                    className="rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+                    className="rounded-none border border-zinc-800 bg-zinc-900 p-6 transition hover:border-[#cc0000] hover:bg-zinc-800"
                 >
                     <h3 className="text-lg font-semibold text-white">Manage Staff</h3>
                     <p className="mt-2 text-sm text-white/60">
@@ -335,7 +335,7 @@ export default function AdminView({
 
                 <Link
                     href="/enrollment/families"
-                    className="rounded-xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+                    className="rounded-none border border-zinc-800 bg-zinc-900 p-6 transition hover:border-[#cc0000] hover:bg-zinc-800"
                 >
                     <h3 className="text-lg font-semibold text-white">Manage Families</h3>
                     <p className="mt-2 text-sm text-white/60">
@@ -344,14 +344,14 @@ export default function AdminView({
                 </Link>
             </div>
 
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h3 className="text-xl font-semibold">Student Manager</h3>
                 <input
                     type="text"
                     placeholder="Search students..."
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    className="mb-4 w-full rounded-lg bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
+                    className="mb-4 w-full rounded-none bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
                 />
 
                 <div className="mt-2 text-sm">
@@ -407,7 +407,7 @@ export default function AdminView({
                                                                 }))
                                                             }
                                                             placeholder="First name"
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         />
 
                                                         <input
@@ -420,7 +420,7 @@ export default function AdminView({
                                                                 }))
                                                             }
                                                             placeholder="Last initial"
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         />
 
                                                         <select
@@ -431,7 +431,7 @@ export default function AdminView({
                                                                     instrument: e.target.value,
                                                                 }))
                                                             }
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         >
                                                             <option value="">Select instrument</option>
                                                             {INSTRUMENT_OPTIONS.map((option) => (
@@ -449,7 +449,7 @@ export default function AdminView({
                                                                     school: e.target.value,
                                                                 }))
                                                             }
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         >
                                                             <option value="">Select school</option>
                                                             {schoolList.map((s) => (
@@ -467,7 +467,7 @@ export default function AdminView({
                                                                     primaryProgramId: e.target.value,
                                                                 }))
                                                             }
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         >
                                                             <option value="">Select program</option>
                                                             {PROGRAM_OPTIONS.map((option) => (
@@ -480,14 +480,14 @@ export default function AdminView({
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => saveStudentRecord(student.name)}
-                                                                className="rounded-md bg-green-600 px-3 py-2 text-white"
+                                                                className="rounded-none bg-[#cc0000] px-3 py-2 text-white"
                                                             >
                                                                 Save Student
                                                             </button>
 
                                                             <button
                                                                 onClick={cancelEditingStudent}
-                                                                className="rounded-md bg-zinc-700 px-3 py-2 text-white"
+                                                                className="rounded-none bg-zinc-700 px-3 py-2 text-white"
                                                             >
                                                                 Cancel
                                                             </button>
@@ -505,27 +505,27 @@ export default function AdminView({
                                                             type="text"
                                                             value={editingParentName}
                                                             onChange={(e) => setEditingParentName(e.target.value)}
-                                                            className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                            className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                         />
 
                                                         <button
                                                             onClick={() => saveParentName(student)}
                                                             disabled={isSavingParent}
-                                                            className="rounded-md bg-green-600 px-3 py-2 text-white disabled:opacity-50"
+                                                            className="rounded-none bg-[#cc0000] px-3 py-2 text-white disabled:opacity-50"
                                                         >
                                                             {isSavingParent ? "Saving..." : "Save"}
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleToggleStudentActive(student)}
-                                                            className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
+                                                            className="rounded-none bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
                                                         >
                                                             {student.active ? "Deactivate" : "Activate"}
                                                         </button>
 
                                                         <button
                                                             onClick={cancelEditingParent}
-                                                            className="rounded-md bg-zinc-700 px-3 py-2 text-white"
+                                                            className="rounded-none bg-zinc-700 px-3 py-2 text-white"
                                                         >
                                                             Cancel
                                                         </button>
@@ -544,7 +544,7 @@ export default function AdminView({
                                                         console.log("INSTRUCTOR DROPDOWN CHANGED", student.name, e.target.value);
                                                         onUpdateStudentInstructor?.(student.name, e.target.value);
                                                     }}
-                                                    className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-white"
+                                                    className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"
                                                 >
                                                     <option value="">Unassigned</option>
 
@@ -562,14 +562,14 @@ export default function AdminView({
                                                         onClick={() =>
                                                             startEditingParent(student.name, student.parentEmail)
                                                         }
-                                                        className="rounded-md bg-zinc-800 px-3 py-2 text-white"
+                                                        className="rounded-none bg-zinc-800 px-3 py-2 text-white"
                                                     >
                                                         Edit Parent
                                                     </button>
 
                                                     <button
                                                         onClick={() => startEditingStudent(student)}
-                                                        className="rounded-md bg-zinc-800 px-3 py-2 text-white"
+                                                        className="rounded-none bg-zinc-800 px-3 py-2 text-white"
                                                     >
                                                         Edit Student
                                                     </button>
@@ -577,7 +577,7 @@ export default function AdminView({
                                                     <button
                                                         type="button"
                                                         onClick={() => handleToggleStudentActive(student)}
-                                                        className="rounded-md bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
+                                                        className="rounded-none bg-zinc-900 px-3 py-2 text-sm text-white transition hover:bg-zinc-800"
                                                     >
                                                         {student.active ? "Deactivate" : "Activate"}
                                                     </button>

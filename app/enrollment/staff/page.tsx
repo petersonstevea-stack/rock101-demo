@@ -453,7 +453,7 @@ export default function StaffEnrollmentPage() {
                 <div
                     className={
                         statusType === "success"
-                            ? "rounded-xl border border-green-500/20 bg-green-500/10 p-4"
+                            ? "rounded-none border border-green-500/20 bg-green-500/10 p-4"
                             : "rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-4"
                     }
                 >
@@ -461,7 +461,7 @@ export default function StaffEnrollmentPage() {
                 </div>
             )}
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <div className="space-y-1">
                     <h2 className="text-xl font-semibold text-white">Staff Enrollment</h2>
                     <p className="text-sm text-white/70">
@@ -529,7 +529,7 @@ export default function StaffEnrollmentPage() {
                         type="button"
                         onClick={handleSubmit}
                         disabled={isSaving}
-                        className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-none bg-[#cc0000] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#b30000] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isSaving ? "Saving..." : "Save Staff"}
                     </button>
@@ -537,7 +537,7 @@ export default function StaffEnrollmentPage() {
             </div>
 
             {editingStaffId && (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
+                <div className="rounded-none border border-amber-500/20 bg-amber-500/10 p-6">
                     <div className="mb-4">
                         <h2 className="text-lg font-semibold text-white">Edit Staff</h2>
                         <p className="mt-1 text-sm text-white/70">
@@ -602,7 +602,7 @@ export default function StaffEnrollmentPage() {
                         <button
                             type="button"
                             onClick={cancelEditingStaff}
-                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                            className="rounded-none border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                         >
                             Cancel Edit
                         </button>
@@ -611,7 +611,7 @@ export default function StaffEnrollmentPage() {
                             type="button"
                             onClick={handleUpdateStaff}
                             disabled={isUpdating}
-                            className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-none bg-[#cc0000] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#b30000] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isUpdating ? "Saving..." : "Save Staff Changes"}
                         </button>
@@ -619,12 +619,12 @@ export default function StaffEnrollmentPage() {
                 </div>
             )}
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-lg font-semibold text-white">Staff Directory</h2>
                 <button
                     type="button"
                     onClick={() => setShowInactiveStaff((prev) => !prev)}
-                    className="mt-2 rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                    className="mt-2 rounded-none bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
                 >
                     {showInactiveStaff ? "Hide Inactive Staff" : "Show Inactive Staff"}
                 </button>
@@ -638,7 +638,7 @@ export default function StaffEnrollmentPage() {
                             .map((staff) => (
                                 <div
                                     key={staff.id}
-                                    className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                    className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                                 >
                                     <p className="font-semibold text-white">{staff.name}</p>
                                     <p className="text-xs text-white/60">{staff.email}</p>
@@ -658,7 +658,7 @@ export default function StaffEnrollmentPage() {
                                         <button
                                             type="button"
                                             onClick={() => startEditingStaff(staff)}
-                                            className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                            className="rounded-none bg-zinc-800 px-3 py-2 text-sm text-white transition hover:bg-zinc-700"
                                         >
                                             Edit Staff
                                         </button>
@@ -666,7 +666,7 @@ export default function StaffEnrollmentPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleResendInvite(staff)}
-                                            className="rounded-md bg-[var(--sor-red)] px-3 py-2 text-sm text-white transition hover:opacity-90"
+                                            className="rounded-none bg-[#cc0000] px-3 py-2 text-sm text-white transition hover:bg-[#b30000]"
                                         >
                                             Send Invite
                                         </button>
@@ -675,7 +675,7 @@ export default function StaffEnrollmentPage() {
                                             type="button"
                                             onClick={() => handleToggleStaffActive(staff)}
                                             disabled={isTogglingStaffId === staff.id}
-                                            className="rounded-md bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
+                                            className="rounded-none bg-zinc-950 px-3 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:opacity-50"
                                         >
                                             {isTogglingStaffId === staff.id
                                                 ? "Updating..."

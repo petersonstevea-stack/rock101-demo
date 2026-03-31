@@ -399,7 +399,7 @@ export default function EnrollmentPage() {
             title="Enrollment"
             description="This internal workspace is where Stage Ready will manage staff, parents, and student enrollment. For pilot testing, we are starting with controlled forms first. In the production permission model, school access will be granted by higher-level admin assignment, not self-selected by end users."
         >
-            <section className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
+            <section className="rounded-none border border-amber-400/20 bg-amber-400/10 p-4">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-200">
                     Access model note
                 </h2>
@@ -415,7 +415,7 @@ export default function EnrollmentPage() {
                 <section
                     className={
                         statusType === "success"
-                            ? "rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4"
+                            ? "rounded-none border border-emerald-400/20 bg-emerald-400/10 p-4"
                             : "rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-4"
                     }
                 >
@@ -471,14 +471,14 @@ export default function EnrollmentPage() {
                 disabled={isSaving}
             />
 
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-lg font-semibold text-white">Debug Preview</h2>
                 <p className="mt-1 text-sm text-white/60">
                     This temporary panel helps us confirm form state and saved values while
                     we build the enrollment system.
                 </p>
 
-                <pre className="mt-4 overflow-x-auto rounded-xl bg-black/40 p-4 text-xs text-white/80">
+                <pre className="mt-4 overflow-x-auto rounded-none bg-zinc-950 p-4 text-xs text-white/80">
                     {JSON.stringify(
                         {
                             currentStaffValues: staffValues,
@@ -500,7 +500,7 @@ export default function EnrollmentPage() {
                 </pre>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-lg font-semibold text-white">Staff Directory</h2>
                 <p className="mt-1 text-sm text-white/60">
                     This shows all staff currently saved in the system.
@@ -513,7 +513,7 @@ export default function EnrollmentPage() {
                         staffList.map((staff) => (
                             <div
                                 key={staff.id}
-                                className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                             >
                                 <p className="text-sm font-semibold text-white">{staff.name}</p>
                                 <p className="text-xs text-white/60">{staff.email}</p>
@@ -526,14 +526,14 @@ export default function EnrollmentPage() {
                 </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-lg font-semibold text-white">Student Directory</h2>
                 <input
                     type="text"
                     placeholder="Search students..."
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
-                    className="mt-3 w-full rounded-lg bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
+                    className="mt-3 w-full rounded-none bg-zinc-800 px-4 py-2 text-white placeholder-white/40"
                 />
                 <p className="mt-1 text-sm text-white/60">
                     This shows all students currently enrolled in the system.
@@ -558,7 +558,7 @@ export default function EnrollmentPage() {
                             .map((student) => (
                                 <div
                                     key={student.id}
-                                    className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                    className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                                 >
                                     <p className="text-sm font-semibold text-white">
                                         {student.first_name} {student.last_initial ?? ""}
@@ -592,7 +592,7 @@ export default function EnrollmentPage() {
                 </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-lg font-semibold text-white">Parent Directory</h2>
                 <p className="mt-1 text-sm text-white/60">
                     This shows all parents currently saved in the system.
@@ -605,7 +605,7 @@ export default function EnrollmentPage() {
                         parentList.map((parent) => (
                             <div
                                 key={parent.id}
-                                className="rounded-xl border border-white/10 bg-black/40 p-4"
+                                className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                             >
                                 <p className="text-sm font-semibold text-white">{parent.name}</p>
                                 <p className="text-xs text-white/60">{parent.email}</p>
