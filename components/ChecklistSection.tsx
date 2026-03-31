@@ -104,9 +104,9 @@ export default function ChecklistSection({
                     return (
                         <div
                             key={`${item.id}-${index}`}
-                            className={`rounded-none border px-4 py-3 transition ${earned
-                                ? "border-[#cc0000] bg-zinc-900"
-                                : "border-zinc-800 bg-zinc-900"
+                            className={`rounded-none border border-zinc-800 px-4 py-3 transition ${earned
+                                ? "bg-zinc-800"
+                                : "bg-zinc-900"
                                 }`}
                         >
                             <div className="flex items-start justify-between gap-3">
@@ -123,7 +123,7 @@ export default function ChecklistSection({
                                             {item.label}
                                         </span>
                                         <span className="ml-4 text-sm text-zinc-300">
-                                            {earned ? "🏆" : "○"}
+                                            {earned ? "✓" : "○"}
                                         </span>
                                     </div>
                                 </button>
