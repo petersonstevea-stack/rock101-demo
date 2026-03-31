@@ -1183,10 +1183,7 @@ export default function Rock101App() {
                         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
                     },
                     body: JSON.stringify({
-                        parentEmail: selectedStudent.parentEmail,
-                        studentName: selectedStudent.name,
-                        lessonNotes: selectedStudent.notes.instructor,
-                        rehearsalNotes: selectedStudent.notes.director,
+                        studentId: selectedStudent.id,
                     }),
                 }
             );
