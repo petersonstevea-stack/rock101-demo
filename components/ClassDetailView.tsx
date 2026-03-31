@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
-import { supabase } from "@/lib/supabaseClient";
 import PageHero from "@/components/PageHero";
 import {
   SONG_READINESS_LEVELS,
@@ -64,31 +63,11 @@ export default function ClassDetailView({
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
-
-  useEffect(() => {
-    supabase
-      .from("schools")
-      .select("id, name")
-      .eq("is_sandbox", false)
-      .order("name")
-      .then(({ data }) => {
-        if (data) setSchoolList(data);
-      });
-  }, []);
-  const instructorName =
-    users.find((user) => user.email === rockClass.instructorEmail)?.name ||
-    rockClass.instructorEmail ||
-    "Not assigned";
 
   const directorName =
     users.find((user) => user.email === rockClass.directorEmail)?.name ||
     rockClass.directorEmail ||
     "Not assigned";
-
-  const schoolName =
-    schoolList.find((school) => school.id === rockClass.schoolId)?.name ||
-    rockClass.schoolId;
 
   const availableStudents = allStudents.filter(
     (student) =>
@@ -97,24 +76,49 @@ export default function ClassDetailView({
       !rockClass.studentIds.includes(student.id)
   );
 
+  const scheduleSubtitle = rockClass.dayOfWeek
+    ? `${rockClass.dayOfWeek}s at ${rockClass.time || "Time not set"}`
+    : rockClass.time || "Time not set";
+
+  const metaSegments: string[] = [];
+  if (directorName && directorName !== "Not assigned") {
+    metaSegments.push(directorName);
+  }
+  if (rockClass.performanceDate) {
+    const formatted = new Date(rockClass.performanceDate + "T00:00:00").toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    metaSegments.push(`Show Date: ${formatted}`);
+  }
+  metaSegments.push(`${rockClass.studentNames.length} Students`);
+  const heroMeta = metaSegments.join(" · ");
+
+  const sessionDateLabel = selectedSession?.session_date
+    ? new Date(selectedSession.session_date + "T00:00:00").toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
   return (
     <div className="mt-8 space-y-6">
       <PageHero
         title={rockClass.name}
-        subtitle={
-          selectedSession?.session_date && selectedSession?.start_time
-            ? (() => {
-              const date = new Date(`${selectedSession.session_date}T${selectedSession.start_time}`);
-              return date.toLocaleString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              });
-            })()
-            : `${schoolName} • ${rockClass.dayOfWeek} • ${rockClass.time || "Time not set"}`
+        subtitle={scheduleSubtitle}
+        meta={heroMeta}
+        topRight={
+          sessionDateLabel ? (
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-widest text-white" style={{ opacity: 0.45 }}>
+                Session
+              </div>
+              <div className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-oswald)", opacity: 0.85 }}>
+                {sessionDateLabel}
+              </div>
+            </div>
+          ) : undefined
         }
         imageSrc="/images/rock101-drums.jpg"
       />
@@ -148,52 +152,6 @@ export default function ClassDetailView({
       </div>
 
       <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">School</div>
-            <div className="mt-2 font-semibold text-white">{schoolName}</div>
-          </div>
-
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">Schedule</div>
-            <div className="mt-2 font-semibold text-white">
-              {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
-            </div>
-          </div>
-
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">Class Instructor</div>
-            <div className="mt-2 font-semibold text-white">{directorName}</div>
-          </div>
-
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">Instructor</div>
-            <div className="mt-2 font-semibold text-white">{instructorName}</div>
-          </div>
-
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">Performance</div>
-            <div className="mt-2 font-semibold text-white">
-              {rockClass.performanceTitle || "Not set"}
-            </div>
-            <div className="text-sm text-zinc-400">
-              {rockClass.performanceDate || "No date"}
-            </div>
-          </div>
-
-          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
-            <div className="text-sm text-zinc-400">Students</div>
-            <div className="mt-2 text-2xl font-bold text-white">
-              {rockClass.studentNames.length}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
-
-
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
 
         {rockClass.songs.length > 0 ? (
