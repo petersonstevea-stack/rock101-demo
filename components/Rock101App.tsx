@@ -9,7 +9,6 @@ import GraduationRequirementsView from "@/components/GraduationRequirementsView"
 import ParentDashboardOverview from "@/components/ParentDashboardOverview";
 import { buildParentDashboardData } from "@/lib/parentDashboard";
 import LoginScreen from "@/components/LoginScreen";
-import AppHeader from "@/components/AppHeader";
 import StudentSelector from "@/components/StudentSelector";
 import PrivateLessonView from "@/components/PrivateLessonView";
 import GroupRehearsalView from "@/components/GroupRehearsalView";
@@ -1297,37 +1296,7 @@ export default function Rock101App() {
                 canSeeManagementTabs={canSeeManagementTabs}
                 role={role ?? ""}
             >
-                <AppHeader
-                    role={role}
-                    studentName="No student assigned"
-                    userName={currentUser.name}
-                    userEmail={currentUser.email}
-                    onLogout={handleLogout}
-                />
-
                 <div className="p-6">
-                    {isOwner && (
-                        <div className="mb-4 max-w-sm">
-                            <label className="mb-2 block text-sm text-zinc-400">
-                                School Filter
-                            </label>
-                            <select
-                                value={selectedSchoolId}
-                                onChange={(e) =>
-                                    setSelectedSchoolId(e.target.value as SchoolFilter)
-                                }
-                                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
-                            >
-                                <option value="all">All Schools</option>
-                                {schoolList.map((school) => (
-                                    <option key={school.id} value={school.id}>
-                                        {school.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-
                     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
                         <h2 className="text-xl font-bold">No student found</h2>
                         {role === "instructor" ? (
@@ -1363,41 +1332,7 @@ export default function Rock101App() {
             canSeeManagementTabs={canSeeManagementTabs}
             role={role ?? ""}
         >
-            <AppHeader
-                role={role}
-                studentName={
-                    selectedStudent?.name ??
-                    visibleStudents[0]?.name ??
-                    (selectedClass ? selectedClass.name : "No student selected")
-                }
-                userName={currentUser.name}
-                userEmail={currentUser.email}
-                onLogout={handleLogout}
-            />
-
             <div className="p-6">
-                {isOwner && (
-                    <div className="mb-6 max-w-sm">
-                        <label className="mb-2 block text-sm text-zinc-400">
-                            School Filter
-                        </label>
-                        <select
-                            value={selectedSchoolId}
-                            onChange={(e) =>
-                                setSelectedSchoolId(e.target.value as SchoolFilter)
-                            }
-                            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white"
-                        >
-                            <option value="all">All Schools</option>
-                            {schoolList.map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-
                 {role === "instructor" && (
                     <div className="mb-4 flex gap-3">
                         <button

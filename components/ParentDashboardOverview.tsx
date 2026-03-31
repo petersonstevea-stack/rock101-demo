@@ -385,10 +385,13 @@ export default function ParentDashboardOverview({
                     label="Group Rehearsal"
                 />
 
-                <StatCard
-                    {...data.stats.badgesEarned}
-                    label="Badges Earned"
-                />
+                {/* Badges hidden per ROADMAP UI review — evaluate later */}
+                {false && (
+                    <StatCard
+                        {...data.stats.badgesEarned}
+                        label="Badges Earned"
+                    />
+                )}
 
                 <StatCard
                     {...data.stats.highFives}
