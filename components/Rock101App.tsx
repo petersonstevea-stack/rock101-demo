@@ -1391,6 +1391,7 @@ export default function Rock101App() {
                 )}
 
                 {selectedStudent &&
+                    (tab === "parent" || tab === "privateLesson" || tab === "groupRehearsal" || tab === "graduationRequirements" || tab === "certificate") &&
                     (role === "owner" ||
                         role === "generalManager" ||
                         role === "instructor" ||
@@ -1417,7 +1418,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementClasses}
-                            className={`rounded-lg px-4 py-2 ${managementLandingView === "classes"
+                            className={`rounded-none px-4 py-2 ${managementLandingView === "classes"
                                 ? "bg-red-600"
                                 : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
@@ -1428,7 +1429,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementStudents}
-                            className={`rounded-lg px-4 py-2 ${managementLandingView === "students"
+                            className={`rounded-none px-4 py-2 ${managementLandingView === "students"
                                 ? "bg-red-600"
                                 : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
@@ -1546,7 +1547,7 @@ export default function Rock101App() {
                                             key={student.name}
                                             type="button"
                                             onClick={() => handleSelectStudent(student.name)}
-                                            className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
+                                            className="rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
                                         >
                                             <div className="font-semibold text-white">
                                                 {student.name}
