@@ -251,14 +251,13 @@ export default function ClassDetailView({
                       className="flex items-center justify-between rounded-none border border-zinc-800 bg-zinc-950 px-4 py-3"
                     >
                       <span className="text-sm text-white">{student.name}</span>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+                      <label className="flex cursor-pointer items-center">
                         <input
                           type="checkbox"
                           checked={isPresent}
                           onChange={(e) => handleAttendanceToggle(student.id!, e.target.checked)}
                           className="h-4 w-4 rounded-none accent-[#cc0000]"
                         />
-                        Present
                       </label>
                     </div>
                   );
@@ -287,9 +286,6 @@ export default function ClassDetailView({
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                           <div className="font-semibold text-white">{song}</div>
-                          <div className="mt-1 text-sm text-zinc-400">
-                            Class readiness: {getSongReadinessLabel(readiness)}
-                          </div>
                         </div>
 
                         <div className="w-full md:max-w-md">
