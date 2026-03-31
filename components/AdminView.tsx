@@ -541,7 +541,6 @@ export default function AdminView({
                                                 <select
                                                     value={student.primaryInstructorEmail || ""}
                                                     onChange={(e) => {
-                                                        console.log("INSTRUCTOR DROPDOWN CHANGED", student.name, e.target.value);
                                                         onUpdateStudentInstructor?.(student.name, e.target.value);
                                                     }}
                                                     className="rounded-none border border-zinc-700 bg-black px-3 py-2 text-white"

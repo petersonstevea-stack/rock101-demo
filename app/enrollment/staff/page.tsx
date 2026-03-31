@@ -274,8 +274,6 @@ export default function StaffEnrollmentPage() {
             return;
         }
 
-        console.log("STAFF EDIT RESULT:", data);
-
         if (!data || data.length === 0) {
             setStatusType("error");
             setStatusMessage(`No staff row matched id ${editingStaffId}`);
@@ -376,8 +374,6 @@ export default function StaffEnrollmentPage() {
             return;
         }
 
-        console.log("STAFF TOGGLE RESULT:", data);
-
         if (!data || data.length === 0) {
             setStatusType("error");
             setStatusMessage(`No staff row matched id ${staff.id}`);
@@ -403,7 +399,6 @@ export default function StaffEnrollmentPage() {
     async function handleResendInvite(staff: StaffRow) {
         setStatusType("success");
         setStatusMessage(`Sending invite to ${staff.name}...`);
-        console.log("SEND INVITE CLICKED:", staff);
 
         try {
             const inviteResponse = await fetch(
@@ -422,10 +417,7 @@ export default function StaffEnrollmentPage() {
                 }
             );
 
-            console.log("INVITE RESPONSE STATUS:", inviteResponse.status);
-
             const inviteResult = await inviteResponse.json();
-            console.log("INVITE RESPONSE BODY:", inviteResult);
 
             if (!inviteResponse.ok) {
                 setStatusType("error");

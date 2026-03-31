@@ -107,7 +107,7 @@ export default function EnrollmentPage() {
         supabase
             .from("schools")
             .select("id, name")
-            .eq("is_sandbox", false)
+            .eq("active", true)
             .order("name")
             .then(({ data }) => {
                 if (data) setSchoolList(data);

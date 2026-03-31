@@ -106,6 +106,7 @@ export default function Rock101App() {
     const [editingClass, setEditingClass] = useState<any | null>(null);
     const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
+    const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
     useEffect(() => {
         supabase
@@ -1168,10 +1169,9 @@ export default function Rock101App() {
     }
 
     async function handleSubmitToParents() {
-        if (!selectedStudent) {
-            alert("No student selected.");
-            return;
-        }
+        if (!selectedStudent) return;
+
+        setParentEmailStatus(null);
 
         try {
             const response = await fetch(
@@ -1192,7 +1192,7 @@ export default function Rock101App() {
             );
 
             if (!response.ok) {
-                alert(`Parent email failed. Status: ${response.status}`);
+                setParentEmailStatus({ type: "error", message: `Failed to send parent email (status ${response.status}).` });
                 return;
             }
 
@@ -1217,11 +1217,9 @@ export default function Rock101App() {
                     parentSubmitted: true,
                 },
             }));
-
-            alert("Parent update sent.");
         } catch (error) {
             console.error("Error sending parent update email:", error);
-            alert("Parent email failed. Check browser console.");
+            setParentEmailStatus({ type: "error", message: "Failed to send parent email. Check browser console." });
         }
     }
 
@@ -1425,6 +1423,11 @@ export default function Rock101App() {
                                     role: role as AppUser["role"],
                                 })}
                             />
+                            {parentEmailStatus && (
+                                <div className={`mb-4 rounded-none p-3 text-sm ${parentEmailStatus.type === "error" ? "bg-[#cc0000]/20 text-white" : "bg-zinc-800 text-zinc-300"}`}>
+                                    {parentEmailStatus.message}
+                                </div>
+                            )}
                         </div>
                     )}
 
