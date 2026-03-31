@@ -1,0 +1,334 @@
+"use client";
+
+import { useState } from "react";
+
+type NavItem = {
+  tab: string;
+  label: string;
+};
+
+const STUDENT_NAV: NavItem[] = [
+  { tab: "parent", label: "Dashboard" },
+  { tab: "privateLesson", label: "Private Lesson" },
+  { tab: "graduationRequirements", label: "Grad Requirements" },
+  { tab: "groupRehearsal", label: "Group Rehearsal" },
+  { tab: "certificate", label: "Certificate" },
+];
+
+const SCHOOL_NAV: NavItem[] = [
+  { tab: "classSetup", label: "Class Setup" },
+  { tab: "bandsDashboard", label: "Bands" },
+  { tab: "pipeline", label: "Pipeline" },
+  { tab: "admin", label: "Admin" },
+];
+
+type AppShellProps = {
+  children: React.ReactNode;
+  schoolName: string;
+  studentName?: string;
+  instrument?: string;
+  programName?: string;
+  currentTab: string;
+  onTabChange: (tab: string) => void;
+  onSignOut: () => void;
+  canSeeStudentTabs: boolean;
+  canSeeManagementTabs: boolean;
+  role: string;
+};
+
+function NavItems({
+  currentTab,
+  onTabChange,
+  canSeeStudentTabs,
+  canSeeManagementTabs,
+}: {
+  currentTab: string;
+  onTabChange: (tab: string) => void;
+  canSeeStudentTabs: boolean;
+  canSeeManagementTabs: boolean;
+}) {
+  return (
+    <>
+      {canSeeStudentTabs && (
+        <div>
+          <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-600">
+            Student
+          </div>
+          {STUDENT_NAV.map((item) => {
+            const isActive = currentTab === item.tab;
+            return (
+              <button
+                key={item.tab}
+                type="button"
+                onClick={() => onTabChange(item.tab)}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: isActive ? "#cc0000" : "transparent",
+                  color: isActive ? "#ffffff" : "#a1a1aa",
+                  borderLeft: isActive ? "3px solid #ffffff" : "3px solid transparent",
+                  borderRadius: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = "#1c1c1c";
+                    e.currentTarget.style.color = "#ffffff";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#a1a1aa";
+                  }
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {canSeeManagementTabs && (
+        <div>
+          <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-600">
+            School
+          </div>
+          {SCHOOL_NAV.map((item) => {
+            const isActive = currentTab === item.tab;
+            return (
+              <button
+                key={item.tab}
+                type="button"
+                onClick={() => onTabChange(item.tab)}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: isActive ? "#cc0000" : "transparent",
+                  color: isActive ? "#ffffff" : "#a1a1aa",
+                  borderLeft: isActive ? "3px solid #ffffff" : "3px solid transparent",
+                  borderRadius: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = "#1c1c1c";
+                    e.currentTarget.style.color = "#ffffff";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#a1a1aa";
+                  }
+                }}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function SidebarContent({
+  schoolName,
+  studentName,
+  instrument,
+  programName,
+  currentTab,
+  onTabChange,
+  onSignOut,
+  canSeeStudentTabs,
+  canSeeManagementTabs,
+}: Omit<AppShellProps, "children" | "role">) {
+  return (
+    <div className="flex h-full flex-col" style={{ backgroundColor: "#111111" }}>
+      {/* Logo */}
+      <div className="border-b border-zinc-800 px-4 py-5">
+        <div className="text-sm font-bold uppercase tracking-[0.18em] text-white">
+          Stage Ready
+        </div>
+        <div
+          className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em]"
+          style={{ color: "#cc0000" }}
+        >
+          School of Rock
+        </div>
+      </div>
+
+      {/* School */}
+      <div className="border-b border-zinc-800 px-4 py-4">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+          Location
+        </div>
+        <div className="mt-1 text-sm font-bold leading-snug text-white">
+          {schoolName}
+        </div>
+      </div>
+
+      {/* Student context */}
+      {studentName && (
+        <div className="border-b border-zinc-800 px-4 py-4">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            Viewing
+          </div>
+          <div className="mt-1 text-sm font-bold uppercase leading-snug tracking-wide text-white">
+            {studentName}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {instrument && (
+              <span className="bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+                {instrument}
+              </span>
+            )}
+            {programName && (
+              <span className="bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+                {programName}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2">
+        <NavItems
+          currentTab={currentTab}
+          onTabChange={onTabChange}
+          canSeeStudentTabs={canSeeStudentTabs}
+          canSeeManagementTabs={canSeeManagementTabs}
+        />
+      </nav>
+
+      {/* Sign out */}
+      <div className="border-t border-zinc-800 px-4 py-4">
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function AppShell({
+  children,
+  schoolName,
+  studentName,
+  instrument,
+  programName,
+  currentTab,
+  onTabChange,
+  onSignOut,
+  canSeeStudentTabs,
+  canSeeManagementTabs,
+  role,
+}: AppShellProps) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function handleTabChange(tab: string) {
+    onTabChange(tab);
+    setDrawerOpen(false);
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Desktop sidebar — hidden on mobile */}
+      <aside
+        className="hidden md:flex w-[200px] shrink-0 flex-col"
+        style={{ backgroundColor: "#111111" }}
+      >
+        <SidebarContent
+          schoolName={schoolName}
+          studentName={studentName}
+          instrument={instrument}
+          programName={programName}
+          currentTab={currentTab}
+          onTabChange={onTabChange}
+          onSignOut={onSignOut}
+          canSeeStudentTabs={canSeeStudentTabs}
+          canSeeManagementTabs={canSeeManagementTabs}
+        />
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 min-w-0 bg-black">
+        {/* Mobile header — visible on mobile only */}
+        <div
+          className="flex md:hidden items-center px-4 py-3 border-b border-zinc-800"
+          style={{ backgroundColor: "#111111" }}
+        >
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="text-white p-1"
+            aria-label="Open menu"
+          >
+            {/* Hamburger icon */}
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="2" y="5" width="18" height="2" fill="currentColor" />
+              <rect x="2" y="10" width="18" height="2" fill="currentColor" />
+              <rect x="2" y="15" width="18" height="2" fill="currentColor" />
+            </svg>
+          </button>
+
+          <div className="flex-1 text-center text-sm font-bold uppercase tracking-[0.18em] text-white">
+            Stage Ready
+          </div>
+
+          {/* Spacer to balance the hamburger */}
+          <div className="w-[30px]" />
+        </div>
+
+        {children}
+      </main>
+
+      {/* Mobile drawer overlay */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Dark overlay */}
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setDrawerOpen(false)}
+          />
+
+          {/* Drawer panel */}
+          <div
+            className="absolute left-0 top-0 h-full w-[200px] flex flex-col"
+            style={{ backgroundColor: "#111111" }}
+          >
+            {/* Close button */}
+            <div className="flex justify-end px-4 py-3 border-b border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="text-zinc-400 hover:text-white transition-colors"
+                aria-label="Close menu"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <line x1="2" y1="2" x2="16" y2="16" stroke="currentColor" strokeWidth="2" />
+                  <line x1="16" y1="2" x2="2" y2="16" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </button>
+            </div>
+
+            <SidebarContent
+              schoolName={schoolName}
+              studentName={studentName}
+              instrument={instrument}
+              programName={programName}
+              currentTab={currentTab}
+              onTabChange={handleTabChange}
+              onSignOut={onSignOut}
+              canSeeStudentTabs={canSeeStudentTabs}
+              canSeeManagementTabs={canSeeManagementTabs}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

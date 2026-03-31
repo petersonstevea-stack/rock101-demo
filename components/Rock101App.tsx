@@ -41,6 +41,7 @@ import {
     SessionUser,
 } from "@/lib/session";
 import Link from "next/link";
+import AppShell from "@/components/AppShell";
 type Tab =
     | "privateLesson"
     | "graduationRequirements"
@@ -448,6 +449,11 @@ export default function Rock101App() {
 
     const canSeeStudentTabs =
         !!selectedStudent && (!canManageRock101 || !!selectedStudentName);
+
+    const currentSchoolName =
+        effectiveSchoolFilter !== "all"
+            ? schoolList.find((s) => s.id === effectiveSchoolFilter)?.name ?? "School of Rock"
+            : "All Schools";
 
     useEffect(() => {
         if (visibleStudents.length === 0) return;
@@ -1282,7 +1288,15 @@ export default function Rock101App() {
         visibleStudents.length === 0
     ) {
         return (
-            <div className="min-h-screen bg-black text-white">
+            <AppShell
+                schoolName={currentSchoolName}
+                currentTab={tab}
+                onTabChange={(newTab) => setTab(newTab as Tab)}
+                onSignOut={handleLogout}
+                canSeeStudentTabs={canSeeStudentTabs}
+                canSeeManagementTabs={canSeeManagementTabs}
+                role={role ?? ""}
+            >
                 <AppHeader
                     role={role}
                     studentName="No student assigned"
@@ -1332,12 +1346,23 @@ export default function Rock101App() {
                         )}
                     </div>
                 </div>
-            </div>
+            </AppShell>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <AppShell
+            schoolName={currentSchoolName}
+            studentName={selectedStudent?.name ?? undefined}
+            instrument={selectedStudent?.instrument ?? undefined}
+            programName="Rock 101"
+            currentTab={tab}
+            onTabChange={(newTab) => setTab(newTab as Tab)}
+            onSignOut={handleLogout}
+            canSeeStudentTabs={canSeeStudentTabs}
+            canSeeManagementTabs={canSeeManagementTabs}
+            role={role ?? ""}
+        >
             <AppHeader
                 role={role}
                 studentName={
@@ -1701,7 +1726,8 @@ export default function Rock101App() {
                         </div>
                     )}
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                {/* OLD TAB BAR — kept for reference until AppShell nav is verified */}
+                {false && <div className="mt-8 flex flex-wrap gap-3">
                     {canSeeStudentTabs && (
                         <>
                             <button
@@ -1854,7 +1880,7 @@ export default function Rock101App() {
                             </button>
                         </>
                     )}
-                </div>
+                </div>}
 
                 {canSeeStudentTabs && tab === "privateLesson" && selectedStudent && (
                     <>
@@ -2194,6 +2220,6 @@ export default function Rock101App() {
                     />
                 )}
             </div>
-        </div>
+        </AppShell>
     );
 }
