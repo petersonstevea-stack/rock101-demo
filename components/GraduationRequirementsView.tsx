@@ -120,13 +120,14 @@ export default function GraduationRequirementsView({
     );
 
     return (
-        <div className="mt-8 space-y-6">
+        <div className="min-h-screen bg-white">
+        <div className="p-6 space-y-6">
             <PageHero
                 title="Graduation Requirements"
                 subtitle={`Rock 101 graduation skills for ${student.name}`}
                 imageSrc="/images/rock101-drums.jpg"
             />
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-4 backdrop-blur-sm">
+            <div className="rounded-none bg-[#111111] p-4">
                 <h3 className="text-lg font-semibold text-white">
                     Graduation Workflow Status
                 </h3>
@@ -153,10 +154,15 @@ export default function GraduationRequirementsView({
                         disabled={
                             workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit
                         }
-                        className={`rounded-lg px-4 py-2 font-medium text-white ${workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit
+                        className={`rounded-none px-4 py-2 font-medium text-white ${workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit
                             ? "bg-zinc-700 cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-500"
+                            : "hover:bg-[#b30000]"
                             }`}
+                        style={
+                            !(workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit)
+                                ? { backgroundColor: "#cc0000" }
+                                : undefined
+                        }
                     >
                         {workflow.graduationInstructorSubmitted
                             ? "Instructor Signoff Complete"
@@ -169,10 +175,15 @@ export default function GraduationRequirementsView({
                         disabled={
                             workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit
                         }
-                        className={`rounded-lg px-4 py-2 font-medium text-white ${workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit
-                                ? "bg-zinc-700 cursor-not-allowed"
-                                : "bg-red-600 hover:bg-red-500"
+                        className={`rounded-none px-4 py-2 font-medium text-white ${workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit
+                            ? "bg-zinc-700 cursor-not-allowed"
+                            : "hover:bg-[#b30000]"
                             }`}
+                        style={
+                            !(workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit)
+                                ? { backgroundColor: "#cc0000" }
+                                : undefined
+                        }
                     >
                         {workflow.graduationDirectorSubmitted
                             ? "Class Instructor Signoff Complete"
@@ -185,20 +196,14 @@ export default function GraduationRequirementsView({
                     const { monthPart, descriptorPart } = splitMonthTitle(group.title);
 
                     return (
-                        <div
-                            key={group.month}
-                            className={`space-y-5 ${group.month === currentMonth
-                                ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-xl p-2"
-                                : ""
-                                }`}
-                        >
-                            <div className="sor-finish-card rounded-2xl p-5">
+                        <div key={group.month} className="space-y-5">
+                            <div className="bg-[#111111] rounded-none p-5">
                                 <div>
                                     <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                                        <span className="sor-display-red">{monthPart}</span>
+                                        <span style={{ color: "#cc0000" }}>{monthPart}</span>
 
                                         {descriptorPart && (
-                                            <span className="ml-2 text-white italic opacity-80">
+                                            <span className="ml-2 text-white italic">
                                                 {descriptorPart}
                                             </span>
                                         )}
@@ -208,7 +213,7 @@ export default function GraduationRequirementsView({
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
+                            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-1">
                                 <ChecklistSection
                                     title="Graduation Requirements"
                                     items={group.graduationItems}
@@ -223,6 +228,7 @@ export default function GraduationRequirementsView({
                     );
                 })}
             </div>
+        </div>
         </div>
     );
 }
