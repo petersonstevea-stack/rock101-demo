@@ -449,6 +449,10 @@ export default function Rock101App() {
     const canSeeStudentTabs: boolean =
         role === "parent" || canManageRock101;
 
+    const canSeeStudentContent: boolean =
+        canSeeStudentTabs &&
+        (role === "parent" || !!selectedStudentName);
+
     const currentSchoolName = selectedStudent
         ? schoolList.find((s) => s.id === selectedStudent.schoolId)?.name ?? "School of Rock"
         : effectiveSchoolFilter !== "all"
@@ -1820,7 +1824,7 @@ export default function Rock101App() {
                     )}
                 </div>}
 
-                {canSeeStudentTabs && tab === "privateLesson" && selectedStudent && (
+                {canSeeStudentContent && tab === "privateLesson" && selectedStudent && (
                     <>
                         <PrivateLessonView
                             student={selectedStudent}
@@ -1864,7 +1868,7 @@ export default function Rock101App() {
                     </>
                 )}
 
-                {canSeeStudentTabs &&
+                {canSeeStudentContent &&
                     tab === "graduationRequirements" &&
                     selectedStudent && (
                         <GraduationRequirementsView
@@ -1904,7 +1908,7 @@ export default function Rock101App() {
                         />
                     )}
 
-                {canSeeStudentTabs && tab === "groupRehearsal" && selectedStudent && (
+                {canSeeStudentContent && tab === "groupRehearsal" && selectedStudent && (
                     <>
                         <GroupRehearsalView
                             student={selectedStudent}
@@ -1952,11 +1956,11 @@ export default function Rock101App() {
                             )}
                     </>
                 )}
-                {canSeeStudentTabs && tab === "badges" && selectedStudent && (
+                {canSeeStudentContent && tab === "badges" && selectedStudent && (
                     <BadgeGrid earnedBadges={earnedBadges} />
                 )}
 
-                {canSeeStudentTabs && tab === "parent" && selectedStudent && (
+                {canSeeStudentContent && tab === "parent" && selectedStudent && (
                     <div className="space-y-8">
                         {parentDashboardData && (
                             <ParentDashboardOverview
@@ -1985,7 +1989,7 @@ export default function Rock101App() {
                     </div>
                 )}
 
-                {canSeeStudentTabs && tab === "certificate" && selectedStudent && (
+                {canSeeStudentContent && tab === "certificate" && selectedStudent && (
                     <CertificateView student={selectedStudent} />
                 )}
 
