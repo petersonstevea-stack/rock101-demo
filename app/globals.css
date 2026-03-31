@@ -137,7 +137,13 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-runnable-track {
   border-radius: 0;
   height: 4px;
-  background: #333333;
+  background: linear-gradient(
+    to right,
+    #cc0000 0%,
+    #cc0000 var(--value, 0%),
+    #333333 var(--value, 0%),
+    #333333 100%
+  );
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -154,7 +160,13 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-track {
   border-radius: 0;
   height: 4px;
-  background: #333333;
+  background: linear-gradient(
+    to right,
+    #cc0000 0%,
+    #cc0000 var(--value, 0%),
+    #333333 var(--value, 0%),
+    #333333 100%
+  );
 }
 
 .sor-finish-card:hover {

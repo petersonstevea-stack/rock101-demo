@@ -157,7 +157,11 @@ export default function GroupRehearsalView({
                                                             )
                                                         }
                                                         className="w-full"
-                                                        style={{ accentColor: "#cc0000", borderRadius: 0 }}
+                                                        style={{
+                                                            accentColor: "#cc0000",
+                                                            borderRadius: 0,
+                                                            "--value": `${((readiness - 1) / 4) * 100}%`,
+                                                        } as React.CSSProperties}
                                                         disabled={!canEdit}
                                                     />
                                                     <div className="mt-1 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
