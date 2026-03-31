@@ -71,7 +71,7 @@ export default function ChecklistSection({
         items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
 
     return (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-5">
             {showHeader && (
                 <>
                     <div className="mb-3 flex items-center justify-between">
@@ -79,7 +79,7 @@ export default function ChecklistSection({
                         <div className="text-sm font-semibold text-red-300">{percent}%</div>
                     </div>
 
-                    <div className="mb-4 h-3 overflow-hidden rounded-full bg-zinc-800">
+                    <div className="mb-4 h-3 overflow-hidden rounded-none bg-[#333333]">
                         <div
                             className="h-full transition-all"
                             style={{
@@ -104,8 +104,8 @@ export default function ChecklistSection({
                     return (
                         <div
                             key={`${item.id}-${index}`}
-                            className={`rounded-lg border px-4 py-3 transition ${earned
-                                ? "border-red-500 bg-red-950/20 shadow-[0_0_18px_rgba(190,55,60,0.18)]"
+                            className={`rounded-none border px-4 py-3 transition ${earned
+                                ? "border-[#cc0000] bg-zinc-900"
                                 : "border-zinc-800 bg-zinc-900"
                                 }`}
                         >
@@ -119,7 +119,7 @@ export default function ChecklistSection({
                                         }`}
                                 >
                                     <div className="flex items-center justify-between gap-3">
-                                        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold tracking-[0.02em] text-white">
+                                        <span className="inline-flex items-center rounded-none border border-zinc-700 bg-zinc-800 px-3 py-1 text-sm font-semibold tracking-[0.02em] text-white">
                                             {item.label}
                                         </span>
                                         <span className="ml-4 text-sm text-zinc-300">
@@ -133,7 +133,7 @@ export default function ChecklistSection({
                                         <button
                                             type="button"
                                             onClick={() => onAddFistBump(item.id)}
-                                            className="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
+                                            className="rounded-none bg-zinc-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                                         >
                                             🙌 High Fives {highFives}/{FIST_BUMPS_TO_EARN}
                                         </button>
@@ -143,7 +143,7 @@ export default function ChecklistSection({
                                         <button
                                             type="button"
                                             onClick={() => onToggleSigned(item.id)}
-                                            className={`rounded-lg px-3 py-2 text-sm font-medium transition ${state?.signed
+                                            className={`rounded-none px-3 py-2 text-sm font-medium transition ${state?.signed
                                                 ? "bg-emerald-700 text-white hover:bg-emerald-600"
                                                 : "bg-red-600 text-white hover:bg-red-500"
                                                 }`}

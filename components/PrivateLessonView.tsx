@@ -123,7 +123,7 @@ export default function PrivateLessonView({
 
     return (
         <div className="min-h-screen bg-white">
-        <div className="p-6 space-y-6">
+        <div className="pt-6 px-6 pb-6 space-y-6">
             <PageHero
                 title="Private Lesson"
                 subtitle={`Focused skill-building for ${student.name} • ${student.instrument}`}
@@ -148,10 +148,7 @@ export default function PrivateLessonView({
                     return (
                         <div
                             key={group.month}
-                            className={`space-y-5 ${group.month === currentMonth
-                                    ? "ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black rounded-none p-2"
-                                    : ""
-                                }`}
+                            className="space-y-5"
                         >
                             <div className="bg-[#111111] rounded-none p-5">
                                 <div>
