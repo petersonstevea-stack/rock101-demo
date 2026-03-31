@@ -308,7 +308,7 @@ export default function ParentDashboardOverview({
     }
     return (
         <div className="min-h-screen bg-white">
-        <div className="mt-8 space-y-6 px-6 pb-12">
+        <div className="p-6 space-y-6">
             <section className="bg-[#111111] overflow-hidden rounded-none p-6">
                 <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr] xl:items-end">
                     <div>
