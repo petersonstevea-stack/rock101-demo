@@ -1402,8 +1402,7 @@ export default function Rock101App() {
                         role === "instructor" ||
                         (role === "director" &&
                             currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
-                        <>
-
+                        <div className="px-6 pt-6">
                             <WorkflowBanner
                                 ready={workflowReady}
                                 submitted={selectedStudent.workflow.parentSubmitted}
@@ -1415,7 +1414,7 @@ export default function Rock101App() {
                                     role: role as AppUser["role"],
                                 })}
                             />
-                        </>
+                        </div>
                     )}
 
                 {canManageRock101 && !selectedClass && !selectedStudentName && (
@@ -1657,7 +1656,7 @@ export default function Rock101App() {
                     managementLandingView === "students" &&
                     !selectedClass &&
                     selectedStudentName && (
-                        <div className="mb-4">
+                        <div className="px-6 pt-4">
                             <button
                                 type="button"
                                 onClick={() => setSelectedStudentName("")}
