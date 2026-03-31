@@ -66,6 +66,8 @@ export default function ClassDetailView({
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
   const [attendanceSaving, setAttendanceSaving] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitConfirmedAt, setSubmitConfirmedAt] = useState<string | null>(null);
 
   // Pike 13 integration (Phase 6): attendance will be
   // pre-populated from Pike 13 event occurrence data.
@@ -97,6 +99,57 @@ export default function ClassDetailView({
       { onConflict: "session_id,student_id" }
     );
     setAttendanceSaving(false);
+  }
+
+  async function handleFullSubmit() {
+    if (!selectedSessionId) return;
+    setSubmitLoading(true);
+
+    // Step 1: Save note
+    await onSaveDirectorFeedback();
+
+    // Step 2: Upsert session_student_signoffs for all students
+    const now = new Date().toISOString();
+    const studentIds = rockClass.studentIds;
+
+    await supabase.from("session_student_signoffs").upsert(
+      studentIds.map((studentId) => ({
+        session_id: selectedSessionId,
+        student_id: studentId,
+        class_instructor_submitted: true,
+        class_instructor_submitted_at: now,
+      })),
+      { onConflict: "session_id,student_id" }
+    );
+
+    // Step 3: Merge classInstructorSubmitted into students.workflow
+    const { data: studentsData } = await supabase
+      .from("students")
+      .select("id, workflow")
+      .in("id", studentIds);
+
+    if (studentsData) {
+      await Promise.all(
+        studentsData.map((s) =>
+          supabase
+            .from("students")
+            .update({ workflow: { ...(s.workflow || {}), classInstructorSubmitted: true } })
+            .eq("id", s.id)
+        )
+      );
+    }
+
+    setSubmitLoading(false);
+    setSubmitConfirmedAt(
+      new Date().toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
   }
 
   const directorName =
@@ -209,21 +262,23 @@ export default function ClassDetailView({
 
                   if (!didSave) return;
 
-                  setLastSavedAt(new Date().toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  }));
+                  setLastSavedAt(
+                    new Date().toLocaleString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  );
+                  setTimeout(() => setLastSavedAt(null), 4000);
                 }}
                 className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
               >
-                Save Class Instructor Feedback
+                Save Note
               </button>
 
               {lastSavedAt && (
                 <span className="text-sm text-zinc-400 opacity-80">
-                  Saved {lastSavedAt}
+                  Note saved · {lastSavedAt}
                 </span>
               )}
             </div>
@@ -390,6 +445,22 @@ export default function ClassDetailView({
               </div>
             ))}
           </div>
+        )}
+      </div>
+      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
+        <button
+          type="button"
+          disabled={submitLoading || !selectedSessionId}
+          onClick={handleFullSubmit}
+          className="w-full rounded-none bg-[#cc0000] px-4 py-3 text-white hover:bg-[#b30000] disabled:opacity-50"
+        >
+          {submitLoading ? "Submitting…" : "Submit Class Instructor Feedback"}
+        </button>
+
+        {submitConfirmedAt && (
+          <p className="mt-3 text-sm text-zinc-300">
+            Class instructor feedback submitted · {submitConfirmedAt}
+          </p>
         )}
       </div>
     </div>
