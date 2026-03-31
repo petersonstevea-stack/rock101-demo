@@ -242,7 +242,7 @@ export default function ClassDetailView({
             ) : students.length === 0 ? (
               <p className="mt-4 text-sm text-zinc-500">No students in this class.</p>
             ) : (
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
                 {students.filter((s) => s.id).map((student) => {
                   const isPresent = !(attendanceMap[student.id!] ?? false);
                   return (
