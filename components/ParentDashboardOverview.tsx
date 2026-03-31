@@ -73,7 +73,7 @@ function SectionCard({
     const { firstPart, secondPart } = splitSectionTitle(title);
 
     return (
-        <section className="space-y-5 rounded-none p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
+        <section className="space-y-5 rounded-none">
             <div className="bg-[#111111] rounded-none p-5">
                 <div className="flex items-center justify-between gap-4">
                     <div>

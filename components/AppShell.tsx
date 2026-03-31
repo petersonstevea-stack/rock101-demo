@@ -145,14 +145,14 @@ function SidebarContent({
     <div className="flex h-full flex-col" style={{ backgroundColor: "#111111" }}>
       {/* Logo */}
       <div className="border-b border-zinc-800 px-4 py-5">
-        <div className="text-sm font-bold uppercase tracking-[0.18em] text-white">
-          Stage Ready
-        </div>
         <div
-          className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em]"
+          className="text-[10px] font-semibold uppercase tracking-[0.22em]"
           style={{ color: "#cc0000" }}
         >
           School of Rock
+        </div>
+        <div className="mt-0.5 text-sm font-bold uppercase tracking-[0.18em] text-white">
+          Stage Ready
         </div>
       </div>
 
