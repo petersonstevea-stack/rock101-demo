@@ -314,7 +314,7 @@ export default function AdminView({
                         className={
                             statusType === "success"
                                 ? "mt-4 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-200"
-                                : "mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200"
+                                : "mt-4 rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-3 text-sm text-white"
                         }
                     >
                         {statusMessage}
@@ -586,7 +586,7 @@ export default function AdminView({
                                                         <button
                                                             type="button"
                                                             onClick={() => handleDeleteStudent(student.id, student.name)}
-                                                            className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
+                                                            className="rounded-none bg-zinc-700 px-3 py-2 text-sm text-white transition hover:bg-zinc-600"
                                                         >
                                                             Delete
                                                         </button>

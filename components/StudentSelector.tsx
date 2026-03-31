@@ -35,7 +35,7 @@ export default function StudentSelector({
 }: StudentSelectorProps) {
   return (
     <div className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-      <div className="mb-3 text-sm uppercase tracking-[0.2em] text-red-300">
+      <div className="mb-3 text-sm uppercase tracking-[0.2em] text-[#cc0000]">
         Select Student
       </div>
 
@@ -45,9 +45,9 @@ export default function StudentSelector({
             key={student.name}
             type="button"
             onClick={() => onSelect(student)}
-            className={`rounded-lg px-4 py-2 ${
+            className={`rounded-none px-4 py-2 ${
               selected.name === student.name
-                ? "bg-red-600"
+                ? "bg-[#cc0000]"
                 : "bg-zinc-800 hover:bg-zinc-700"
             }`}
           >

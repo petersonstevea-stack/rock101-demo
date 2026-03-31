@@ -42,7 +42,7 @@ export default function RoleShell({
     <div className="min-h-screen bg-black text-white p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-red-300">
+          <div className="text-sm uppercase tracking-[0.2em] text-[#cc0000]">
             {role}
           </div>
           <h1 className="mt-2 text-4xl font-bold">Rock 101 Demo App</h1>

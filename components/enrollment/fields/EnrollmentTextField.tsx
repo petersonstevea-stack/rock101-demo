@@ -30,7 +30,7 @@ export default function EnrollmentTextField({
         className="block text-sm font-medium text-white/90"
       >
         {label}
-        {required ? <span className="ml-1 text-red-400">*</span> : null}
+        {required ? <span className="ml-1 text-[#cc0000]">*</span> : null}
       </label>
 
       <input

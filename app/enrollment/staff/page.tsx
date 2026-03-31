@@ -454,7 +454,7 @@ export default function StaffEnrollmentPage() {
                     className={
                         statusType === "success"
                             ? "rounded-xl border border-green-500/20 bg-green-500/10 p-4"
-                            : "rounded-xl border border-red-500/20 bg-red-500/10 p-4"
+                            : "rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-4"
                     }
                 >
                     <p className="text-sm">{statusMessage}</p>
@@ -650,7 +650,7 @@ export default function StaffEnrollmentPage() {
                                         {staff.active ? (
                                             <span className="text-green-400">Active</span>
                                         ) : (
-                                            <span className="text-red-400">Inactive</span>
+                                            <span className="text-[#cc0000]">Inactive</span>
                                         )}
                                     </p>
 
@@ -688,7 +688,7 @@ export default function StaffEnrollmentPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteStaff(staff)}
-                                                className="rounded-md bg-red-900 px-3 py-2 text-sm text-white transition hover:bg-red-800"
+                                                className="rounded-none bg-zinc-700 px-3 py-2 text-sm text-white transition hover:bg-zinc-600"
                                             >
                                                 Delete Staff
                                             </button>

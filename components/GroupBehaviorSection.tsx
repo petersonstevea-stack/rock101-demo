@@ -31,7 +31,7 @@ export default function GroupBehaviorSection({
     <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Weekly Fist Bumps</h2>
-        <div className="text-sm text-red-300">{totalFistBumps} total</div>
+        <div className="text-sm text-[#cc0000]">{totalFistBumps} total</div>
       </div>
 
       <div className="grid gap-2">
@@ -51,7 +51,7 @@ export default function GroupBehaviorSection({
                     {highFives} fist bump{highFives === 1 ? "" : "s"}
                   </div>
                   {earnedBadge && (
-                    <div className="mt-1 text-xs font-medium text-red-300">
+                    <div className="mt-1 text-xs font-medium text-[#cc0000]">
                       Badge earned
                     </div>
                   )}
@@ -60,7 +60,7 @@ export default function GroupBehaviorSection({
                 <button
                   type="button"
                   onClick={() => onAddFistBump(item.id)}
-                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500"
+                  className="rounded-none bg-[#cc0000] px-3 py-2 text-sm font-medium text-white hover:bg-[#b30000]"
                 >
                   + Fist Bump
                 </button>

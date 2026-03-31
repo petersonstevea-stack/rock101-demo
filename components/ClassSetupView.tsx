@@ -480,7 +480,7 @@ export default function ClassSetupView({
                 <button
                     type="button"
                     onClick={handleCreateOrUpdateClass}
-                    className="rounded-lg bg-red-600 px-5 py-3 font-semibold text-white hover:bg-red-500"
+                    className="rounded-none bg-[#cc0000] px-5 py-3 font-semibold text-white hover:bg-[#b30000]"
                 >
                     {editingClassId ? "Save Changes" : "Create Class"}
                 </button>
@@ -506,7 +506,7 @@ export default function ClassSetupView({
                                 <div
                                     key={rockClass.id}
                                     onClick={() => handleEditClass(rockClass)}
-                                    className="cursor-pointer rounded-lg border border-zinc-800 bg-black p-4 transition hover:border-red-500"
+                                    className="cursor-pointer rounded-none border border-zinc-800 bg-black p-4 transition hover:border-[#cc0000]"
                                 >
                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                         <div>

@@ -82,7 +82,7 @@ export default function ClassSelectorView({
                   onClick={() =>
                     onSelectClass(session.rock_classes?.id, session.id)
                   }
-                  className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-4 text-left transition hover:border-red-500 hover:bg-zinc-800"
+                  className="rounded-none border border-zinc-800 bg-zinc-900 p-4 text-left transition hover:border-[#cc0000] hover:bg-zinc-800"
                 >
                   <div className="text-xl font-semibold text-white">
                     {session.rock_classes?.name ?? "Unnamed Class"}

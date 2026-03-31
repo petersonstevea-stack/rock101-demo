@@ -76,7 +76,7 @@ export default function ChecklistSection({
                 <>
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="sor-heading text-xl text-white">{title}</h2>
-                        <div className="text-sm font-semibold text-red-300">{percent}%</div>
+                        <div className="text-sm font-semibold text-[#cc0000]">{percent}%</div>
                     </div>
 
                     <div className="mb-4 h-3 overflow-hidden rounded-none bg-[#333333]">

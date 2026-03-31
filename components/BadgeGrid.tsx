@@ -77,8 +77,8 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
         imageSrc="/images/rock101-band.jpg"
       />
 
-      <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-        <div className="sor-finish-card rounded-2xl p-5">
+      <div className="space-y-5">
+        <div className="bg-[#111111] rounded-none p-5">
           <div>
             <h2 className="sor-display text-4xl md:text-5xl leading-none">
               <span className="sor-display-red">BADGES</span>
@@ -90,7 +90,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
             <div className="sor-divider" />
 
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-              <div className="rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-red-200">
+              <div className="rounded-full border border-[#cc0000]/30 bg-[#cc0000]/10 px-4 py-1.5 text-white">
                 {earnedCount} of {badges.length} earned
               </div>
               <div className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-1.5 text-zinc-300">
@@ -100,7 +100,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
+        <div className="rounded-none border border-zinc-800 bg-zinc-950 p-6">
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {badges.map((badge) => {
               const earned = earnedBadges.has(badge.name);
@@ -111,7 +111,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
                   key={badge.name}
                   className={`overflow-hidden rounded-2xl border p-6 transition ${
                     earned
-                      ? `bg-gradient-to-br ${badge.accent} border-red-500/50 shadow-[0_0_30px_rgba(255,0,0,0.14)]`
+                      ? `bg-gradient-to-br ${badge.accent} border-[#cc0000]/50 shadow-[0_0_30px_rgba(255,0,0,0.14)]`
                       : "border-zinc-800 bg-zinc-900/75 opacity-60 grayscale"
                   }`}
                 >
@@ -119,7 +119,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
                     <div
                       className={`flex h-14 w-14 items-center justify-center rounded-2xl border text-3xl ${
                         earned
-                          ? "border-red-500/40 bg-red-600/10"
+                          ? "border-[#cc0000]/40 bg-[#cc0000]/10"
                           : "border-zinc-700 bg-zinc-800/90"
                       }`}
                     >
@@ -129,7 +129,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
                     <div
                       className={`rounded-full border px-3 py-1 text-sm font-semibold ${
                         earned
-                          ? "border-red-500/40 text-red-300"
+                          ? "border-[#cc0000]/40 text-[#cc0000]"
                           : "border-zinc-700 text-zinc-400"
                       }`}
                     >
@@ -141,7 +141,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
                     <div
                       className={`flex h-24 w-24 items-center justify-center rounded-full border text-5xl ${
                         earned
-                          ? "border-red-500/40 bg-black/30 shadow-[0_0_24px_rgba(255,0,0,0.16)]"
+                          ? "border-[#cc0000]/40 bg-black/30 shadow-[0_0_24px_rgba(255,0,0,0.16)]"
                           : "border-zinc-700 bg-zinc-800/90"
                       }`}
                     >
@@ -163,7 +163,7 @@ export default function BadgeGrid({ earnedBadges }: BadgeGridProps) {
 
                     <div
                       className={`mt-2 text-xs uppercase tracking-[0.25em] ${
-                        earned ? "text-red-300" : "text-zinc-400"
+                        earned ? "text-[#cc0000]" : "text-zinc-400"
                       }`}
                     >
                       {badge.subtitle}

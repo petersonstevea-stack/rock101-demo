@@ -416,14 +416,14 @@ export default function EnrollmentPage() {
                     className={
                         statusType === "success"
                             ? "rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4"
-                            : "rounded-2xl border border-red-400/20 bg-red-400/10 p-4"
+                            : "rounded-none border border-[#cc0000]/20 bg-[#cc0000]/10 p-4"
                     }
                 >
                     <p
                         className={
                             statusType === "success"
                                 ? "text-sm font-medium text-emerald-200"
-                                : "text-sm font-medium text-red-200"
+                                : "text-sm font-medium text-white"
                         }
                     >
                         {statusMessage}

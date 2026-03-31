@@ -132,7 +132,7 @@ export default function ClassDetailView({
           <button
             type="button"
             onClick={onEditClass}
-            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+            className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
           >
             Edit Class
           </button>
@@ -140,7 +140,7 @@ export default function ClassDetailView({
           <button
             type="button"
             onClick={onDeleteClass}
-            className="rounded-lg bg-red-800 px-4 py-2 text-white hover:bg-red-700"
+            className="rounded-none bg-zinc-700 px-4 py-2 text-white hover:bg-zinc-600"
           >
             Delete Class
           </button>
@@ -228,7 +228,8 @@ export default function ClassDetailView({
                             Number(e.target.value) as SongReadinessValue
                           )
                         }
-                        className="w-full accent-red-600"
+                        className="w-full"
+                        style={{ accentColor: "#cc0000" }}
                       />
                       <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
                         <span>Just Starting</span>
@@ -271,7 +272,7 @@ export default function ClassDetailView({
                 minute: "2-digit",
               }));
             }}
-            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+            className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
           >
             Save Class Instructor Feedback
           </button>
@@ -334,7 +335,7 @@ export default function ClassDetailView({
                   <button
                     type="button"
                     onClick={() => onSelectStudent(student.name)}
-                    className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+                    className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
                   >
                     Open Progress
                   </button>

@@ -80,7 +80,7 @@ export default function NotesPanel({
         )}
 
         {!value.trim() && canEdit && (
-          <div className="text-sm text-red-300">
+          <div className="text-sm text-[#cc0000]">
             {role === "instructor"
               ? "Instructor notes are required before saving weekly feedback."
               : "Rock 101 Class Instructor notes are required before saving weekly feedback."}

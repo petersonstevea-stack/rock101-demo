@@ -186,10 +186,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                     <button
                                         key={schoolId}
                                         type="button"
-                                        className="w-full rounded-lg py-4 text-white transition"
+                                        className="w-full rounded-none py-4 text-white transition"
                                         style={{ backgroundColor: "var(--sor-red)" }}
                                         onMouseEnter={(e) =>
-                                            (e.currentTarget.style.backgroundColor = "#a82e33")
+                                            (e.currentTarget.style.backgroundColor = "#b30000")
                                         }
                                         onMouseLeave={(e) =>
                                             (e.currentTarget.style.backgroundColor =
@@ -230,10 +230,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                             )}
 
                             <button
-                                className="mt-4 w-full rounded-lg py-4 text-white transition"
+                                className="mt-4 w-full rounded-none py-4 text-white transition"
                                 style={{ backgroundColor: "var(--sor-red)" }}
                                 onMouseEnter={(e) =>
-                                    (e.currentTarget.style.backgroundColor = "#a82e33")
+                                    (e.currentTarget.style.backgroundColor = "#b30000")
                                 }
                                 onMouseLeave={(e) =>
                                     (e.currentTarget.style.backgroundColor = "var(--sor-red)")
@@ -269,7 +269,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     )}
 
                     {error && (
-                        <p className="mt-4 text-center text-red-400">{error}</p>
+                        <p className="mt-4 text-center text-[#cc0000]">{error}</p>
                     )}
                 </div>
             </div>

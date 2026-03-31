@@ -45,6 +45,9 @@ type AppShellProps = {
   canSeeStudentTabs: boolean;
   canSeeManagementTabs: boolean;
   role: string;
+  isOwner?: boolean;
+  schoolList?: { id: string; name: string }[];
+  onSchoolChange?: (schoolId: string) => void;
 };
 
 function NavItems({
@@ -150,6 +153,9 @@ function SidebarContent({
   canSeeStudentTabs,
   canSeeManagementTabs,
   role,
+  isOwner,
+  schoolList,
+  onSchoolChange,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -166,9 +172,28 @@ function SidebarContent({
         <div style={{ color: "#666666", fontSize: "10px" }}>
           Location
         </div>
-        <div className="mt-1 leading-snug text-white" style={{ fontSize: "13px", fontWeight: 500 }}>
-          {schoolName}
-        </div>
+        {isOwner && schoolList && schoolList.length > 0 && onSchoolChange ? (
+          <select
+            className="mt-1 w-full bg-transparent leading-snug text-white outline-none"
+            style={{ fontSize: "13px", fontWeight: 500 }}
+            value={schoolName}
+            onChange={(e) => {
+              const selected = schoolList.find((s) => s.name === e.target.value);
+              if (selected) onSchoolChange(selected.id);
+            }}
+          >
+            <option value="all" style={{ backgroundColor: "#000000" }}>All Schools</option>
+            {schoolList.map((s) => (
+              <option key={s.id} value={s.name} style={{ backgroundColor: "#000000" }}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="mt-1 leading-snug text-white" style={{ fontSize: "13px", fontWeight: 500 }}>
+            {schoolName}
+          </div>
+        )}
       </div>
 
       {/* Student context */}
@@ -231,6 +256,9 @@ export default function AppShell({
   canSeeStudentTabs,
   canSeeManagementTabs,
   role,
+  isOwner,
+  schoolList,
+  onSchoolChange,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -257,6 +285,9 @@ export default function AppShell({
           canSeeStudentTabs={canSeeStudentTabs}
           canSeeManagementTabs={canSeeManagementTabs}
           role={role}
+          isOwner={isOwner}
+          schoolList={schoolList}
+          onSchoolChange={onSchoolChange}
         />
       </aside>
 
@@ -332,6 +363,9 @@ export default function AppShell({
               canSeeStudentTabs={canSeeStudentTabs}
               canSeeManagementTabs={canSeeManagementTabs}
               role={role}
+              isOwner={isOwner}
+              schoolList={schoolList}
+              onSchoolChange={onSchoolChange}
             />
           </div>
         </div>

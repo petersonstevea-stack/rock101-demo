@@ -21,7 +21,7 @@ export default function AppHeader({
 }: AppHeaderProps) {
     return (
         <header className="mb-8 w-full border-b border-zinc-800 bg-black">
-            <div className="h-1 w-full bg-red-600" />
+            <div className="h-1 w-full bg-[#cc0000]" />
 
             <div className="px-6 py-4">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
@@ -38,7 +38,7 @@ export default function AppHeader({
                             </h1>
 
                             {role && (
-                                <div className="text-xs tracking-[0.2em] text-red-500">
+                                <div className="text-xs tracking-[0.2em] text-[#cc0000]">
                                     {role.toUpperCase()} VIEW
                                 </div>
                             )}
@@ -64,7 +64,7 @@ export default function AppHeader({
                         <button
                             type="button"
                             onClick={onLogout}
-                            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+                            className="rounded-none px-4 py-2 text-sm font-medium text-white transition"
                             style={{ backgroundColor: "var(--sor-red)" }}
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor = "#a82e33";

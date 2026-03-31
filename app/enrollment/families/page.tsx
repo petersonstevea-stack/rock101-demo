@@ -331,7 +331,7 @@ export default function FamiliesEnrollmentPage() {
                                         <button
                                             type="button"
                                             onClick={() => removeStudent(index)}
-                                            className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm text-red-200 transition hover:bg-red-500/20"
+                                            className="rounded-none border border-[#cc0000]/30 bg-[#cc0000]/10 px-3 py-1 text-sm text-white transition hover:bg-[#cc0000]/20"
                                         >
                                             Remove
                                         </button>
@@ -423,7 +423,7 @@ export default function FamiliesEnrollmentPage() {
                         className={
                             statusType === "success"
                                 ? "text-sm text-green-300"
-                                : "text-sm text-red-300"
+                                : "text-sm text-[#cc0000]"
                         }
                     >
                         {statusMessage}

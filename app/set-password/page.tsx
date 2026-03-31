@@ -57,7 +57,7 @@ export default function SetPasswordPage() {
 
         <button
           onClick={handleSetPassword}
-          className="w-full rounded-lg bg-red-600 py-2 hover:bg-red-500"
+          className="w-full rounded-none bg-[#cc0000] py-2 hover:bg-[#b30000]"
         >
           Set Password
         </button>

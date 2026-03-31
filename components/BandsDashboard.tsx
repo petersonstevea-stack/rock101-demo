@@ -98,7 +98,7 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
 
             <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
               <div
-                className="h-full bg-red-600"
+                className="h-full bg-[#cc0000]"
                 style={{ width: `${band.avgProgress}%` }}
               />
             </div>
@@ -106,7 +106,7 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
 
           <div className="mt-4 rounded-xl border border-zinc-800 p-3">
             <div className="text-sm text-zinc-400">Performance Ready Students</div>
-            <div className="mt-1 text-xl font-bold text-red-300">
+            <div className="mt-1 text-xl font-bold text-[#cc0000]">
               {band.performanceReady}
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
 
                   <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
                     <div
-                      className="h-full bg-red-600"
+                      className="h-full bg-[#cc0000]"
                       style={{ width: `${progress}%` }}
                     />
                   </div>

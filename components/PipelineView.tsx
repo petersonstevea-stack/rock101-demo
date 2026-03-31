@@ -126,14 +126,14 @@ export default function PipelineView({ students }: PipelineViewProps) {
                             </div>
                           </div>
 
-                          <div className="text-sm font-semibold text-red-300">
+                          <div className="text-sm font-semibold text-[#cc0000]">
                             {progress}%
                           </div>
                         </div>
 
                         <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
                           <div
-                            className="h-full bg-red-600"
+                            className="h-full bg-[#cc0000]"
                             style={{ width: `${progress}%` }}
                           />
                         </div>

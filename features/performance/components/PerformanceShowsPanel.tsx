@@ -177,7 +177,7 @@ export default function PerformanceShowsPanel({ shows, setShows }: Props) {
                                             handleDelete(show.id);
                                         }
                                     }}
-                                    className="text-red-400 hover:text-red-600 text-sm transition font-medium px-2 py-1 rounded hover:bg-red-500/10"
+                                    className="text-[#cc0000] hover:text-[#b30000] text-sm transition font-medium px-2 py-1 rounded-none hover:bg-[#cc0000]/10"
                                 >
                                     Delete
                                 </button>
