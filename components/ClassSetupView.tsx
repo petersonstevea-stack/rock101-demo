@@ -228,6 +228,7 @@ export default function ClassSetupView({
                 ? classToEdit.id
                 : crypto.randomUUID(),
             name: className.trim(),
+            school: schoolId,
             school_id: schoolId,
             director_email: directorEmail.trim().toLowerCase(),
             day_of_week: dayOfWeek,
