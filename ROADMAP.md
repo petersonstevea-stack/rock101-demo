@@ -113,7 +113,7 @@ Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all 
 ### Known Bugs — Fix Before Pilot Launch
 - ✅ **ClassSetupView student picker:** Fixed. Students already enrolled in another class are filtered out of the picker. When editing an existing class, that class's own students remain available.
 - ✅ **staff_school_roles gap:** Fixed. Both `app/enrollment/staff/page.tsx` and `app/enrollment/page.tsx` now auto-insert a `staff_school_roles` row immediately after a successful staff INSERT. SSR failure is logged but non-blocking — staff record takes priority.
-- 🔶 **School selector bug:** Owner school filter dropdown has never worked correctly — selecting a specific school defaults back to All Schools. Needs investigation before multi-school pilot launch.
+- ✅ **School selector bug:** Fixed. Owners can now select a school from a dropdown in the sidebar Location block. Selection updates `selectedSchoolId`, which flows through `effectiveSchoolFilter` to student and class data fetches.
 
 ---
 
@@ -123,9 +123,9 @@ Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all 
 - ✅ Student Dashboard — redesigned with white page background, dark solid-color tiles (#111111/#cc0000), squared edges, solid fills throughout (no gradients), stat tiles, progress rows, notes cards with red left border
 - ✅ Sidebar nav — matches Method App style: pure black background, white nav items, red active state (full block), role badge (white card), Location/Viewing context blocks
 - ✅ Badges section — hidden from UI; evaluate later whether to keep or remove permanently
-- 🔜 Private Lesson page — redesign for clarity and invitation
-- 🔜 Graduation Requirements page — redesign for clarity
-- 🔜 Group Rehearsal page — redesign for clarity
+- ✅ Private Lesson page — white background, solid dark tiles, squared edges, brand red progress bars and sign buttons, two-column checklist layout
+- ✅ Graduation Requirements page — white background, solid dark tiles, squared edges, workflow signoff block, brand red buttons and progress bars
+- ✅ Group Rehearsal page — white background, solid dark tiles, squared edges, rectangular song readiness sliders with red fill, brand red High Fives and sign buttons
 - 🔜 Rock 101 song library — audit and update song list
 - 🔜 General UI polish pass across all views
 
