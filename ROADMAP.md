@@ -150,6 +150,37 @@ a full design polish day:
 - Keep dark Stage Ready design language throughout
 Do not build until Phase 1 functional work is stable.
 
+### 🔜 Step 1.18 — Session-Level Sign-off and Attendance Table
+Prerequisite for the execution dashboard. Current sign-off data
+lives in `students.workflow` as a flat boolean blob with no session
+anchor. Cannot support per-session accountability or absence
+tracking without a proper relational record.
+
+New table: `session_student_signoffs`
+- `session_id` (FK → `class_sessions`)
+- `student_id` (FK → `students`)
+- `private_lesson_absent` boolean DEFAULT false
+- `group_class_absent` boolean DEFAULT false
+- `instructor_submitted` boolean DEFAULT false
+- `instructor_submitted_at` timestamptz
+- `instructor_submitted_by` uuid
+- `class_instructor_submitted` boolean DEFAULT false
+- `class_instructor_submitted_at` timestamptz
+- `class_instructor_submitted_by` uuid
+- `parent_email_sent` boolean DEFAULT false
+- `parent_email_sent_at` timestamptz
+- UNIQUE(`session_id`, `student_id`)
+
+Migration approach:
+- Add the table (additive — do not delete `students.workflow` yet)
+- Update Rock101App sign-off writes to write to BOTH
+  `session_student_signoffs` AND `students.workflow` during transition
+- `students.workflow` booleans become legacy once execution
+  dashboard is live and reading from the new table
+- Do not remove `students.workflow` until full cutover is confirmed
+
+### 🔜 Step 1.19 — Weekly Execution Dashboard (Management View)
+
 ---
 
 ### Known Bugs — Fix Before Pilot Launch
