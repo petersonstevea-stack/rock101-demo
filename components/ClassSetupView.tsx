@@ -103,6 +103,8 @@ export default function ClassSetupView({
         async function loadClasses() {
             if (!schoolId) return;
 
+            console.log("[ClassSetupView] loadClasses schoolId:", schoolId);
+
             const { data, error } = await supabase
                 .from("rock_classes")
                 .select("*")
