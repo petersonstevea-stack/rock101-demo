@@ -42,7 +42,7 @@ export default function EnrollmentSelectField({
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
         required={required}
-        className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-white/30 focus:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <option value="" disabled>
           {placeholder}

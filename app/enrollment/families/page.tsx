@@ -49,12 +49,12 @@ export default function FamiliesEnrollmentPage() {
     const [parentName, setParentName] = useState("");
     const [parentEmail, setParentEmail] = useState("");
 
-    const [students, setStudents] = useState<StudentDraft>(createEmptyStudent() as any);
     const [studentList, setStudentList] = useState<StudentDraft[]>([
         createEmptyStudent(),
     ]);
 
     const [staffList, setStaffList] = useState<StaffRow[]>([]);
+    const [staffSchoolRoles, setStaffSchoolRoles] = useState<{ staff_id: string; school_slug: string }[]>([]);
     const [recentStudents, setRecentStudents] = useState<StudentRow[]>([]);
     const [statusMessage, setStatusMessage] = useState("");
     const [statusType, setStatusType] = useState<"success" | "error" | "idle">(
@@ -67,7 +67,7 @@ export default function FamiliesEnrollmentPage() {
         supabase
             .from("schools")
             .select("id, name")
-            .eq("is_sandbox", false)
+            .eq("active", true)
             .order("name")
             .then(({ data }) => {
                 if (data) setSchoolList(data);
@@ -80,6 +80,15 @@ export default function FamiliesEnrollmentPage() {
 
             if (staffData) {
                 setStaffList(staffData as StaffRow[]);
+            }
+
+            const { data: rolesData } = await supabase
+                .from("staff_school_roles")
+                .select("staff_id, school_slug")
+                .eq("active", true);
+
+            if (rolesData) {
+                setStaffSchoolRoles(rolesData);
             }
 
             const { data: recentStudentData } = await supabase
@@ -306,11 +315,19 @@ export default function FamiliesEnrollmentPage() {
 
                 <div className="space-y-6">
                     {studentList.map((student, index) => {
+                        const staffIdsForSchool = student.school
+                            ? new Set(
+                                staffSchoolRoles
+                                    .filter((r) => r.school_slug === student.school)
+                                    .map((r) => r.staff_id)
+                            )
+                            : null;
+
                         const instructorOptions = staffList
                             .filter(
                                 (staff) =>
                                     (staff.role === "instructor" || staff.role === "director") &&
-                                    (!student.school || staff.school_slug === student.school)
+                                    (!student.school || staffIdsForSchool?.has(staff.id))
                             )
                             .map((staff) => ({
                                 value: staff.id,
