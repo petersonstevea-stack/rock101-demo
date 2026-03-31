@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
     fetchAllCurriculumItems,
@@ -18,6 +17,7 @@ import WorkflowBanner from "@/components/WorkflowBanner";
 import BandsDashboard from "@/components/BandsDashboard";
 import PipelineView from "@/components/PipelineView";
 import CertificateView from "@/components/CertificateView";
+import ClassSetupView from "@/components/ClassSetupView";
 import {
     canEditGroupRehearsal,
     canSubmitParentUpdate,
@@ -47,6 +47,7 @@ type Tab =
     | "badges"
     | "parent"
     | "certificate"
+    | "classSetup"
     | "performanceDashboard"
     | "bandsDashboard"
     | "pipeline"
@@ -82,7 +83,6 @@ function mapSchoolNameToId(schoolName?: string | null): string {
 }
 
 export default function Rock101App() {
-    const router = useRouter();
     const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
     const [studentViewFilter, setStudentViewFilter] = useState<
         "myStudents" | "allStudents"
@@ -101,6 +101,7 @@ export default function Rock101App() {
     const [savedClasses, setSavedClasses] = useState<any[]>([]);
     const [weeklySessions, setWeeklySessions] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
+    const [editingClass, setEditingClass] = useState<any | null>(null);
     const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -597,7 +598,8 @@ export default function Rock101App() {
         saveSelectedTab(nextTab);
     }
     function handleEditClass(classToEdit: any) {
-        router.push(`/class-setup?classId=${classToEdit.id}`);
+        setEditingClass(classToEdit);
+        handleSetTab("classSetup");
     }
     function handleSelectStudent(studentName: string) {
         setSelectedStudentName(studentName);
@@ -1290,10 +1292,7 @@ export default function Rock101App() {
             <AppShell
                 schoolName={currentSchoolName}
                 currentTab={tab}
-                onTabChange={(newTab) => {
-                    if (newTab === "classSetup") { router.push("/class-setup"); return; }
-                    setTab(newTab as Tab);
-                }}
+                onTabChange={(newTab) => handleSetTab(newTab as Tab)}
                 onSignOut={handleLogout}
                 canSeeStudentTabs={canSeeStudentTabs}
                 canSeeManagementTabs={canSeeManagementTabs}
@@ -1468,7 +1467,7 @@ export default function Rock101App() {
                                     </p>
                                     <button
                                         type="button"
-                                        onClick={() => router.push("/class-setup")}
+                                        onClick={() => handleSetTab("classSetup")}
                                         className="mt-5 rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
                                     >
                                         Create First Class
@@ -1776,8 +1775,8 @@ export default function Rock101App() {
                         <>
                             <button
                                 type="button"
-                                onClick={() => router.push("/class-setup")}
-                                className="rounded-none bg-zinc-800 px-4 py-2 hover:bg-zinc-700"
+                                onClick={() => handleSetTab("classSetup")}
+                                className={`rounded-none px-4 py-2 ${tab === "classSetup" ? "bg-[#cc0000]" : "bg-zinc-800 hover:bg-zinc-700"}`}
                             >
                                 Class Setup
                             </button>
@@ -1993,6 +1992,21 @@ export default function Rock101App() {
 
                 {canSeeStudentContent && tab === "certificate" && selectedStudent && (
                     <CertificateView student={selectedStudent} />
+                )}
+
+                {tab === "classSetup" && canManageRock101 && (
+                    <ClassSetupView
+                        students={filteredStudentsBySchool}
+                        users={filteredUsersBySchool}
+                        mode={editingClass ? "edit" : "create"}
+                        classToEdit={editingClass}
+                        defaultSchoolId={currentUser?.schoolId}
+                        onClassSaved={() => {
+                            setEditingClass(null);
+                            setClassesVersion((prev) => prev + 1);
+                            handleSetTab("privateLesson");
+                        }}
+                    />
                 )}
 
                 {tab === "performanceDashboard" && canManageRock101 && (

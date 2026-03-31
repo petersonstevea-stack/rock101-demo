@@ -1,6 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+
+function generateTimeOptions(): string[] {
+    const options: string[] = [];
+    for (let hour = 8; hour <= 22; hour++) {
+        for (let min = 0; min < 60; min += 15) {
+            if (hour === 22 && min > 0) break;
+            const h12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+            const ampm = hour >= 12 ? "PM" : "AM";
+            const minStr = min === 0 ? "00" : String(min);
+            options.push(`${h12}:${minStr} ${ampm}`);
+        }
+    }
+    return options;
+}
+
+const TIME_OPTIONS = generateTimeOptions();
 import { RockClass } from "@/types/class";
 import { approvedSongs } from "@/data/songLibrary";
 import { AppUser } from "@/types/user";
@@ -332,26 +348,6 @@ export default function ClassSetupView({
 
                 <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label className="mb-2 block text-sm text-zinc-400">School</label>
-                        <select
-                            value={schoolId}
-                            onChange={(e) => {
-                                const nextSchoolId = e.target.value;
-                                setSchoolId(nextSchoolId);
-                                setDirectorEmail("");
-                                setSelectedStudentIds([]);
-                            }}
-                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
-                        >
-                            {schoolList.map((school) => (
-                                <option key={school.id} value={school.id}>
-                                    {school.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
                         <label className="mb-2 block text-sm text-zinc-400">Class Name</label>
                         <input
                             value={className}
@@ -400,24 +396,16 @@ export default function ClassSetupView({
 
                     <div>
                         <label className="mb-2 block text-sm text-zinc-400">Time</label>
-                        <input
+                        <select
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
                             className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
-                            placeholder="5:00 PM"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-sm text-zinc-400">
-                            Performance Title
-                        </label>
-                        <input
-                            value={performanceTitle}
-                            onChange={(e) => setPerformanceTitle(e.target.value)}
-                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
-                            placeholder="Spring Showcase"
-                        />
+                        >
+                            <option value="">Select time</option>
+                            {TIME_OPTIONS.map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
