@@ -446,8 +446,8 @@ export default function Rock101App() {
         );
     }, [selectedClass, selectedStudent, filteredClassesBySchool]);
 
-    const canSeeStudentTabs =
-        !!selectedStudent && (!canManageRock101 || !!selectedStudentName);
+    const canSeeStudentTabs: boolean =
+        role === "parent" || canManageRock101;
 
     const currentSchoolName = selectedStudent
         ? schoolList.find((s) => s.id === selectedStudent.schoolId)?.name ?? "School of Rock"
