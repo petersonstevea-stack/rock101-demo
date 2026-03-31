@@ -120,14 +120,14 @@ Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all 
 ### UI Design Review — Do Before Pilot Launch
 **Goal:** Improve aesthetics and usability across all student-facing views.
 
-- Student Dashboard — improve overall layout and visual appeal
-- Private Lesson page — redesign for clarity and invitation
-- Graduation Requirements page — redesign for clarity
-- Group Rehearsal page — redesign for clarity
-- Badges section — hide from UI for now, evaluate later
-  whether to keep or remove permanently
-- Rock 101 song library — audit and update song list
-- General UI polish pass across all views
+- ✅ Student Dashboard — redesigned with white page background, dark solid-color tiles (#111111/#cc0000), squared edges, solid fills throughout (no gradients), stat tiles, progress rows, notes cards with red left border
+- ✅ Sidebar nav — matches Method App style: pure black background, white nav items, red active state (full block), role badge (white card), Location/Viewing context blocks
+- ✅ Badges section — hidden from UI; evaluate later whether to keep or remove permanently
+- 🔜 Private Lesson page — redesign for clarity and invitation
+- 🔜 Graduation Requirements page — redesign for clarity
+- 🔜 Group Rehearsal page — redesign for clarity
+- 🔜 Rock 101 song library — audit and update song list
+- 🔜 General UI polish pass across all views
 
 ---
 
