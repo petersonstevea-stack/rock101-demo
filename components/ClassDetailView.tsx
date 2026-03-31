@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
+import { supabase } from "@/lib/supabaseClient";
 import PageHero from "@/components/PageHero";
 import {
   SONG_READINESS_LEVELS,
@@ -63,6 +64,40 @@ export default function ClassDetailView({
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+
+  // Pike 13 integration (Phase 6): attendance will be
+  // pre-populated from Pike 13 event occurrence data.
+  // group_class_absent will be set automatically when
+  // pike13_event_occurrence_id is synced.
+  useEffect(() => {
+    if (!selectedSessionId) return;
+    supabase
+      .from("session_student_signoffs")
+      .select("student_id, group_class_absent")
+      .eq("session_id", selectedSessionId)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, boolean> = {};
+        for (const row of data) {
+          map[row.student_id] = row.group_class_absent;
+        }
+        setAttendanceMap(map);
+      });
+  }, [selectedSessionId]);
+
+  async function handleAttendanceToggle(studentId: string, newIsPresent: boolean) {
+    if (!selectedSessionId) return;
+    const group_class_absent = !newIsPresent;
+    setAttendanceMap((prev) => ({ ...prev, [studentId]: group_class_absent }));
+    setAttendanceSaving(true);
+    await supabase.from("session_student_signoffs").upsert(
+      { session_id: selectedSessionId, student_id: studentId, group_class_absent },
+      { onConflict: "session_id,student_id" }
+    );
+    setAttendanceSaving(false);
+  }
 
   const directorName =
     users.find((user) => user.email === rockClass.directorEmail)?.name ||
@@ -152,8 +187,8 @@ export default function ClassDetailView({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Class Instructor Notes — first in DOM = top on mobile, right on desktop */}
-        <div className="order-1 md:order-2">
+        {/* Class Instructor Notes + Attendance — first in DOM = top on mobile, right on desktop */}
+        <div className="order-1 md:order-2 space-y-6">
           <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
             <h3 className="text-xl font-semibold text-white">Class Instructor Notes</h3>
 
@@ -192,6 +227,44 @@ export default function ClassDetailView({
                 </span>
               )}
             </div>
+          </div>
+
+          <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-white">Class Attendance</h3>
+              {attendanceSaving && (
+                <span className="text-xs text-zinc-400">Saving…</span>
+              )}
+            </div>
+
+            {!selectedSessionId ? (
+              <p className="mt-4 text-sm text-zinc-500">Select a session to track attendance.</p>
+            ) : students.length === 0 ? (
+              <p className="mt-4 text-sm text-zinc-500">No students in this class.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {students.filter((s) => s.id).map((student) => {
+                  const isPresent = !(attendanceMap[student.id!] ?? false);
+                  return (
+                    <div
+                      key={student.id}
+                      className="flex items-center justify-between rounded-none border border-zinc-800 bg-zinc-950 px-4 py-3"
+                    >
+                      <span className="text-sm text-white">{student.name}</span>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+                        <input
+                          type="checkbox"
+                          checked={isPresent}
+                          onChange={(e) => handleAttendanceToggle(student.id!, e.target.checked)}
+                          className="h-4 w-4 rounded-none accent-[#cc0000]"
+                        />
+                        Present
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
