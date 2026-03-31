@@ -237,10 +237,15 @@ export default function Rock101App() {
 
     useEffect(() => {
         async function loadClasses() {
+            const ownerRole = currentUser?.role === "owner";
+            const schoolIdFilter =
+                ownerRole && selectedSchoolId !== "all"
+                    ? selectedSchoolId
+                    : (currentUser?.schoolId ?? "");
             const { data, error } = await supabase
                 .from("rock_classes")
                 .select("*")
-                .eq("school_id", selectedSchoolId ?? currentUser?.schoolId ?? "");
+                .eq("school_id", schoolIdFilter);
 
             if (error) {
                 console.error("SUPABASE LOAD CLASSES ERROR:", error);
@@ -266,7 +271,7 @@ export default function Rock101App() {
                     performanceDate: c.performance_date ?? "",
                 };
             });
-            const safeClasses = isOwner
+            const safeClasses = ownerRole
                 ? supabaseClasses
                 : supabaseClasses.filter(
                     (c) => c.schoolId === currentUser?.schoolId
@@ -1300,6 +1305,9 @@ export default function Rock101App() {
                 canSeeStudentTabs={canSeeStudentTabs}
                 canSeeManagementTabs={canSeeManagementTabs}
                 role={role ?? ""}
+                isOwner={isOwner}
+                schoolList={schoolList}
+                onSchoolChange={(id) => setSelectedSchoolId(id)}
             >
                 <div className="p-6">
                     <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
@@ -1336,6 +1344,9 @@ export default function Rock101App() {
             canSeeStudentTabs={canSeeStudentTabs}
             canSeeManagementTabs={canSeeManagementTabs}
             role={role ?? ""}
+            isOwner={isOwner}
+            schoolList={schoolList}
+            onSchoolChange={(id) => setSelectedSchoolId(id)}
         >
             <div className="p-6">
                 {role === "instructor" && (
@@ -1934,9 +1945,6 @@ export default function Rock101App() {
                             role === "generalManager" ||
                             role === "director") && (
                                 <>
-                                    <div className="mb-2 text-lg font-semibold text-white">
-                                        Class Instructor Weekly Feedback
-                                    </div>
                                     <div className="mb-2 text-lg font-semibold text-white">
                                         Class Instructor Weekly Feedback
                                     </div>

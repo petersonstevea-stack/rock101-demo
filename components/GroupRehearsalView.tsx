@@ -156,8 +156,8 @@ export default function GroupRehearsalView({
                                                                 Number(e.target.value) as SongReadinessValue
                                                             )
                                                         }
-                                                        className="w-full rounded-none"
-                                                        style={{ accentColor: "#cc0000" }}
+                                                        className="w-full"
+                                                        style={{ accentColor: "#cc0000", borderRadius: 0 }}
                                                         disabled={!canEdit}
                                                     />
                                                     <div className="mt-1 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
