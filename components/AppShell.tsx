@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case "owner": return "Owner";
+    case "gm": return "General Manager";
+    case "director": return "Music Director";
+    case "instructor": return "Instructor";
+    case "parent": return "Parent";
+    default: return role;
+  }
+}
+
 type NavItem = {
   tab: string;
   label: string;
@@ -140,20 +151,16 @@ function SidebarContent({
   onSignOut,
   canSeeStudentTabs,
   canSeeManagementTabs,
-}: Omit<AppShellProps, "children" | "role">) {
+  role,
+}: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#111111" }}>
       {/* Logo */}
-      <div className="border-b border-zinc-800 px-4 py-5">
-        <div
-          className="text-[10px] font-semibold uppercase tracking-[0.22em]"
-          style={{ color: "#cc0000" }}
-        >
-          School of Rock
-        </div>
-        <div className="mt-0.5 text-sm font-bold uppercase tracking-[0.18em] text-white">
-          Stage Ready
-        </div>
+      <img src="/sor-logo.png" alt="School of Rock" className="w-full px-4 py-4 object-contain" />
+
+      {/* Role badge */}
+      <div className="border-b border-zinc-700 bg-zinc-800 px-4 py-2">
+        <div className="text-sm text-white">{getRoleLabel(role)}</div>
       </div>
 
       {/* School */}
@@ -251,6 +258,7 @@ export default function AppShell({
           onSignOut={onSignOut}
           canSeeStudentTabs={canSeeStudentTabs}
           canSeeManagementTabs={canSeeManagementTabs}
+          role={role}
         />
       </aside>
 
@@ -325,6 +333,7 @@ export default function AppShell({
               onSignOut={onSignOut}
               canSeeStudentTabs={canSeeStudentTabs}
               canSeeManagementTabs={canSeeManagementTabs}
+              role={role}
             />
           </div>
         </div>
