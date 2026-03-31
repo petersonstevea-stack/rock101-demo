@@ -1391,6 +1391,7 @@ export default function Rock101App() {
                 )}
 
                 {selectedStudent &&
+                    !!selectedStudentName &&
                     (tab === "parent" || tab === "privateLesson" || tab === "groupRehearsal" || tab === "graduationRequirements" || tab === "certificate") &&
                     (role === "owner" ||
                         role === "generalManager" ||
