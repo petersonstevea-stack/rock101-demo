@@ -62,7 +62,7 @@ function NavItems({
     <>
       {canSeeStudentTabs && (
         <div>
-          <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-600">
+          <div className="px-4 pt-4 pb-1" style={{ color: "#666666", fontSize: "11px", fontWeight: 400 }}>
             Student
           </div>
           {STUDENT_NAV.map((item) => {
@@ -72,23 +72,22 @@ function NavItems({
                 key={item.tab}
                 type="button"
                 onClick={() => onTabChange(item.tab)}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors"
+                className="w-full px-4 py-2.5 text-left transition-colors"
                 style={{
                   backgroundColor: isActive ? "#cc0000" : "transparent",
-                  color: isActive ? "#ffffff" : "#a1a1aa",
-                  borderLeft: isActive ? "3px solid #ffffff" : "3px solid transparent",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 400,
                   borderRadius: 0,
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "#1c1c1c";
-                    e.currentTarget.style.color = "#ffffff";
+                    e.currentTarget.style.backgroundColor = "#1a1a1a";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
                     e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#a1a1aa";
                   }
                 }}
               >
@@ -101,7 +100,7 @@ function NavItems({
 
       {canSeeManagementTabs && (
         <div>
-          <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-[0.22em] uppercase text-zinc-600">
+          <div className="px-4 pt-4 pb-1" style={{ color: "#666666", fontSize: "11px", fontWeight: 400 }}>
             School
           </div>
           {SCHOOL_NAV.map((item) => {
@@ -111,23 +110,22 @@ function NavItems({
                 key={item.tab}
                 type="button"
                 onClick={() => onTabChange(item.tab)}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium transition-colors"
+                className="w-full px-4 py-2.5 text-left transition-colors"
                 style={{
                   backgroundColor: isActive ? "#cc0000" : "transparent",
-                  color: isActive ? "#ffffff" : "#a1a1aa",
-                  borderLeft: isActive ? "3px solid #ffffff" : "3px solid transparent",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 400,
                   borderRadius: 0,
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "#1c1c1c";
-                    e.currentTarget.style.color = "#ffffff";
+                    e.currentTarget.style.backgroundColor = "#1a1a1a";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
                     e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#a1a1aa";
                   }
                 }}
               >
@@ -154,21 +152,21 @@ function SidebarContent({
   role,
 }: Omit<AppShellProps, "children">) {
   return (
-    <div className="flex h-full flex-col" style={{ backgroundColor: "#111111" }}>
+    <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
       {/* Logo */}
       <img src="/sor-logo.png" alt="School of Rock" className="w-32 mx-auto block py-4 px-2 object-contain" />
 
       {/* Role badge */}
       <div className="border-b border-zinc-300 bg-white px-4 py-2">
-        <div className="text-sm font-normal text-black">{getRoleLabel(role)}</div>
+        <div className="text-black" style={{ fontSize: "14px", fontWeight: 400 }}>{getRoleLabel(role)}</div>
       </div>
 
       {/* School */}
       <div className="border-b border-zinc-800 px-4 py-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+        <div style={{ color: "#666666", fontSize: "10px" }}>
           Location
         </div>
-        <div className="mt-1 text-sm font-bold leading-snug text-white">
+        <div className="mt-1 leading-snug text-white" style={{ fontSize: "13px", fontWeight: 500 }}>
           {schoolName}
         </div>
       </div>
@@ -176,10 +174,10 @@ function SidebarContent({
       {/* Student context */}
       {studentName && (
         <div className="border-b border-zinc-800 px-4 py-4">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+          <div style={{ color: "#666666", fontSize: "10px" }}>
             Viewing
           </div>
-          <div className="mt-1 text-sm font-bold uppercase leading-snug tracking-wide text-white">
+          <div className="mt-1 leading-snug text-white" style={{ fontSize: "13px", fontWeight: 500 }}>
             {studentName}
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
@@ -246,7 +244,7 @@ export default function AppShell({
       {/* Desktop sidebar — hidden on mobile */}
       <aside
         className="hidden md:flex w-[200px] shrink-0 flex-col"
-        style={{ backgroundColor: "#111111" }}
+        style={{ backgroundColor: "#000000" }}
       >
         <SidebarContent
           schoolName={schoolName}
@@ -267,7 +265,7 @@ export default function AppShell({
         {/* Mobile header — visible on mobile only */}
         <div
           className="flex md:hidden items-center px-4 py-3 border-b border-zinc-800"
-          style={{ backgroundColor: "#111111" }}
+          style={{ backgroundColor: "#000000" }}
         >
           <button
             type="button"
@@ -306,7 +304,7 @@ export default function AppShell({
           {/* Drawer panel */}
           <div
             className="absolute left-0 top-0 h-full w-[200px] flex flex-col"
-            style={{ backgroundColor: "#111111" }}
+            style={{ backgroundColor: "#000000" }}
           >
             {/* Close button */}
             <div className="flex justify-end px-4 py-3 border-b border-zinc-800">
