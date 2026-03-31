@@ -170,7 +170,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     STAGE READY
                 </h1>
 
-                <div className="w-full max-w-sm rounded-lg bg-zinc-800 px-6 py-8 shadow-lg">
+                <div className="w-full max-w-sm rounded-none bg-zinc-800 px-6 py-8">
                     {pendingUser && schoolChoices.length > 0 ? (
                         <div className="space-y-3">
                             <p className="text-center text-sm text-zinc-300">
@@ -186,15 +186,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                     <button
                                         key={schoolId}
                                         type="button"
-                                        className="w-full rounded-none py-4 text-white transition"
-                                        style={{ backgroundColor: "var(--sor-red)" }}
-                                        onMouseEnter={(e) =>
-                                            (e.currentTarget.style.backgroundColor = "#b30000")
-                                        }
-                                        onMouseLeave={(e) =>
-                                            (e.currentTarget.style.backgroundColor =
-                                                "var(--sor-red)")
-                                        }
+                                        className="w-full rounded-none bg-[#cc0000] py-4 text-white transition hover:bg-[#b30000]"
                                         onClick={() => {
                                             const resolvedUser: SessionUser = {
                                                 ...pendingUser,
@@ -216,7 +208,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-6 w-full rounded-lg bg-white p-4 text-black"
+                                className="mt-6 w-full rounded-none bg-white p-4 text-black"
                             />
 
                             {!isResetMode && (
@@ -225,19 +217,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="mt-4 w-full rounded-lg bg-white p-4 text-black"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleLogin();
+                                    }}
+                                    className="mt-4 w-full rounded-none bg-white p-4 text-black"
                                 />
                             )}
 
                             <button
-                                className="mt-4 w-full rounded-none py-4 text-white transition"
-                                style={{ backgroundColor: "var(--sor-red)" }}
-                                onMouseEnter={(e) =>
-                                    (e.currentTarget.style.backgroundColor = "#b30000")
-                                }
-                                onMouseLeave={(e) =>
-                                    (e.currentTarget.style.backgroundColor = "var(--sor-red)")
-                                }
+                                className="mt-4 w-full rounded-none bg-[#cc0000] py-4 text-white transition hover:bg-[#b30000]"
                                 onClick={isResetMode ? handleForgotPassword : handleLogin}
                             >
                                 {isResetMode ? "Send Reset Email" : "Continue"}

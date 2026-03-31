@@ -113,7 +113,7 @@ export default function ClassSelectorView({
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 text-zinc-300 backdrop-blur-sm">
+        <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">
           No sessions scheduled for this week.
         </div>
       )}

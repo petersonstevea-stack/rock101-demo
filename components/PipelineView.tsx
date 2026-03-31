@@ -73,38 +73,38 @@ export default function PipelineView({ students }: PipelineViewProps) {
 
   return (
     <div className="mt-8 grid gap-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+      <div className="rounded-none border border-zinc-800 bg-zinc-950 p-5">
         <div className="mb-4 text-xl font-bold">Rock 101 Graduation Pipeline</div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-xl border border-zinc-800 p-4">
+          <div className="rounded-none border border-zinc-800 p-4">
             <div className="text-sm text-zinc-400">Performance Ready</div>
             <div className="mt-1 text-2xl font-bold">{performanceReady}</div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 p-4">
+          <div className="rounded-none border border-zinc-800 p-4">
             <div className="text-sm text-zinc-400">Stage Ready</div>
             <div className="mt-1 text-2xl font-bold">{stageReady}</div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 p-4">
+          <div className="rounded-none border border-zinc-800 p-4">
             <div className="text-sm text-zinc-400">Developing</div>
             <div className="mt-1 text-2xl font-bold">{developing}</div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 p-4">
+          <div className="rounded-none border border-zinc-800 p-4">
             <div className="text-sm text-zinc-400">New Students</div>
             <div className="mt-1 text-2xl font-bold">{newStudents}</div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+      <div className="rounded-none border border-zinc-800 bg-zinc-950 p-5">
         <div className="mb-4 text-xl font-bold">All Rock 101 Students by Class</div>
 
         <div className="grid gap-5">
           {bandNames.map((bandName) => (
-            <div key={bandName} className="rounded-2xl border border-zinc-800 p-4">
+            <div key={bandName} className="rounded-none border border-zinc-800 p-4">
               <div className="mb-4 text-lg font-bold">{bandName}</div>
 
               <div className="grid gap-3">
@@ -116,7 +116,7 @@ export default function PipelineView({ students }: PipelineViewProps) {
                     return (
                       <div
                         key={student.name}
-                        className="rounded-xl border border-zinc-800 p-3"
+                        className="rounded-none border border-zinc-800 p-3"
                       >
                         <div className="mb-2 flex items-center justify-between gap-3">
                           <div>
@@ -131,7 +131,7 @@ export default function PipelineView({ students }: PipelineViewProps) {
                           </div>
                         </div>
 
-                        <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
+                        <div className="h-3 overflow-hidden rounded-none bg-zinc-800">
                           <div
                             className="h-full bg-[#cc0000]"
                             style={{ width: `${progress}%` }}

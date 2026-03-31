@@ -74,17 +74,17 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
       {bands.map((band) => (
         <div
           key={band.bandName}
-          className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5"
+          className="rounded-none border border-zinc-800 bg-zinc-950 p-5"
         >
           <div className="mb-4 text-xl font-bold">{band.bandName}</div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-zinc-800 p-3">
+            <div className="rounded-none border border-zinc-800 p-3">
               <div className="text-sm text-zinc-400">Students</div>
               <div className="mt-1 text-2xl font-bold">{band.members.length}</div>
             </div>
 
-            <div className="rounded-xl border border-zinc-800 p-3">
+            <div className="rounded-none border border-zinc-800 p-3">
               <div className="text-sm text-zinc-400">Avg Progress</div>
               <div className="mt-1 text-2xl font-bold">{band.avgProgress}%</div>
             </div>
@@ -96,7 +96,7 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
               <span>{band.avgProgress}%</span>
             </div>
 
-            <div className="h-3 overflow-hidden rounded-full bg-zinc-800">
+            <div className="h-3 overflow-hidden rounded-none bg-zinc-800">
               <div
                 className="h-full bg-[#cc0000]"
                 style={{ width: `${band.avgProgress}%` }}
@@ -118,14 +118,14 @@ export default function BandsDashboard({ students }: BandsDashboardProps) {
               return (
                 <div
                   key={member.name}
-                  className="rounded-xl border border-zinc-800 p-3"
+                  className="rounded-none border border-zinc-800 p-3"
                 >
                   <div className="mb-2 flex items-center justify-between text-sm">
                     <span>{member.name}</span>
                     <span>{progress}%</span>
                   </div>
 
-                  <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
+                  <div className="h-2.5 overflow-hidden rounded-none bg-zinc-800">
                     <div
                       className="h-full bg-[#cc0000]"
                       style={{ width: `${progress}%` }}

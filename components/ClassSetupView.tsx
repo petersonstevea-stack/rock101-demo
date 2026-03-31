@@ -305,7 +305,7 @@ export default function ClassSetupView({
 
     return (
         <div className="mt-8 space-y-8">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h2 className="text-2xl font-bold">Class Builder</h2>
                 <p className="mt-2 text-zinc-400">
                     Create and manage Rock 101 classes with school, schedule, roster,
@@ -313,7 +313,7 @@ export default function ClassSetupView({
                 </p>
             </div>
 
-            <div className="space-y-6 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="space-y-6 rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <div className="flex items-center justify-between">
                     <h3 className="text-xl font-semibold">
                         {editingClassId ? "Edit Class" : "Create New Class"}
@@ -323,7 +323,7 @@ export default function ClassSetupView({
                         <button
                             type="button"
                             onClick={resetForm}
-                            className="rounded-lg bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+                            className="rounded-none bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                         >
                             Cancel Edit
                         </button>
@@ -341,7 +341,7 @@ export default function ClassSetupView({
                                 setDirectorEmail("");
                                 setSelectedStudentIds([]);
                             }}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
                             {schoolList.map((school) => (
                                 <option key={school.id} value={school.id}>
@@ -356,7 +356,7 @@ export default function ClassSetupView({
                         <input
                             value={className}
                             onChange={(e) => setClassName(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                             placeholder="Tuesday 5pm Rock 101"
                         />
                     </div>
@@ -369,7 +369,7 @@ export default function ClassSetupView({
                         <select
                             value={directorEmail}
                             onChange={(e) => setDirectorEmail(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
                             <option value="">Select instructor</option>
 
@@ -386,7 +386,7 @@ export default function ClassSetupView({
                         <select
                             value={dayOfWeek}
                             onChange={(e) => setDayOfWeek(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
                             <option value="Monday">Monday</option>
                             <option value="Tuesday">Tuesday</option>
@@ -403,7 +403,7 @@ export default function ClassSetupView({
                         <input
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                             placeholder="5:00 PM"
                         />
                     </div>
@@ -415,7 +415,7 @@ export default function ClassSetupView({
                         <input
                             value={performanceTitle}
                             onChange={(e) => setPerformanceTitle(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                             placeholder="Spring Showcase"
                         />
                     </div>
@@ -428,7 +428,7 @@ export default function ClassSetupView({
                             type="date"
                             value={performanceDate}
                             onChange={(e) => setPerformanceDate(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white"
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                         />
                     </div>
                 </div>
@@ -439,7 +439,7 @@ export default function ClassSetupView({
                         {availableStudents.map((student) => (
                             <label
                                 key={student.id}
-                                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
+                                className="flex items-center gap-3 rounded-none border border-zinc-800 bg-black px-4 py-3"
                             >
                                 <input
                                     type="checkbox"
@@ -464,7 +464,7 @@ export default function ClassSetupView({
                         {approvedSongs.map((song) => (
                             <label
                                 key={song}
-                                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-black px-4 py-3"
+                                className="flex items-center gap-3 rounded-none border border-zinc-800 bg-black px-4 py-3"
                             >
                                 <input
                                     type="checkbox"
@@ -486,7 +486,7 @@ export default function ClassSetupView({
                 </button>
             </div>
 
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                 <h3 className="text-xl font-semibold">Saved Classes</h3>
 
                 {filteredClasses.length === 0 ? (
@@ -535,7 +535,7 @@ export default function ClassSetupView({
                                                     e.stopPropagation();
                                                     handleEditClass(rockClass);
                                                 }}
-                                                className="rounded-lg bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+                                                className="rounded-none bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                                             >
                                                 Edit
                                             </button>

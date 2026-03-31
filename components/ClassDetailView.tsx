@@ -123,7 +123,7 @@ export default function ClassDetailView({
         <button
           type="button"
           onClick={onBackToClasses}
-          className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+          className="rounded-none bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
         >
           Back to Classes
         </button>
@@ -147,32 +147,32 @@ export default function ClassDetailView({
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">School</div>
             <div className="mt-2 font-semibold text-white">{schoolName}</div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">Schedule</div>
             <div className="mt-2 font-semibold text-white">
               {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
             </div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">Class Instructor</div>
             <div className="mt-2 font-semibold text-white">{directorName}</div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">Instructor</div>
             <div className="mt-2 font-semibold text-white">{instructorName}</div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">Performance</div>
             <div className="mt-2 font-semibold text-white">
               {rockClass.performanceTitle || "Not set"}
@@ -182,7 +182,7 @@ export default function ClassDetailView({
             </div>
           </div>
 
-          <div className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+          <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4">
             <div className="text-sm text-zinc-400">Students</div>
             <div className="mt-2 text-2xl font-bold text-white">
               {rockClass.studentNames.length}
@@ -191,7 +191,7 @@ export default function ClassDetailView({
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
 
 
         <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
@@ -205,7 +205,7 @@ export default function ClassDetailView({
               return (
                 <div
                   key={song}
-                  className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm"
+                  className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -245,7 +245,7 @@ export default function ClassDetailView({
           <div className="mt-4 text-zinc-200">No songs assigned</div>
         )}
       </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="text-xl font-semibold text-white">Class Instructor Weekly Feedback</h3>
 
         <div className="mt-4">
@@ -253,7 +253,7 @@ export default function ClassDetailView({
             value={directorFeedback}
             onChange={(e) => onDirectorFeedbackChange(e.target.value)}
             placeholder="Add weekly class-level feedback here..."
-            className="min-h-[140px] w-full rounded-lg border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"
+            className="min-h-[140px] w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"
           />
         </div>
 
@@ -284,7 +284,7 @@ export default function ClassDetailView({
           )}
         </div>
       </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/82 p-6 backdrop-blur-sm">
+      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="text-xl font-semibold text-white">Student Roster</h3>
 
         <div className="mb-6 mt-4">
@@ -301,7 +301,7 @@ export default function ClassDetailView({
                   key={student.id}
                   type="button"
                   onClick={() => onAddStudentToClass(student.id!)}
-                  className="rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white hover:bg-zinc-700"
+                  className="rounded-none bg-zinc-800 px-3 py-2 text-sm text-white hover:bg-zinc-700"
                 >
                   + {student.name}
                 </button>
@@ -317,7 +317,7 @@ export default function ClassDetailView({
             {students.map((student) => (
               <div
                 key={student.id ?? student.name}
-                className="rounded-lg border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm"
+                className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
               >
                 <div className="text-lg font-semibold text-white">
                   {student.name}
@@ -344,7 +344,7 @@ export default function ClassDetailView({
                     <button
                       type="button"
                       onClick={() => onRemoveStudentFromClass(student.id!)}
-                      className="rounded-lg bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+                      className="rounded-none bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
                     >
                       Remove
                     </button>
