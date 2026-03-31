@@ -126,20 +126,21 @@ export default function CertificateView({ student }: CertificateViewProps) {
   );
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="min-h-screen bg-white">
+    <div className="p-6 space-y-6">
       <PageHero
         title="Certificate of Achievement"
         subtitle="A celebration of progress, consistency, and readiness for the next stage."
         imageSrc="/images/rock101-band.jpg"
       />
 
-      <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-        <div className="sor-finish-card rounded-2xl p-5">
+      <div className="space-y-5">
+        <div className="bg-[#111111] rounded-none p-5">
           <div>
             <h2 className="sor-display text-4xl md:text-5xl leading-none">
-              <span className="sor-display-red">{firstPart.toUpperCase()}</span>
+              <span style={{ color: "#cc0000" }}>{firstPart.toUpperCase()}</span>
               {secondPart && (
-                <span className="ml-2 text-white italic opacity-80 normal-case">
+                <span className="ml-2 text-white italic normal-case">
                   {secondPart}
                 </span>
               )}
@@ -150,11 +151,11 @@ export default function CertificateView({ student }: CertificateViewProps) {
         </div>
 
         {!unlocked ? (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
+          <div className="rounded-none bg-zinc-950 p-6">
             <div className="mb-4">
               <div className="sor-display text-3xl md:text-4xl leading-none">
-                <span className="sor-display-red">Certificate</span>
-                <span className="ml-2 text-white italic opacity-80 normal-case">
+                <span style={{ color: "#cc0000" }}>Certificate</span>
+                <span className="ml-2 text-white italic normal-case">
                   Locked
                 </span>
               </div>
@@ -162,14 +163,14 @@ export default function CertificateView({ student }: CertificateViewProps) {
             </div>
 
             <div className="grid gap-4 text-white">
-              <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
+              <div className="rounded-none bg-[#1a1a1a] p-4">
                 The graduation certificate becomes available only after the
                 student completes 100% of the Rock 101 course.
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
-                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">
+                <div className="rounded-none bg-[#1a1a1a] p-4">
+                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-500">
                     Current Progress
                   </div>
                   <div className="mt-2 text-3xl font-black text-white">
@@ -177,11 +178,11 @@ export default function CertificateView({ student }: CertificateViewProps) {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 backdrop-blur-sm">
-                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">
+                <div className="rounded-none bg-[#1a1a1a] p-4">
+                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-500">
                     Current Stage
                   </div>
-                  <div className="mt-2 text-2xl font-bold text-[var(--sor-red)]">
+                  <div className="mt-2 text-2xl font-bold" style={{ color: "#cc0000" }}>
                     {stage}
                   </div>
                 </div>
@@ -189,27 +190,27 @@ export default function CertificateView({ student }: CertificateViewProps) {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/82 p-6 backdrop-blur-sm">
-            <div className="mx-auto max-w-4xl rounded-3xl border border-red-500/30 bg-gradient-to-br from-zinc-950 via-black to-red-950/30 p-8 shadow-[0_0_40px_rgba(255,0,0,0.08)] md:p-12">
-              <div className="rounded-2xl border border-zinc-800 bg-black/35 p-8 text-center backdrop-blur-sm md:p-12">
-                <div className="sor-display sor-display-red text-sm tracking-[0.45em]">
+          <div className="rounded-none bg-zinc-950 p-6">
+            <div className="mx-auto max-w-4xl rounded-none bg-[#111111] p-8 md:p-12">
+              <div className="rounded-none bg-[#1a1a1a] p-8 text-center md:p-12">
+                <div className="sor-display text-sm tracking-[0.45em]" style={{ color: "#cc0000" }}>
                   School of Rock
                 </div>
 
                 <h2 className="mt-6 sor-display text-3xl leading-none md:text-5xl">
-                  <span className="sor-display-red">Rock 101</span>
-                  <span className="ml-2 text-white italic opacity-80 normal-case">
+                  <span style={{ color: "#cc0000" }}>Rock 101</span>
+                  <span className="ml-2 text-white italic normal-case">
                     Graduation Certificate
                   </span>
                 </h2>
 
-                <div className="mx-auto mt-4 h-[4px] w-40 rounded-full bg-[var(--sor-red)]" />
+                <div className="mx-auto mt-4 h-[4px] w-40" style={{ backgroundColor: "#cc0000" }} />
 
                 <p className="mt-8 text-sm uppercase tracking-[0.35em] text-zinc-400">
                   Presented to
                 </p>
 
-                <div className="mt-4 sor-display text-4xl leading-none text-[var(--sor-red)] md:text-6xl">
+                <div className="mt-4 sor-display text-4xl leading-none md:text-6xl" style={{ color: "#cc0000" }}>
                   {student.name}
                 </div>
 
@@ -223,8 +224,8 @@ export default function CertificateView({ student }: CertificateViewProps) {
                 </p>
 
                 <div className="mt-10 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-zinc-800 bg-black/35 p-5 backdrop-blur-sm">
-                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+                  <div className="rounded-none bg-zinc-900 p-5">
+                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
                       Instrument
                     </div>
                     <div className="mt-2 text-xl font-bold text-white">
@@ -232,8 +233,8 @@ export default function CertificateView({ student }: CertificateViewProps) {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-zinc-800 bg-black/35 p-5 backdrop-blur-sm">
-                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+                  <div className="rounded-none bg-zinc-900 p-5">
+                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
                       Band
                     </div>
                     <div className="mt-2 text-xl font-bold text-white">
@@ -243,17 +244,17 @@ export default function CertificateView({ student }: CertificateViewProps) {
                 </div>
 
                 <div className="mt-10 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-zinc-800 bg-black/35 p-5 backdrop-blur-sm">
-                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+                  <div className="rounded-none bg-zinc-900 p-5">
+                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
                       Final Progress
                     </div>
-                    <div className="mt-2 text-2xl font-black text-[var(--sor-red)]">
+                    <div className="mt-2 text-2xl font-black" style={{ color: "#cc0000" }}>
                       {progress}%
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-zinc-800 bg-black/35 p-5 backdrop-blur-sm">
-                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
+                  <div className="rounded-none bg-zinc-900 p-5">
+                    <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
                       Stage
                     </div>
                     <div className="mt-2 text-2xl font-black text-white">
@@ -278,7 +279,7 @@ export default function CertificateView({ student }: CertificateViewProps) {
                   </div>
                 </div>
 
-                <div className="mt-10 sor-display sor-display-red text-xs tracking-[0.3em]">
+                <div className="mt-10 sor-display text-xs tracking-[0.3em]" style={{ color: "#cc0000" }}>
                   Keep practicing. Keep performing. Keep rocking.
                 </div>
               </div>
@@ -286,6 +287,7 @@ export default function CertificateView({ student }: CertificateViewProps) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
