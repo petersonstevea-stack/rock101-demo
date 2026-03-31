@@ -1433,7 +1433,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementClasses}
-                            className={`rounded-none px-4 py-2 ${managementLandingView === "classes"
+                            className={`rounded-none px-4 py-2 text-white ${managementLandingView === "classes"
                                 ? "bg-[#cc0000]"
                                 : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
@@ -1444,7 +1444,7 @@ export default function Rock101App() {
                         <button
                             type="button"
                             onClick={handleShowManagementStudents}
-                            className={`rounded-none px-4 py-2 ${managementLandingView === "students"
+                            className={`rounded-none px-4 py-2 text-white ${managementLandingView === "students"
                                 ? "bg-[#cc0000]"
                                 : "bg-zinc-800 hover:bg-zinc-700"
                                 }`}
