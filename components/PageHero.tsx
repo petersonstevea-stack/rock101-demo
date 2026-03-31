@@ -1,14 +1,21 @@
+
 "use client";
+
+import type { ReactNode } from "react";
 
 type PageHeroProps = {
   title: string;
   subtitle?: string;
+  meta?: string;
+  topRight?: ReactNode;
   imageSrc: string;
 };
 
 export default function PageHero({
   title,
   subtitle,
+  meta,
+  topRight,
   imageSrc,
 }: PageHeroProps) {
   return (
@@ -22,12 +29,22 @@ export default function PageHero({
 
       <div className="absolute inset-0 bg-black/55" />
 
-      <div className="absolute inset-0 flex flex-col justify-end p-6">
-        <h2 className="text-2xl font-bold text-white">{title}</h2>
+      <div className="absolute inset-0 flex flex-col justify-between p-6">
+        <div className="flex justify-end">
+          {topRight ?? null}
+        </div>
 
-        {subtitle ? (
-          <p className="mt-2 max-w-2xl text-sm text-zinc-200">{subtitle}</p>
-        ) : null}
+        <div>
+          <h2 className="text-2xl font-bold text-white">{title}</h2>
+
+          {subtitle ? (
+            <p className="mt-1 max-w-2xl text-sm text-zinc-300">{subtitle}</p>
+          ) : null}
+
+          {meta ? (
+            <p className="mt-1 max-w-2xl text-sm text-zinc-400">{meta}</p>
+          ) : null}
+        </div>
       </div>
     </div>
   );
