@@ -196,6 +196,102 @@ Pike 13 is School of Rock's school management system — it handles scheduling, 
 
 ---
 
+## UI Design System — Stage Ready Visual Language
+This design system must be followed for ALL new UI work including the Performance Program. Every component should feel like a natural extension of the School of Rock Method App.
+
+### Layout Shell
+- `components/AppShell.tsx` is the layout wrapper
+- Left sidebar (200px) + main content area
+- Sidebar: persistent on desktop (md+), hamburger drawer on mobile (<md)
+- Sidebar background: #000000 (pure black)
+- Main content background: #ffffff (white page)
+- Content tiles: dark (#111111) on white — dark tiles pop against white background
+
+### Sidebar Structure (top to bottom)
+1. SOR logo image (/sor-logo.png) — centered, w-32
+2. Role badge — white bg (#ffffff), black text, full width, normal weight font
+3. Location block — gray label + school name, dropdown selector for owner role
+4. Viewing block — gray label + student name + instrument/program tags (only when student selected)
+5. STUDENT nav section
+6. SCHOOL nav section
+7. Sign Out at bottom
+
+### Sidebar Nav Styling
+- Section labels: #666666, 11px, normal weight, sentence case
+- Nav items: white, 14px, font-weight 400
+- Active item: bg-[#cc0000], white text, full width
+- Hover: bg-[#1a1a1a]
+- Zero border-radius on all nav elements
+
+### Color Palette — Non-Negotiable
+| Use | Value |
+|---|---|
+| Brand red | #cc0000 |
+| Hover red | #b30000 |
+| Primary tile background | #111111 |
+| Secondary tile / inner card | #1a1a1a |
+| Progress bar track | #333333 |
+| Progress bar fill | #cc0000 |
+| Page background | #ffffff |
+| Muted/secondary text | text-zinc-500 |
+
+NEVER use Tailwind red classes (bg-red-500, bg-red-600 etc.) — always use bg-[#cc0000].
+NEVER use var(--sor-red) — CSS variable is wrong.
+NEVER use sor-finish-card CSS class.
+
+### Typography
+- Display headings: Oswald (--font-oswald) — bold condensed, for section titles. Two-tone pattern: RED WORD + WHITE ITALIC WORD. Example: "MONTH 1" in #cc0000 + "FOUNDATIONS" in white italic
+- Body/nav: Roboto (--font-roboto), normal weight
+
+### Border Radius — Zero Everywhere
+All interactive and content elements use `rounded-none`:
+- Buttons, badges, tags, cards, tiles, inputs, progress bars, modal containers
+- Exception: slider thumb keeps `border-radius: 50%`
+
+### Button Styling
+- Primary: `bg-[#cc0000] text-white rounded-none`
+- Hover: `hover:bg-[#b30000]`
+- Complete/signed state: `bg-zinc-700 text-white rounded-none` (neutral gray, never green)
+- Never use `rounded-lg`, `rounded-full`, `rounded-xl` on any button
+
+### Progress Bars
+- Track: `bg-[#333333] rounded-none` height 4px
+- Fill: `bg-[#cc0000] rounded-none`
+- Range input sliders: use CSS pseudo-elements in globals.css — Tailwind classes don't reach native browser track rendering
+- Red fill driven by `--value` CSS custom property set inline on the input element
+
+### Page Structure — Every Student View
+1. WorkflowBanner (red, full width, only when student selected + on student tab)
+2. Back button (px-6 pt-4, inside white area)
+3. Photo hero header (full width, dark overlay, white text — never round corners on photo hero)
+4. Content (p-6 space-y-6 wrapper, white bg, dark tiles inside)
+
+### Section Header Pattern
+Large two-tone display heading:
+- First word(s): color #cc0000 via inline style
+- Remaining words: pure white, no opacity reduction
+- Red underline accent below
+- Background: solid `bg-[#111111] rounded-none`
+- Never use gradients, glow, or backdrop-blur
+
+### Tile/Card Pattern
+- Outer section: `bg-[#111111] rounded-none`
+- Inner cards: `bg-[#1a1a1a] rounded-none`
+- Notes/feedback cards: `bg-[#1a1a1a] rounded-none` with `border-l-2 border-l-[#cc0000]` red left accent
+- Never use box shadows, gradients, or blur
+
+### What To Never Do
+- Never use Tailwind red classes (`bg-red-*`)
+- Never use `var(--sor-red)`
+- Never use rounded corners on any element
+- Never use gradients on content tiles
+- Never use backdrop-blur or bg-opacity
+- Never use `bg-zinc-900/82` style opacity classes
+- Never use `sor-finish-card` CSS class
+- Never add gamification elements (trophies etc.) to instructor-facing professional views
+
+---
+
 ## Performance Program — Early Work Exists
 There are folders in the codebase containing early Performance Program work (approximately 5% complete). Before doing any Performance Program build work, Claude Code must first audit these folders and produce an inventory of:
 - What files exist and what they do
