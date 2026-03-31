@@ -38,11 +38,11 @@ export default function PageHero({
           <h2 className="text-2xl font-bold text-white">{title}</h2>
 
           {subtitle ? (
-            <p className="mt-1 max-w-2xl text-sm text-zinc-300">{subtitle}</p>
+            <p className="mt-1 max-w-2xl text-sm text-white">{subtitle}</p>
           ) : null}
 
           {meta ? (
-            <p className="mt-1 max-w-2xl text-sm text-zinc-400">{meta}</p>
+            <p className="mt-1 max-w-2xl text-sm text-white">{meta}</p>
           ) : null}
         </div>
       </div>

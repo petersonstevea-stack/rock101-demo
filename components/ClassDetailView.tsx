@@ -104,25 +104,6 @@ export default function ClassDetailView({
 
   return (
     <div className="mt-8 space-y-6">
-      <PageHero
-        title={rockClass.name}
-        subtitle={scheduleSubtitle}
-        meta={heroMeta}
-        topRight={
-          sessionDateLabel ? (
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-white" style={{ opacity: 0.45 }}>
-                Session
-              </div>
-              <div className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-oswald)", opacity: 0.85 }}>
-                {sessionDateLabel}
-              </div>
-            </div>
-          ) : undefined
-        }
-        imageSrc="/images/rock101-drums.jpg"
-      />
-
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -151,97 +132,126 @@ export default function ClassDetailView({
         </div>
       </div>
 
-      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="text-xl font-semibold text-white">Approved Songs</h3>
+      <PageHero
+        title={rockClass.name}
+        subtitle={scheduleSubtitle}
+        meta={heroMeta}
+        topRight={
+          sessionDateLabel ? (
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-widest text-white" style={{ opacity: 0.45 }}>
+                Session
+              </div>
+              <div className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-oswald)", opacity: 0.85 }}>
+                {sessionDateLabel}
+              </div>
+            </div>
+          ) : undefined
+        }
+        imageSrc="/images/rock101-drums.jpg"
+      />
 
-        {rockClass.songs.length > 0 ? (
-          <div className="mt-4 space-y-4">
-            {rockClass.songs.map((song) => {
-              const readiness =
-                rockClass.songProgress?.[song]?.readiness ?? 1;
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Class Instructor Notes — first in DOM = top on mobile, right on desktop */}
+        <div className="order-1 md:order-2">
+          <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
+            <h3 className="text-xl font-semibold text-white">Class Instructor Notes</h3>
 
-              return (
-                <div
-                  key={song}
-                  className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div className="font-semibold text-white">{song}</div>
-                      <div className="mt-1 text-sm text-zinc-400">
-                        Class readiness: {getSongReadinessLabel(readiness)}
-                      </div>
-                    </div>
+            <div className="mt-4">
+              <textarea
+                value={directorFeedback}
+                onChange={(e) => onDirectorFeedbackChange(e.target.value)}
+                placeholder="Add weekly class-level feedback here..."
+                className="min-h-[140px] w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"
+              />
+            </div>
 
-                    <div className="w-full md:max-w-md">
-                      <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        step={1}
-                        value={readiness}
-                        onChange={(e) =>
-                          onUpdateSongProgress(
-                            song,
-                            Number(e.target.value) as SongReadinessValue
-                          )
-                        }
-                        className="w-full"
-                        style={{ accentColor: "#cc0000" }}
-                      />
-                      <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
-                        <span>Just Starting</span>
-                        <span>Show Ready</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  const didSave = await onSaveDirectorFeedback();
+
+                  if (!didSave) return;
+
+                  setLastSavedAt(new Date().toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }));
+                }}
+                className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
+              >
+                Save Class Instructor Feedback
+              </button>
+
+              {lastSavedAt && (
+                <span className="text-sm text-zinc-400 opacity-80">
+                  Saved {lastSavedAt}
+                </span>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="mt-4 text-zinc-200">No songs assigned</div>
-        )}
-      </div>
-      <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="text-xl font-semibold text-white">Class Instructor Weekly Feedback</h3>
-
-        <div className="mt-4">
-          <textarea
-            value={directorFeedback}
-            onChange={(e) => onDirectorFeedbackChange(e.target.value)}
-            placeholder="Add weekly class-level feedback here..."
-            className="min-h-[140px] w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"
-          />
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={async () => {
-              const didSave = await onSaveDirectorFeedback();
+        {/* Song Progress — second in DOM = below on mobile, left on desktop */}
+        <div className="order-2 md:order-1">
+          <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
+            <h3 className="text-xl font-semibold text-white">Song Progress</h3>
 
-              if (!didSave) return;
+            {rockClass.songs.length > 0 ? (
+              <div className="mt-4 space-y-4">
+                {rockClass.songs.map((song) => {
+                  const readiness =
+                    rockClass.songProgress?.[song]?.readiness ?? 1;
 
-              setLastSavedAt(new Date().toLocaleString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              }));
-            }}
-            className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
-          >
-            Save Class Instructor Feedback
-          </button>
+                  return (
+                    <div
+                      key={song}
+                      className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
+                    >
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="font-semibold text-white">{song}</div>
+                          <div className="mt-1 text-sm text-zinc-400">
+                            Class readiness: {getSongReadinessLabel(readiness)}
+                          </div>
+                        </div>
 
-          {lastSavedAt && (
-            <span className="text-sm text-zinc-400 opacity-80">
-              Saved {lastSavedAt}
-            </span>
-          )}
+                        <div className="w-full md:max-w-md">
+                          <input
+                            type="range"
+                            min={1}
+                            max={5}
+                            step={1}
+                            value={readiness}
+                            onChange={(e) =>
+                              onUpdateSongProgress(
+                                song,
+                                Number(e.target.value) as SongReadinessValue
+                              )
+                            }
+                            className="w-full"
+                            style={{ accentColor: "#cc0000" }}
+                          />
+                          <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
+                            <span>Just Starting</span>
+                            <span>Show Ready</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-4 text-zinc-200">No songs assigned</div>
+            )}
+          </div>
         </div>
       </div>
+
       <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="text-xl font-semibold text-white">Student Roster</h3>
 
