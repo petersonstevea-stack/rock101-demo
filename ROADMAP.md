@@ -113,6 +113,7 @@ Complete. `directorSubmitted` → `classInstructorSubmitted` renamed across all 
 ### Known Bugs — Fix Before Pilot Launch
 - ✅ **ClassSetupView student picker:** Fixed. Students already enrolled in another class are filtered out of the picker. When editing an existing class, that class's own students remain available.
 - ✅ **staff_school_roles gap:** Fixed. Both `app/enrollment/staff/page.tsx` and `app/enrollment/page.tsx` now auto-insert a `staff_school_roles` row immediately after a successful staff INSERT. SSR failure is logged but non-blocking — staff record takes priority.
+- 🔶 **School selector bug:** Owner school filter dropdown has never worked correctly — selecting a specific school defaults back to All Schools. Needs investigation before multi-school pilot launch.
 
 ---
 
