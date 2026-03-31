@@ -153,10 +153,10 @@ export default function PrivateLessonView({
                             <div className="bg-[#111111] rounded-none p-5">
                                 <div>
                                     <h2 className="sor-display text-4xl leading-none md:text-5xl">
-                                        <span className="sor-display-red">{monthPart}</span>
+                                        <span style={{ color: "#cc0000" }}>{monthPart}</span>
 
                                         {descriptorPart && (
-                                            <span className="ml-2 text-white italic opacity-80">
+                                            <span className="ml-2 text-white italic">
                                                 {descriptorPart}
                                             </span>
                                         )}
@@ -165,10 +165,10 @@ export default function PrivateLessonView({
                                     <div className="sor-divider" />
 
                                     <div className="mt-4 flex items-center justify-between">
-                                        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
+                                        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
                                             Month Progress
                                         </div>
-                                        <div className="text-sm font-semibold text-red-300">
+                                        <div className="text-sm font-semibold" style={{ color: "#cc0000" }}>
                                             {percent}%
                                         </div>
                                     </div>
@@ -178,7 +178,7 @@ export default function PrivateLessonView({
                                             className="h-full transition-all"
                                             style={{
                                                 width: `${percent}%`,
-                                                backgroundColor: "var(--sor-red)"
+                                                backgroundColor: "#cc0000"
                                             }}
                                         />
                                     </div>

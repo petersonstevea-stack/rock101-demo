@@ -84,7 +84,7 @@ export default function ChecklistSection({
                             className="h-full transition-all"
                             style={{
                                 width: `${percent}%`,
-                                backgroundColor: "var(--sor-red)"
+                                backgroundColor: "#cc0000"
                             }}
                         />
                     </div>
