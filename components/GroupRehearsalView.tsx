@@ -99,7 +99,8 @@ export default function GroupRehearsalView({
     const rehearsalHeader = splitRehearsalTitle("Rehearsal Readiness");
 
     return (
-        <div className="mt-8 space-y-6">
+        <div className="min-h-screen bg-white">
+        <div className="p-6 space-y-6">
             <PageHero
                 title="Group Rehearsal"
                 subtitle={`Band chemistry, rehearsal habits, and live performance readiness for ${student.name}`}
@@ -107,13 +108,13 @@ export default function GroupRehearsalView({
             />
 
             <div className="grid gap-6 xl:grid-cols-2">
-                <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-                    <div className="sor-finish-card rounded-2xl p-5">
+                <div className="space-y-5">
+                    <div className="bg-[#111111] rounded-none p-5">
                         <div>
                             <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                                <span className="sor-display-red">{songHeader.firstPart}</span>
+                                <span style={{ color: "#cc0000" }}>{songHeader.firstPart}</span>
                                 {songHeader.secondPart && (
-                                    <span className="ml-2 text-white italic opacity-80">
+                                    <span className="ml-2 text-white italic">
                                         {songHeader.secondPart}
                                     </span>
                                 )}
@@ -122,7 +123,7 @@ export default function GroupRehearsalView({
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-4 backdrop-blur-sm">
+                    <div className="rounded-none border border-zinc-800 bg-zinc-900 p-4">
                         {classId && classSongs.length > 0 ? (
                             <div className="space-y-3">
                                 {classSongs.map((song) => {
@@ -131,7 +132,7 @@ export default function GroupRehearsalView({
                                     return (
                                         <div
                                             key={song}
-                                            className="rounded-xl border border-zinc-800 bg-black/35 p-3 backdrop-blur-sm"
+                                            className="rounded-none border border-zinc-800 bg-zinc-950 p-3"
                                         >
                                             <div className="flex flex-col gap-2">
                                                 <div>
@@ -155,8 +156,8 @@ export default function GroupRehearsalView({
                                                                 Number(e.target.value) as SongReadinessValue
                                                             )
                                                         }
-                                                        className="w-full"
-                                                        style={{ accentColor: "var(--sor-red)" }}
+                                                        className="w-full rounded-none"
+                                                        style={{ accentColor: "#cc0000" }}
                                                         disabled={!canEdit}
                                                     />
                                                     <div className="mt-1 flex justify-between text-[11px] uppercase tracking-[0.12em] text-zinc-500">
@@ -170,7 +171,7 @@ export default function GroupRehearsalView({
                                 })}
                             </div>
                         ) : (
-                            <div className="rounded-xl border border-zinc-800 bg-black/35 p-4 text-sm text-zinc-400">
+                            <div className="rounded-none border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-400">
                                 No songs assigned to this class yet.
                             </div>
                         )}
@@ -178,15 +179,15 @@ export default function GroupRehearsalView({
                 </div>
 
                 {rehearsalItems.length > 0 && (
-                    <div className="space-y-5 rounded-xl p-2 ring-2 ring-[var(--sor-red)] ring-offset-2 ring-offset-black">
-                        <div className="sor-finish-card rounded-2xl p-5">
+                    <div className="space-y-5">
+                        <div className="bg-[#111111] rounded-none p-5">
                             <div>
                                 <h2 className="sor-display text-4xl md:text-5xl leading-none">
-                                    <span className="sor-display-red">
+                                    <span style={{ color: "#cc0000" }}>
                                         {rehearsalHeader.firstPart}
                                     </span>
                                     {rehearsalHeader.secondPart && (
-                                        <span className="ml-2 text-white italic opacity-80">
+                                        <span className="ml-2 text-white italic">
                                             {rehearsalHeader.secondPart}
                                         </span>
                                     )}
@@ -195,7 +196,7 @@ export default function GroupRehearsalView({
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/82 p-1 backdrop-blur-sm">
+                        <div className="rounded-none border border-zinc-800 bg-zinc-900 p-1">
                             <ChecklistSection
                                 title="Rehearsal Readiness"
                                 items={rehearsalItems}
@@ -210,6 +211,7 @@ export default function GroupRehearsalView({
                     </div>
                 )}
             </div>
+        </div>
         </div>
     );
 }
