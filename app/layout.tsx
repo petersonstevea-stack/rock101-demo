@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Oswald, Roboto } from "next/font/google";
+import { Oswald, Roboto, Big_Shoulders, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 
 const oswald = Oswald({
@@ -14,6 +14,19 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
+const bigShoulders = Big_Shoulders({
+  subsets: ["latin"],
+  weight: ["900"],
+  variable: "--font-big-shoulders",
+});
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["900"],
+  style: ["italic"],
+  variable: "--font-barlow-condensed",
+});
+
 export const metadata: Metadata = {
   title: "STAGE READY",
   description: "School of Rock Rock 101 progress tracking app",
@@ -26,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${oswald.variable} ${roboto.variable} bg-black text-white`}>
+      <body className={`${oswald.variable} ${roboto.variable} ${bigShoulders.variable} ${barlowCondensed.variable} bg-black text-white`}>
         {children}
       </body>
     </html>
