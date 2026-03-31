@@ -48,7 +48,7 @@ export default function NotesPanel({
       : "Enter rehearsal behavior, maturity, and band readiness notes...";
 
   return (
-    <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+    <div className="mt-8 rounded-none border border-zinc-800 bg-zinc-950 p-5">
       <div className="mb-3 text-lg font-bold">{title}</div>
 
       <textarea
@@ -56,7 +56,7 @@ export default function NotesPanel({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={!canEdit}
-        className="h-32 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-32 w-full rounded-none border border-zinc-800 bg-zinc-900 p-3 text-white outline-none disabled:cursor-not-allowed disabled:opacity-60"
       />
 
       <div className="mt-4 flex flex-wrap gap-3">
@@ -64,7 +64,7 @@ export default function NotesPanel({
           type="button"
           onClick={onSave}
           disabled={!value.trim() || !canEdit}
-          className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-none bg-[#cc0000] px-4 py-2 font-medium text-white hover:bg-[#b30000] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {role === "instructor"
             ? "Save Instructor Feedback"
@@ -72,7 +72,7 @@ export default function NotesPanel({
         </button>
 
         {saved && (
-          <div className="rounded-full bg-zinc-800 px-3 py-2 text-sm text-white">
+          <div className="rounded-none bg-zinc-800 px-3 py-2 text-sm text-white">
             {role === "instructor"
               ? "Instructor feedback saved"
               : "Class Instructor feedback saved"}

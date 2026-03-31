@@ -144,8 +144,8 @@ export default function ChecklistSection({
                                             type="button"
                                             onClick={() => onToggleSigned(item.id)}
                                             className={`rounded-none px-3 py-2 text-sm font-medium transition ${state?.signed
-                                                ? "bg-emerald-700 text-white hover:bg-emerald-600"
-                                                : "bg-red-600 text-white hover:bg-red-500"
+                                                ? "bg-zinc-700 text-white hover:bg-zinc-600"
+                                                : "bg-[#cc0000] text-white hover:bg-[#b30000]"
                                                 }`}
                                         >
                                             {state?.signed ? "Signed" : "Sign"}
@@ -167,7 +167,7 @@ export default function ChecklistSection({
                             )}
 
                             {state?.signed && state?.date && (
-                                <div className="mt-2 text-xs text-red-300">
+                                <div className="mt-2 text-xs text-zinc-500">
                                     Signed {state.date}
                                 </div>
                             )}
