@@ -452,7 +452,7 @@ export default function Rock101App() {
     }, [selectedClass, selectedStudent, filteredClassesBySchool]);
 
     const canSeeStudentTabs: boolean =
-        role === "parent" || canManageRock101;
+        role === "parent" || role === "instructor" || canManageRock101;
 
     const canSeeStudentContent: boolean =
         canSeeStudentTabs &&
