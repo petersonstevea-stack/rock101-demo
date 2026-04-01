@@ -80,7 +80,7 @@ export default function StudentSelector({
             className={`rounded-none px-4 py-2 ${
               selected.name === student.name
                 ? "bg-[#cc0000]"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                : "bg-zinc-800 hover:bg-zinc-700 text-white"
             }`}
           >
             {student.name}
