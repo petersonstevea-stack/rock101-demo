@@ -311,20 +311,28 @@ export default function ParentDashboardOverview({
         <div className="min-h-screen bg-white">
         <div className="p-6 space-y-6">
             <section className="bg-[#111111] overflow-hidden rounded-none p-6">
-                <div>
-                    <h1 className="sor-display mt-2 text-4xl leading-none md:text-6xl">
-                        <span className="text-white">{data.student.name}</span>
-                    </h1>
-                    <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
-                        <span className="rounded-none bg-[#333333] px-3 py-1">
-                            {data.student.instrument}
-                        </span>
-                        <span className="rounded-none bg-[#333333] px-3 py-1">
-                            {data.student.className}
-                        </span>
-                        <span className="rounded-none bg-[#333333] px-3 py-1">
-                            {data.student.schoolName}
-                        </span>
+                <div className="flex items-start justify-between gap-6">
+                    <div>
+                        <h1 className="sor-display mt-2 text-3xl leading-none md:text-5xl">
+                            <span className="text-white">{data.student.name}</span>
+                        </h1>
+                        <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                                {data.student.instrument}
+                            </span>
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                                {data.student.className}
+                            </span>
+                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                                {data.student.schoolName}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                        <div className="text-xs uppercase tracking-[0.18em] text-zinc-400">Next Show</div>
+                        <div className="mt-1 text-lg font-bold text-white">
+                            {formatPerformanceDate(data.student.nextPerformanceDate)}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -360,6 +368,7 @@ export default function ParentDashboardOverview({
                 />
             </section>
 
+            {false && (
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
                     {...data.stats.privateLessons}
@@ -386,90 +395,92 @@ export default function ParentDashboardOverview({
                     value={formatPerformanceDate(data.student.nextPerformanceDate)}
                 />
             </section>
+            )}
 
-            <section className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-                <SectionCard title="Progress">
-                    <div className="space-y-4">
-                        <ProgressNavCard
-                            label={data.progress.graduationRequirements.label}
-                            value={data.progress.graduationRequirements.percent}
-                            meta={`${data.progress.graduationRequirements.completed}/${data.progress.graduationRequirements.total}`}
-                            onClick={() =>
-                                onNavigate?.(data.progress.graduationRequirements.targetTab)
-                            }
-                        />
-                        {data.songs.length > 0 && (
-                            <div className="space-y-3 pt-2">
-                                <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                                    Song Progress
-                                </div>
-
-                                {data.songs.map((item) => (
-                                    <button
-                                        key={item.song}
-                                        type="button"
-                                        onClick={() => onNavigate?.(item.targetTab)}
-                                        className="w-full rounded-none border border-zinc-800 bg-[#1a1a1a] p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-800"
-                                    >
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="min-w-0">
-                                                <div className="font-medium text-white">{item.song}</div>
-                                                <div className="mt-1 text-sm text-zinc-400">{item.label}</div>
-                                            </div>
-
-                                            <div className="text-sm font-semibold text-[#cc0000]">
-                                                {item.readiness}/5
-                                            </div>
+            <SectionCard title="Progress">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* LEFT — Song Progress */}
+                    <div className="space-y-3">
+                        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                            Song Progress
+                        </div>
+                        {data.songs.length > 0 ? (
+                            data.songs.map((item) => (
+                                <button
+                                    key={item.song}
+                                    type="button"
+                                    onClick={() => onNavigate?.(item.targetTab)}
+                                    className="w-full rounded-none border border-zinc-800 bg-[#1a1a1a] p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-800"
+                                >
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <div className="font-medium text-white">{item.song}</div>
+                                            <div className="mt-1 text-sm text-zinc-400">{item.label}</div>
                                         </div>
-
-                                        <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-[#333333]">
-                                            <div
-                                                className="h-full rounded-none bg-[#cc0000] transition-all"
-                                                style={{ width: `${(item.readiness / 5) * 100}%` }}
-                                            />
+                                        <div className="text-sm font-semibold text-[#cc0000]">
+                                            {item.readiness}/5
                                         </div>
-                                    </button>
-                                ))}
+                                    </div>
+                                    <div className="mt-3 h-3 w-full overflow-hidden rounded-none bg-[#333333]">
+                                        <div
+                                            className="h-full rounded-none bg-[#cc0000] transition-all"
+                                            style={{ width: `${(item.readiness / 5) * 100}%` }}
+                                        />
+                                    </div>
+                                </button>
+                            ))
+                        ) : (
+                            <div className="rounded-none border border-dashed border-zinc-700 bg-[#1a1a1a] p-4 text-sm text-zinc-500">
+                                No songs assigned yet.
                             </div>
                         )}
+                    </div>
+
+                    {/* RIGHT — Metrics */}
+                    <div className="space-y-3">
+                        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                            Curriculum Progress
+                        </div>
                         <ProgressNavCard
                             label={data.progress.methodAppLessons.label}
                             value={data.progress.methodAppLessons.percent}
                             meta={`${data.progress.methodAppLessons.completed}/${data.progress.methodAppLessons.total}`}
-                            onClick={() =>
-                                onNavigate?.(data.progress.methodAppLessons.targetTab)
-                            }
+                            onClick={() => onNavigate?.(data.progress.methodAppLessons.targetTab)}
                         />
-
                         <ProgressNavCard
                             label={data.progress.rehearsalReadiness.label}
                             value={data.progress.rehearsalReadiness.percent}
                             meta={`${data.progress.rehearsalReadiness.completed}/${data.progress.rehearsalReadiness.total}`}
-                            onClick={() =>
-                                onNavigate?.(data.progress.rehearsalReadiness.targetTab)
-                            }
+                            onClick={() => onNavigate?.(data.progress.rehearsalReadiness.targetTab)}
                         />
-
                         <ProgressNavCard
                             label={data.progress.certificate.label}
                             value={data.progress.certificate.percent}
                             meta={`${data.progress.certificate.completed}/${data.progress.certificate.total}`}
                             onClick={() => onNavigate?.(data.progress.certificate.targetTab)}
                         />
+                        <ProgressNavCard
+                            label={data.progress.graduationRequirements.label}
+                            value={data.progress.graduationRequirements.percent}
+                            meta={`${data.progress.graduationRequirements.completed}/${data.progress.graduationRequirements.total}`}
+                            onClick={() => onNavigate?.(data.progress.graduationRequirements.targetTab)}
+                        />
                     </div>
-                </SectionCard>
+                </div>
+            </SectionCard>
 
-                <SectionCard title="Summary">
-                    <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
-                        <div className="text-base font-semibold text-white">
-                            {data.summary.title}
-                        </div>
-                        <div className="mt-3 text-sm leading-7 text-zinc-400">
-                            {data.summary.text}
-                        </div>
+            {false && (
+            <SectionCard title="Summary">
+                <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
+                    <div className="text-base font-semibold text-white">
+                        {data.summary.title}
                     </div>
-                </SectionCard>
-            </section>
+                    <div className="mt-3 text-sm leading-7 text-zinc-400">
+                        {data.summary.text}
+                    </div>
+                </div>
+            </SectionCard>
+            )}
 
             <SectionCard title="What's Next">
                 <div className="space-y-3">
