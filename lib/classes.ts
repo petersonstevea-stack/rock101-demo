@@ -39,6 +39,7 @@ export async function getThisWeeksSessions(schoolId: string) {
       start_time,
       status,
       director_feedback,
+      instructor_override_user_id,
       rock_classes (
         id,
         name,

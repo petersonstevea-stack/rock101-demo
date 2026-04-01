@@ -27,6 +27,7 @@ import AdminView from "@/components/AdminView";
 import PerformanceDashboard from "@/components/PerformanceDashboard";
 import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
+import ScheduleView from "@/components/ScheduleView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -48,6 +49,7 @@ type Tab =
     | "parent"
     | "certificate"
     | "classSetup"
+    | "schedule"
     | "performanceDashboard"
     | "bandsDashboard"
     | "pipeline"
@@ -1593,6 +1595,8 @@ export default function Rock101App() {
                         students={studentsInSelectedClass}
                         users={filteredUsersBySchool}
                         allStudents={filteredStudentsBySchool}
+                        currentUserRole={role ?? ""}
+                        schoolSlug={currentUser?.schoolId ?? ""}
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
                         onEditClass={() => {
@@ -2007,6 +2011,10 @@ export default function Rock101App() {
                             handleSetTab("privateLesson");
                         }}
                     />
+                )}
+
+                {tab === "schedule" && canManageRock101 && (
+                    <ScheduleView schoolSlug={currentUser?.schoolId ?? ""} />
                 )}
 
                 {tab === "performanceDashboard" && canManageRock101 && (

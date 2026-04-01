@@ -20,11 +20,13 @@ type Student = {
 
 type ClassDetailViewProps = {
   rockClass: RockClass;
-  selectedSessionId?: string | null;  // ← add this line
+  selectedSessionId?: string | null;
   selectedSession?: any | null;
   students: Student[];
   users: AppUser[];
   allStudents: Student[];
+  currentUserRole: string;
+  schoolSlug: string;
   onBackToClasses: () => void;
   onDeleteClass: () => void;
   onEditClass: () => void;
@@ -52,6 +54,8 @@ export default function ClassDetailView({
   students,
   users,
   allStudents,
+  currentUserRole,
+  schoolSlug,
   onBackToClasses,
   onDeleteClass,
   onEditClass,
@@ -68,6 +72,41 @@ export default function ClassDetailView({
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitConfirmedAt, setSubmitConfirmedAt] = useState<string | null>(null);
+  const [schoolStaff, setSchoolStaff] = useState<{ id: string; name: string }[]>([]);
+  const [overrideUserId, setOverrideUserId] = useState<string | null>(null);
+  const [showOverrideDropdown, setShowOverrideDropdown] = useState(false);
+  const [overrideSaving, setOverrideSaving] = useState(false);
+
+  // Load school staff for instructor override dropdown
+  useEffect(() => {
+    if (!schoolSlug) return;
+    supabase
+      .from("staff")
+      .select("id, name")
+      .eq("school_slug", schoolSlug)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setSchoolStaff(data as { id: string; name: string }[]);
+      });
+  }, [schoolSlug]);
+
+  // Sync override from session when session changes
+  useEffect(() => {
+    setOverrideUserId(selectedSession?.instructor_override_user_id ?? null);
+    setShowOverrideDropdown(false);
+  }, [selectedSession]);
+
+  async function handleInstructorOverrideChange(staffId: string | null) {
+    if (!selectedSessionId) return;
+    setOverrideSaving(true);
+    await supabase
+      .from("class_sessions")
+      .update({ instructor_override_user_id: staffId })
+      .eq("id", selectedSessionId);
+    setOverrideUserId(staffId);
+    setShowOverrideDropdown(false);
+    setOverrideSaving(false);
+  }
 
   // Pike 13 integration (Phase 6): attendance will be
   // pre-populated from Pike 13 event occurrence data.
@@ -157,6 +196,15 @@ export default function ClassDetailView({
     rockClass.directorEmail ||
     "Not assigned";
 
+  const displayInstructorName = overrideUserId
+    ? (schoolStaff.find((s) => s.id === overrideUserId)?.name ?? directorName)
+    : directorName;
+
+  const canOverrideInstructor =
+    currentUserRole === "owner" ||
+    currentUserRole === "gm" ||
+    currentUserRole === "director";
+
   const availableStudents = allStudents.filter(
     (student) =>
       student.schoolId === rockClass.schoolId &&
@@ -169,8 +217,8 @@ export default function ClassDetailView({
     : rockClass.time || "Time not set";
 
   const metaSegments: string[] = [];
-  if (directorName && directorName !== "Not assigned") {
-    metaSegments.push(directorName);
+  if (displayInstructorName && displayInstructorName !== "Not assigned") {
+    metaSegments.push(displayInstructorName);
   }
   if (rockClass.performanceDate) {
     const formatted = new Date(rockClass.performanceDate + "T00:00:00").toLocaleDateString("en-US", {
@@ -238,6 +286,49 @@ export default function ClassDetailView({
         }
         imageSrc="/images/rock101-drums.jpg"
       />
+
+      {canOverrideInstructor && selectedSessionId && (
+        <div className="flex items-center gap-3 rounded-none border border-zinc-800 bg-zinc-900 px-5 py-3">
+          {!showOverrideDropdown ? (
+            <>
+              <span className="text-sm text-zinc-400">Instructor:</span>
+              <span className="text-sm text-white">{displayInstructorName}</span>
+              <button
+                type="button"
+                onClick={() => setShowOverrideDropdown(true)}
+                className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
+              >
+                Change
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-zinc-400">Instructor:</span>
+              <select
+                className="rounded-none border border-zinc-700 bg-black px-3 py-1.5 text-sm text-white"
+                defaultValue={overrideUserId ?? ""}
+                onChange={(e) => handleInstructorOverrideChange(e.target.value || null)}
+                disabled={overrideSaving}
+                autoFocus
+              >
+                <option value="">Use class default ({directorName})</option>
+                {schoolStaff.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowOverrideDropdown(false)}
+                className="text-xs text-zinc-500 hover:text-zinc-300"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Class Instructor Notes + Attendance — first in DOM = top on mobile, right on desktop */}

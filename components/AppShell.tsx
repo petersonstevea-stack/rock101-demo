@@ -28,6 +28,7 @@ const STUDENT_NAV: NavItem[] = [
 
 const SCHOOL_NAV: NavItem[] = [
   { tab: "classSetup", label: "Class Setup" },
+  { tab: "schedule", label: "Schedule" },
   { tab: "bandsDashboard", label: "Bands" },
   { tab: "pipeline", label: "Pipeline" },
   { tab: "admin", label: "Admin" },
