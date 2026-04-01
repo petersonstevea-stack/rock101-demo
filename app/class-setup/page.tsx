@@ -37,7 +37,7 @@ function ClassSetupPageInner() {
   const [allClasses, setAllClasses] = useState<{ id: string; student_ids: string[] }[]>([]);
 
   const [className, setClassName] = useState("");
-  const [directorEmail, setDirectorEmail] = useState("");
+  const [classInstructorEmail, setClassInstructorEmail] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("Monday");
   const [time, setTime] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -123,7 +123,7 @@ function ClassSetupPageInner() {
 
         if (classRow) {
           setClassName(classRow.name ?? "");
-          setDirectorEmail(classRow.director_email ?? "");
+          setClassInstructorEmail(classRow.class_instructor_email ?? "");
           setDayOfWeek(classRow.day_of_week ?? "Monday");
           setTime(classRow.time ?? "");
           setSelectedStudentIds(classRow.student_ids ?? []);
@@ -183,7 +183,7 @@ function ClassSetupPageInner() {
       id: classId ?? crypto.randomUUID(),
       name: className.trim(),
       school_id: schoolId,
-      director_email: directorEmail.trim().toLowerCase(),
+      class_instructor_email: classInstructorEmail.trim().toLowerCase(),
       day_of_week: dayOfWeek,
       time: time.trim(),
       songs: selectedSongs,
@@ -251,8 +251,8 @@ function ClassSetupPageInner() {
                 Class Instructor
               </label>
               <select
-                value={directorEmail}
-                onChange={(e) => setDirectorEmail(e.target.value)}
+                value={classInstructorEmail}
+                onChange={(e) => setClassInstructorEmail(e.target.value)}
                 className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
               >
                 <option value="">Select instructor</option>

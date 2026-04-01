@@ -265,8 +265,8 @@ export default function Rock101App() {
                     id: c.id,
                     name: c.name,
                     schoolId: c.school_id ?? "",
-                    directorEmail: c.director_email ?? "",
-                    directorUserId: c.director_user_id ?? null,
+                    classInstructorEmail: c.class_instructor_email ?? "",
+                    classInstructorId: c.class_instructor_id ?? null,
                     instructorEmail: c.instructor_email ?? "",
                     dayOfWeek: c.day_of_week ?? "Monday",
                     time: c.time ?? "",
@@ -362,7 +362,7 @@ export default function Rock101App() {
             filteredClassesBySchool
                 .filter(
                     (rockClass) =>
-                        rockClass.directorEmail?.toLowerCase() ===
+                        rockClass.classInstructorEmail?.toLowerCase() ===
                         currentUser.email.toLowerCase()
                 )
                 .flatMap((rockClass) => rockClass.studentNames)
@@ -460,12 +460,12 @@ export default function Rock101App() {
         role === "parent" || role === "instructor" || canManageRock101;
 
     // Can edit/sign group rehearsal: owner/GM always; others only if their staffId
-    // matches the class's director_user_id OR the session's instructor_override_user_id.
+    // matches the class's class_instructor_id OR the session's instructor_override_user_id.
     const canEditGroupClass =
         role === "owner" ||
         role === "general_manager" ||
         (!!currentUser?.staffId && (
-            activeClassForSelectedStudent?.directorUserId === currentUser.staffId ||
+            activeClassForSelectedStudent?.classInstructorId === currentUser.staffId ||
             selectedSession?.instructor_override_user_id === currentUser.staffId
         ));
 
@@ -552,7 +552,7 @@ export default function Rock101App() {
 
         const dashboardClass =
             activeClassForSelectedStudent ?? selectedClass ?? null;
-        const classFeedback = dashboardClass?.directorFeedback ?? null;
+        const classFeedback = dashboardClass?.classInstructorNotes ?? null;
         const dashboardSongProgress = dashboardClass
             ? dashboardClass.songs.map((song: string) => {
                 const readiness =
@@ -1386,7 +1386,7 @@ export default function Rock101App() {
                         role === "general_manager" ||
                         role === "instructor" ||
                         (role === "music_director" &&
-                            currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
+                            currentUser?.email === activeClassForSelectedStudent?.classInstructorEmail)) && (
                         <div className="px-6 pt-6">
                             <WorkflowBanner
                                 ready={workflowReady}
@@ -1624,14 +1624,14 @@ export default function Rock101App() {
                         onSelectStudent={(studentName) => {
                             setSelectedStudentName(studentName);
                         }}
-                        directorFeedback={
-                            weeklySessions.find((session) => session.id === selectedSessionId)?.director_feedback ?? ""
+                        classInstructorNotes={
+                            weeklySessions.find((session) => session.id === selectedSessionId)?.class_instructor_notes ?? ""
                         }
                         onDirectorFeedbackChange={(value) => {
                             setWeeklySessions((prev) =>
                                 prev.map((session) =>
                                     session.id === selectedSessionId
-                                        ? { ...session, director_feedback: value }
+                                        ? { ...session, class_instructor_notes: value }
                                         : session
                                 )
                             );
@@ -1640,15 +1640,15 @@ export default function Rock101App() {
                             if (!selectedSessionId) return false;
 
                             const feedbackToSave =
-                                weeklySessions.find((session) => session.id === selectedSessionId)?.director_feedback ?? "";
+                                weeklySessions.find((session) => session.id === selectedSessionId)?.class_instructor_notes ?? "";
 
                             const { error } = await supabase
                                 .from("class_sessions")
-                                .update({ director_feedback: feedbackToSave })
+                                .update({ class_instructor_notes: feedbackToSave })
                                 .eq("id", selectedSessionId);
 
                             if (error) {
-                                console.error("SAVE DIRECTOR FEEDBACK ERROR:", error);
+                                console.error("SAVE CLASS INSTRUCTOR NOTES ERROR:", error);
                                 return false;
                             }
 

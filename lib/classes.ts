@@ -21,7 +21,7 @@ export async function getThisWeeksSessions(schoolId: string) {
       session_date,
       start_time,
       status,
-      director_feedback,
+      class_instructor_notes,
       instructor_override_user_id,
       rock_classes (
         id,

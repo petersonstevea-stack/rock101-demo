@@ -35,7 +35,7 @@ type ClassDetailViewProps = {
   onAddStudentToClass: (studentId: string) => void;
   onRemoveStudentFromClass: (studentId: string) => void;
   onUpdateSongProgress: (song: string, readiness: SongReadinessValue) => void;
-  directorFeedback: string;
+  classInstructorNotes: string;
   onDirectorFeedbackChange: (value: string) => void;
   onSaveDirectorFeedback: () => Promise<boolean>;
 };
@@ -65,7 +65,7 @@ export default function ClassDetailView({
   onAddStudentToClass,
   onRemoveStudentFromClass,
   onUpdateSongProgress,
-  directorFeedback,
+  classInstructorNotes,
   onDirectorFeedbackChange,
   onSaveDirectorFeedback,
 }: ClassDetailViewProps) {
@@ -221,26 +221,26 @@ export default function ClassDetailView({
     );
   }
 
-  const directorName =
-    users.find((user) => user.email === rockClass.directorEmail)?.name ||
-    rockClass.directorEmail ||
+  const classInstructorName =
+    users.find((user) => user.email === rockClass.classInstructorEmail)?.name ||
+    rockClass.classInstructorEmail ||
     "Not assigned";
 
   const displayInstructorName = overrideUserId
-    ? (schoolStaff.find((s) => s.id === overrideUserId)?.name ?? directorName)
-    : directorName;
+    ? (schoolStaff.find((s) => s.id === overrideUserId)?.name ?? classInstructorName)
+    : classInstructorName;
 
   const canOverrideInstructor =
     currentUserRole === "owner" ||
     currentUserRole === "general_manager" ||
     currentUserRole === "music_director";
 
-  // Edit/Delete: owner, GM, or the assigned class instructor (by directorUserId or session override)
+  // Edit/Delete: owner, GM, or the assigned class instructor (by classInstructorId or session override)
   const canEditOrDeleteClass =
     currentUserRole === "owner" ||
     currentUserRole === "general_manager" ||
     (!!currentUserStaffId && (
-      rockClass.directorUserId === currentUserStaffId ||
+      rockClass.classInstructorId === currentUserStaffId ||
       selectedSession?.instructor_override_user_id === currentUserStaffId
     ));
 
@@ -391,7 +391,7 @@ export default function ClassDetailView({
                 disabled={overrideSaving}
                 autoFocus
               >
-                <option value="">Use class default ({directorName})</option>
+                <option value="">Use class default ({classInstructorName})</option>
                 {schoolStaff.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -421,7 +421,7 @@ export default function ClassDetailView({
 
             <div className="mt-4">
               <textarea
-                value={directorFeedback}
+                value={classInstructorNotes}
                 onChange={(e) => onDirectorFeedbackChange(e.target.value)}
                 placeholder="Add weekly class-level feedback here..."
                 className="min-h-[140px] w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder:text-zinc-500"

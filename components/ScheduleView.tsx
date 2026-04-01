@@ -14,7 +14,7 @@ type ScheduleSession = {
     id: string;
     name: string;
     time: string;
-    director_email: string;
+    class_instructor_email: string;
     school_id: string;
   } | null;
 };
@@ -94,7 +94,7 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
             id,
             name,
             time,
-            director_email,
+            class_instructor_email,
             school_id
           )
         `)
@@ -105,7 +105,7 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
     const loadedStaff = (staffResult.data ?? []) as (StaffMember & { email: string })[];
     setSchoolStaff(loadedStaff);
 
-    // Build email → name map for class default director lookup
+    // Build email → name map for class default instructor lookup
     const emailMap: Record<string, string> = {};
     for (const s of loadedStaff) {
       emailMap[s.email] = s.name;
@@ -183,9 +183,9 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
     if (overrideId) {
       return schoolStaff.find((s) => s.id === overrideId)?.name ?? "Unknown";
     }
-    const directorEmail = session.rock_classes?.director_email;
-    if (directorEmail && staffByEmail[directorEmail]) {
-      return staffByEmail[directorEmail];
+    const classInstructorEmail = session.rock_classes?.class_instructor_email;
+    if (classInstructorEmail && staffByEmail[classInstructorEmail]) {
+      return staffByEmail[classInstructorEmail];
     }
     return "Not assigned";
   }
@@ -246,7 +246,7 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
                   const isDropdownOpen = activeDropdownId === session.id;
                   const isSaving = savingId === session.id;
                   const classDefault =
-                    staffByEmail[session.rock_classes?.director_email ?? ""] ??
+                    staffByEmail[session.rock_classes?.class_instructor_email ?? ""] ??
                     "class default";
 
                   return (

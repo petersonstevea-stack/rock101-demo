@@ -50,7 +50,7 @@ export default function ClassSetupView({
 
     const [classes, setClasses] = useState<RockClass[]>([]);
     const [editingClassId, setEditingClassId] = useState<string | null>(null);
-    const [directorEmail, setDirectorEmail] = useState("");
+    const [classInstructorEmail, setClassInstructorEmail] = useState("");
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [schoolId, setSchoolId] = useState<string>(defaultSchoolId ?? "");
     const [className, setClassName] = useState("");
@@ -71,7 +71,7 @@ export default function ClassSetupView({
         }
 
         setEditingClassId(classToEdit.id);
-        setDirectorEmail(classToEdit.directorEmail ?? "");
+        setClassInstructorEmail(classToEdit.classInstructorEmail ?? "");
         setSchoolId(classToEdit.schoolId);
         setClassName(classToEdit.name);
         setDayOfWeek(classToEdit.dayOfWeek);
@@ -135,7 +135,7 @@ export default function ClassSetupView({
                 name: c.name ?? "Unnamed Class",
                 dayOfWeek: c.day_of_week ?? "Monday",
                 time: c.time ?? "",
-                directorEmail: c.director_email ?? "",
+                classInstructorEmail: c.class_instructor_email ?? "",
                 instructorEmail: c.instructor_email ?? "",
                 studentIds: c.student_ids ?? [],
                 studentNames: c.student_names ?? [],
@@ -157,7 +157,7 @@ export default function ClassSetupView({
         });
     }, [users, schoolId]);
 
-    const directorUsers = useMemo(() => {
+    const classInstructorUsers = useMemo(() => {
         return schoolUsers;
     }, [schoolUsers]);
 
@@ -200,7 +200,7 @@ export default function ClassSetupView({
 
     function resetForm() {
         setEditingClassId(null);
-        setDirectorEmail("");
+        setClassInstructorEmail("");
         setSchoolId(defaultSchoolId ?? schoolList[0]?.id ?? "");
         setClassName("");
         setDayOfWeek("Monday");
@@ -268,7 +268,7 @@ export default function ClassSetupView({
             name: className.trim(),
             school: schoolId,
             school_id: schoolId,
-            director_email: directorEmail.trim().toLowerCase(),
+            class_instructor_email: classInstructorEmail.trim().toLowerCase(),
             day_of_week: derivedDayOfWeek,
             time: time.trim(),
             songs: selectedSongs,
@@ -342,7 +342,7 @@ export default function ClassSetupView({
             name: className.trim(),
             dayOfWeek: derivedDayOfWeek,
             time: time.trim(),
-            directorEmail: directorEmail.trim().toLowerCase(),
+            classInstructorEmail: classInstructorEmail.trim().toLowerCase(),
             instructorEmail: "",
             studentIds: selectedStudentRecords.map((student) => student.id),
             studentNames: selectedStudentRecords.map((student) => student.name),
@@ -367,7 +367,7 @@ export default function ClassSetupView({
 
     function handleEditClass(rockClass: RockClass) {
         setEditingClassId(rockClass.id);
-        setDirectorEmail(rockClass.directorEmail ?? "");
+        setClassInstructorEmail(rockClass.classInstructorEmail ?? "");
         setSchoolId(rockClass.schoolId);
         setClassName(rockClass.name);
         setDayOfWeek(rockClass.dayOfWeek);
@@ -453,13 +453,13 @@ export default function ClassSetupView({
                         </label>
 
                         <select
-                            value={directorEmail}
-                            onChange={(e) => setDirectorEmail(e.target.value)}
+                            value={classInstructorEmail}
+                            onChange={(e) => setClassInstructorEmail(e.target.value)}
                             className="w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white"
                         >
                             <option value="">Select instructor</option>
 
-                            {directorUsers.map((user) => (
+                            {classInstructorUsers.map((user) => (
                                 <option key={user.email} value={user.email}>
                                     {user.name}
                                 </option>

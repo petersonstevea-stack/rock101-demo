@@ -11,7 +11,7 @@ export type AppUser = {
 export type AppClass = {
   id: string;
   school_id: string;
-  director_user_id: string;
+  class_instructor_id: string;
 };
 
 export type StudentRecord = {
@@ -35,7 +35,7 @@ export const isAssignedDirectorForClass = (
     !!user &&
     !!currentClass &&
     user.role === "music_director" &&
-    user.id === currentClass.director_user_id
+    user.id === currentClass.class_instructor_id
   );
 };
 

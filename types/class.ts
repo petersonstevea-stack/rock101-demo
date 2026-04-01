@@ -8,8 +8,8 @@ export type RockClass = {
   dayOfWeek: string;
   time: string;
 
-  directorEmail: string; // REQUIRED
-  directorUserId?: string | null;
+  classInstructorEmail: string; // REQUIRED
+  classInstructorId?: string | null;
   instructorEmail: string;
 
   studentIds: string[];
@@ -21,5 +21,5 @@ export type RockClass = {
   performanceTitle: string;
   performanceDate: string;
 
-  directorFeedback?: string;
+  classInstructorNotes?: string;
 };
