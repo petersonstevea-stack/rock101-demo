@@ -278,13 +278,7 @@ export default function Rock101App() {
                     performanceDate: c.performance_date ?? "",
                 };
             });
-            const safeClasses = ownerRole
-                ? supabaseClasses
-                : supabaseClasses.filter(
-                    (c) => c.schoolId === currentUser?.schoolId
-                );
-
-            setSavedClasses(safeClasses);
+            setSavedClasses(supabaseClasses);
         }
 
         loadClasses();
