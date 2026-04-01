@@ -181,6 +181,49 @@ Migration approach:
 
 ### 🔜 Step 1.19 — Weekly Execution Dashboard (Management View)
 
+### 🔜 Step 1.21 — Session instructor override + Schedule view
+Depends on: class_sessions.instructor_override_user_id column
+(already added via migration).
+
+Two features shipped together:
+
+1. Session instructor override on class detail page
+   - "Change instructor for this session" control below hero
+   - Dropdown of school staff, saves to
+     instructor_override_user_id on class_sessions
+   - Hero meta line reflects override instructor name
+   - "Use class default" option resets to null
+   - Owner/director roles only
+
+2. Schedule view page
+   - New "Schedule" nav item under School section
+   - Shows all future sessions for all school classes,
+     grouped by week, 12 weeks at a time
+   - Each row: date, class name, time, instructor
+     (override ?? class default ?? "Not assigned")
+   - Inline [Change] button to assign coverage per session
+   - Purpose: vacation coverage planning until Pike 13
+     integration takes over scheduling
+
+Instructor display logic (standard across all views):
+  instructor_override_user_id → staff name
+  ?? director_user_id → staff name
+  ?? "Not assigned"
+
+### 🔜 Step 1.22 — Private lesson session awareness
+Deferred until closer to Pike 13 integration (Phase 6).
+
+Currently private lesson notes and sign-offs are stored
+per student with no session anchor. This mirrors the
+class-session model gap that was fixed in Step 1.18.
+
+When Pike 13 integration is built, private lesson
+appointments will have unique occurrence IDs that can
+anchor private lesson data to specific dated instances —
+exactly as class_sessions anchors group class data.
+
+Do not build until Phase 6 planning begins.
+
 ---
 
 ### Known Bugs — Fix Before Pilot Launch
