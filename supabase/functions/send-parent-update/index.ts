@@ -98,6 +98,9 @@ serve(async (req: Request) => {
     const lessonTitleById: Record<string, string> = {};
     for (const l of lessons) lessonTitleById[l.id] = l.title;
 
+    const reqLabelById: Record<string, string> = {};
+    for (const r of reqs) reqLabelById[r.id] = r.label;
+
     const reqIdSet = new Set(reqs.map((r: {id: string}) => r.id));
     const behaviorIdSet = new Set(behaviors.map((b: {id: string}) => b.id));
 
@@ -123,10 +126,6 @@ serve(async (req: Request) => {
     let totalHF = 0;
     for (const item of Object.values(curriculum)) { if (item.highFives) totalHF += item.highFives; }
 
-    let lessonsSigned = 0;
-    for (const id of Object.keys(lessonTitleById)) { if (curriculum[id]?.signed) lessonsSigned++; }
-    const lessonsPct = lessons.length > 0 ? Math.round(lessonsSigned / lessons.length * 100) : 0;
-
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000);
     const completedThisWeek: string[] = [];
     for (const lessonId of Object.keys(lessonTitleById)) {
@@ -142,19 +141,17 @@ serve(async (req: Request) => {
       if (!(row.song_name in songByName)) songByName[row.song_name] = row.readiness;
     }
 
-    const lessonsByMonth: Record<number, Array<{id: string; title: string}>> = {};
-    for (const l of lessons) {
-      const m = monthByLesson[l.id] ?? 0;
-      if (!lessonsByMonth[m]) lessonsByMonth[m] = [];
-      lessonsByMonth[m].push(l);
+    const recentItems: Array<{ label: string; date: Date; dateStr: string; type: string }> = [];
+    for (const [key, item] of Object.entries(curriculum)) {
+      if (!item.signed || !item.date) continue;
+      const d = new Date(item.date);
+      if (isNaN(d.getTime())) continue;
+      const label = lessonTitleById[key] ?? reqLabelById[key] ?? key;
+      const type = lessonTitleById[key] ? "Private Lesson" : reqLabelById[key] ? "Graduation Requirement" : "Private Lesson";
+      recentItems.push({ label, date: d, dateStr: d.toLocaleDateString("en-US", { month: "long", day: "numeric" }), type });
     }
-
-    const reqsByMonth: Record<number, typeof reqs> = {};
-    for (const r of reqs) {
-      const m = r.month ?? 0;
-      if (!reqsByMonth[m]) reqsByMonth[m] = [];
-      reqsByMonth[m].push(r);
-    }
+    recentItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+    const top5Recent = recentItems.slice(0, 5);
 
     const instrLabel = INST[student.instrument] ?? student.instrument ?? "";
     const studentName = `${student.first_name} ${student.last_initial ?? ""}`.trim();
@@ -186,7 +183,7 @@ serve(async (req: Request) => {
     <td width="4"></td>
     ${statTile(`${behaviorsPct}%`, `${behaviorsSigned}/${behaviorsTotal} complete`, "Group Rehearsal")}
     <td width="4"></td>
-    ${statTile(`${totalHF}`, `positive moments`, "High Fives")}
+    ${statTile(`${totalHF}`, `positive moments`, "Rehearsal Awards")}
   </tr></table>
 </td></tr>`;
 
@@ -216,43 +213,24 @@ serve(async (req: Request) => {
 </td></tr>`;
 
     html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Private Lesson Progress</div>
-  ${bar(lessonsPct)}
-  <div style="font-size:12px;color:#999;margin-top:6px;margin-bottom:16px">${lessonsSigned} of ${lessons.length} lessons signed</div>`;
-    const monthNums = Object.keys(lessonsByMonth).map(Number).sort((a, b) => a - b);
-    for (const m of monthNums) {
-      html += `<div style="font-size:10px;color:#cc0000;text-transform:uppercase;letter-spacing:.15em;margin-bottom:5px;margin-top:10px">Month ${m}</div>`;
-      for (const l of lessonsByMonth[m]) {
-        const c = curriculum[l.id];
-        const isSigned = c?.signed ?? false;
-        const isDone = c?.done ?? false;
-        const textColor = isSigned || isDone ? "#fff" : "#666";
-        const statusColor = isSigned ? "#cc0000" : isDone ? "#888" : "#444";
-        const statusLabel = isSigned ? "Signed" : isDone ? "Done" : "Not started";
-        html += `<div style="background:#1a1a1a;padding:9px 12px;margin-bottom:2px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:12px;color:${textColor}">${l.title}</td><td align="right" style="font-size:11px;color:${statusColor};white-space:nowrap">${statusLabel}</td></tr></table></div>`;
-      }
-    }
-    html += `</td></tr>`;
-
-    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Group Rehearsal Notes</div>
   ${rehearsalNotes ? `<div style="background:#1a1a1a;padding:14px 16px;border-left:2px solid #cc0000;font-size:14px;line-height:1.7;color:#fff">${rehearsalNotes}</div>` : `<div style="color:#666;font-style:italic;font-size:13px">No rehearsal notes this week.</div>`}
 </td></tr>`;
 
     if (behaviors.length > 0) {
       html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Rehearsal Behaviors</div>`;
+  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Rockstar Habits</div>`;
       for (const b of behaviors) {
         const earned = curriculum[b.id]?.highFives ?? 0;
         const req = b.required_high_fives ?? 10;
         const p = Math.round(Math.min(earned, req) / req * 100);
-        html += `<div style="background:#1a1a1a;padding:12px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${b.label}</td><td align="right" style="font-size:11px;color:#cc0000;white-space:nowrap">${earned} / ${req} high fives</td></tr></table>${bar(p, 4)}</div>`;
+        html += `<div style="background:#1a1a1a;padding:12px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${b.label}</td><td align="right" style="font-size:11px;color:#cc0000;white-space:nowrap">${earned} / ${req} Awards</td></tr></table>${bar(p, 4)}</div>`;
       }
       html += `</td></tr>`;
     }
 
     html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Song Readiness</div>`;
+  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Song Progress</div>`;
     const songEntries = Object.entries(songByName);
     if (songEntries.length > 0) {
       for (const [song, level] of songEntries) {
@@ -263,24 +241,16 @@ serve(async (req: Request) => {
     }
     html += `</td></tr>`;
 
-    if (reqs.length > 0) {
-      html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Graduation Requirements</div>`;
-      const reqMonths = Object.keys(reqsByMonth).map(Number).sort((a, b) => a - b);
-      for (const m of reqMonths) {
-        html += `<div style="font-size:10px;color:#cc0000;text-transform:uppercase;letter-spacing:.15em;margin-bottom:5px;margin-top:10px">Month ${m}</div>`;
-        for (const r of reqsByMonth[m]) {
-          const c = curriculum[r.id];
-          const isSigned = c?.signed ?? false;
-          const isDone = c?.done ?? false;
-          const textColor = isSigned || isDone ? "#fff" : "#666";
-          const statusColor = isSigned ? "#cc0000" : isDone ? "#888" : "#444";
-          const statusLabel = isSigned ? "Signed" : isDone ? "Done" : "Not started";
-          html += `<div style="background:#1a1a1a;padding:9px 12px;margin-bottom:2px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:12px;color:${textColor}">${r.label}</td><td align="right" style="font-size:11px;color:${statusColor};white-space:nowrap">${statusLabel}</td></tr></table></div>`;
-        }
+    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
+  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Recent Activity</div>`;
+    if (top5Recent.length > 0) {
+      for (const entry of top5Recent) {
+        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px;border-left:2px solid #cc0000"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${entry.label}</td><td align="right" style="font-size:11px;color:#999;white-space:nowrap">${entry.dateStr}</td></tr><tr><td style="font-size:10px;color:#cc0000;padding-top:2px">${entry.type}</td><td></td></tr></table></div>`;
       }
-      html += `</td></tr>`;
+    } else {
+      html += `<div style="color:#666;font-style:italic;font-size:13px">No signed items yet.</div>`;
     }
+    html += `</td></tr>`;
 
     html += `<tr><td style="background:#0a0a0a;padding:20px 28px;text-align:center;border-top:4px solid #111">
   <div style="font-size:10px;color:#333;text-transform:uppercase;letter-spacing:.2em">Stage Ready &mdash; School of Rock</div>
