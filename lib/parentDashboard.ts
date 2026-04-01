@@ -494,7 +494,7 @@ export function buildParentDashboardData({
       highFives: {
         label: "Fist Bumps",
         value: `${highFives}`,
-        sublabel: "Positive rehearsal moments",
+        sublabel: "Rehearsal Awards",
       },
     },
     progress: {

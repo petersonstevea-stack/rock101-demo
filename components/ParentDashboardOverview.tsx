@@ -93,6 +93,20 @@ function SectionCard({
     );
 }
 
+function formatPerformanceDate(dateStr?: string | null): string {
+    if (!dateStr) return "Not scheduled";
+    const date = new Date(dateStr + "T00:00:00");
+    if (isNaN(date.getTime())) return dateStr;
+    const day = date.getDate();
+    const suffix =
+        day === 1 || day === 21 || day === 31 ? "st"
+        : day === 2 || day === 22 ? "nd"
+        : day === 3 || day === 23 ? "rd"
+        : "th";
+    const month = date.toLocaleDateString("en-US", { month: "long" });
+    return `${month} ${day}${suffix}`;
+}
+
 function PriorityPill({ priority }: { priority: "high" | "medium" | "low" }) {
     const classes =
         priority === "high"
@@ -293,19 +307,6 @@ export default function ParentDashboardOverview({
     rehearsalLastUpdated,
     onNavigate,
 }: Props) {
-    const rehearsals = data.rehearsalsToShow;
-
-    let urgencyBorder = "border-zinc-800";
-
-    if (rehearsals !== null) {
-        if (rehearsals <= 3) {
-            urgencyBorder = "border-[#cc0000]";
-        } else if (rehearsals <= 7) {
-            urgencyBorder = "border-zinc-600";
-        } else {
-            urgencyBorder = "border-zinc-800";
-        }
-    }
     return (
         <div className="min-h-screen bg-white">
         <div className="p-6 space-y-6">
@@ -328,35 +329,11 @@ export default function ParentDashboardOverview({
                         </div>
                     </div>
 
-                    <div className="grid flex-1 gap-4 md:grid-cols-3">
-                        <div className="rounded-none border border-zinc-800 bg-[#1a1a1a] p-4">
-                            <div className="text-sm text-zinc-400">Rock 101 Graduation Certificate</div>
-                            <div className="mt-1 text-lg font-semibold text-white">
-                                {data.certificate.earned ? "Earned" : "Not yet earned"}
-                            </div>
-                            <div className="mt-2 text-sm text-zinc-400">
-                                {data.certificate.completedRequired}/{data.certificate.totalRequired} required items complete
-                            </div>
-                        </div>
-
-                        <div className={`rounded-none border bg-[#1a1a1a] p-4 ${urgencyBorder}`}>
-                            <div className="text-sm text-zinc-400">Countdown to the Stage</div>
-                            <div className="mt-1 text-lg font-semibold text-white">
-                                {data.rehearsalsToShow !== null
-                                    ? `${data.rehearsalsToShow} rehearsal${data.rehearsalsToShow === 1 ? "" : "s"}`
-                                    : "Not scheduled"}
-                            </div>
-                            <div className="mt-2 text-sm text-zinc-400">
-                                {data.rehearsalsToShow !== null
-                                    ? `${data.rehearsalsToShow} rehearsal${data.rehearsalsToShow === 1 ? "" : "s"} until showtime`
-                                    : "Add a performance date to track rehearsals remaining"}
-                            </div>
-                        </div>
-
+                    <div className="flex-1">
                         <div className="rounded-none border border-zinc-800 bg-[#1a1a1a] p-4">
                             <div className="text-sm text-zinc-400">Next Performance</div>
-                            <div className="mt-1 text-lg font-semibold text-white">
-                                {data.student.nextPerformanceDate ?? "Not scheduled"}
+                            <div className="mt-1 text-lg font-bold text-white">
+                                {formatPerformanceDate(data.student.nextPerformanceDate)}
                             </div>
                             <div className="mt-2 text-sm text-zinc-400">
                                 {data.student.nextPerformanceDate
@@ -395,7 +372,7 @@ export default function ParentDashboardOverview({
 
                 <StatCard
                     {...data.stats.highFives}
-                    label="High Fives!"
+                    label=""
                 />
             </section>
 
