@@ -245,7 +245,9 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                     <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
                                         <div>
                                             <div className="text-white text-sm font-medium">{`${student.first_name} ${student.last_initial ?? ""}`.trim()}</div>
-                                            <div className="text-zinc-500 text-xs mt-0.5">{instructorName}</div>
+                                            <div className="text-zinc-500 text-xs mt-0.5">
+                                                {staffMap[student.primary_instructor_email ?? ""] ?? student.primary_instructor_email ?? "Unassigned"}
+                                            </div>
                                         </div>
                                         <div className="text-center w-20 text-sm">
                                             {w.instructorSubmitted ? <Check /> : <Warn />}
