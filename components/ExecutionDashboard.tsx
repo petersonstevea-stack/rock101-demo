@@ -84,6 +84,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [staffMap, setStaffMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showCompleted, setShowCompleted] = useState(false);
 
     useEffect(() => {
         if (!schoolId) return;
@@ -125,7 +126,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
             const map: Record<string, string> = {};
             for (const s of (staffResult.data ?? []) as StaffRow[]) {
-                if (s.email) map[s.email.toLowerCase()] = s.name;
+                if (s.email) map[s.email] = s.name;
             }
 
             setSessions((sessionsResult.data ?? []) as unknown as SessionRow[]);
@@ -172,7 +173,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                             const rc = session.rock_classes;
                             const instructorEmail = rc?.class_instructor_email ?? null;
                             const instructorName = instructorEmail
-                                ? (staffMap[instructorEmail.toLowerCase()] ?? instructorEmail)
+                                ? (staffMap[instructorEmail] ?? instructorEmail)
                                 : "—";
                             const studentCount = rc?.student_ids?.length ?? 0;
                             const hasNotes = !!session.class_instructor_notes?.trim();
@@ -216,66 +217,88 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                 {students.length === 0 ? (
                     <div className="text-zinc-400 text-sm">No active students found for this school.</div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                        {[students.slice(0, Math.ceil(students.length / 2)), students.slice(Math.ceil(students.length / 2))].map((col, colIdx) => (
-                            <div key={colIdx} className="grid gap-2">
-                                {/* Header row */}
-                                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2">
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider">Student</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-20">Instructor</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Class</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Parent</div>
-                                    <div className="text-zinc-500 text-xs uppercase tracking-wider text-right w-36">Status</div>
+                ) : (() => {
+                    const completedCount = students.filter((s) => s.workflow?.parentSubmitted).length;
+                    const visibleStudents = showCompleted ? students : students.filter((s) => !s.workflow?.parentSubmitted);
+                    const mid = Math.ceil(visibleStudents.length / 2);
+                    const columns = [visibleStudents.slice(0, mid), visibleStudents.slice(mid)];
+
+                    return (
+                        <>
+                            {completedCount > 0 && (
+                                <div className="mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCompleted((v) => !v)}
+                                        className="rounded-none bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 transition"
+                                    >
+                                        {showCompleted ? "Hide completed" : `Show completed (${completedCount})`}
+                                    </button>
                                 </div>
+                            )}
 
-                                {col.map((student) => {
-                                    const w = student.workflow ?? {};
-                                    const status = getStatusSummary(w);
-                                    const isReadyToSend = status === "Ready to send";
+                            <div className="grid grid-cols-2 gap-4">
+                                {columns.map((col, colIdx) => (
+                                    <div key={colIdx} className="grid gap-2">
+                                        {/* Header row */}
+                                        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2">
+                                            <div className="text-zinc-500 text-xs uppercase tracking-wider">Student</div>
+                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-20">Instructor</div>
+                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Class</div>
+                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Parent</div>
+                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-right w-36">Status</div>
+                                        </div>
 
-                                    return (
-                                        <div
-                                            key={student.id}
-                                            className="bg-[#1a1a1a] rounded-none px-4 py-3"
-                                            style={isReadyToSend ? { borderLeft: "3px solid #cc0000" } : undefined}
-                                        >
-                                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
-                                                <div>
-                                                    <div className="text-white text-sm font-medium">{`${student.first_name} ${student.last_initial ?? ""}`.trim()}</div>
-                                                    <div className="text-zinc-500 text-xs mt-0.5">
-                                                        {staffMap[student.primary_instructor_email?.toLowerCase() ?? ""] ?? student.primary_instructor_email ?? "Unassigned"}
+                                        {col.map((student) => {
+                                            const w = student.workflow ?? {};
+                                            const status = getStatusSummary(w);
+                                            const isReadyToSend = status === "Ready to send";
+                                            const isComplete = !!w.parentSubmitted;
+
+                                            return (
+                                                <div
+                                                    key={student.id}
+                                                    className={`bg-[#1a1a1a] rounded-none px-4 py-3 ${isComplete ? "opacity-50" : ""}`}
+                                                    style={isReadyToSend ? { borderLeft: "3px solid #cc0000" } : undefined}
+                                                >
+                                                    <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
+                                                        <div>
+                                                            <div className="text-white text-sm font-medium">{`${student.first_name} ${student.last_initial ?? ""}`.trim()}</div>
+                                                            <div className="text-zinc-500 text-xs mt-0.5">
+                                                                {staffMap[student.primary_instructor_email ?? ""] ?? student.primary_instructor_email ?? "Unassigned"}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-center w-20 text-sm">
+                                                            {w.instructorSubmitted ? <Check /> : <Warn />}
+                                                        </div>
+                                                        <div className="text-center w-14 text-sm">
+                                                            {w.classInstructorSubmitted ? <Check /> : <Warn />}
+                                                        </div>
+                                                        <div className="text-center w-14 text-sm">
+                                                            {w.parentSubmitted ? <Check /> : <Dash />}
+                                                        </div>
+                                                        <div className="text-right w-36">
+                                                            <span
+                                                                className="text-xs font-medium"
+                                                                style={{
+                                                                    color: status === "Sent" ? "#86efac"
+                                                                        : status === "Ready to send" ? "#cc0000"
+                                                                        : "#71717a",
+                                                                }}
+                                                            >
+                                                                {status}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-center w-20 text-sm">
-                                                    {w.instructorSubmitted ? <Check /> : <Warn />}
-                                                </div>
-                                                <div className="text-center w-14 text-sm">
-                                                    {w.classInstructorSubmitted ? <Check /> : <Warn />}
-                                                </div>
-                                                <div className="text-center w-14 text-sm">
-                                                    {w.parentSubmitted ? <Check /> : <Dash />}
-                                                </div>
-                                                <div className="text-right w-36">
-                                                    <span
-                                                        className="text-xs font-medium"
-                                                        style={{
-                                                            color: status === "Sent" ? "#86efac"
-                                                                : status === "Ready to send" ? "#cc0000"
-                                                                : "#71717a",
-                                                        }}
-                                                    >
-                                                        {status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </>
+                    );
+                })()}
             </div>
         </div>
     );
