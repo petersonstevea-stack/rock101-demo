@@ -161,7 +161,7 @@ export default function ChecklistSection({
 
                             {earnedByFistBumps && (
                                 <div className="mt-2 text-xs text-amber-300">
-                                    Earned through 10 High Fives
+                                    Earned through {item.requiredHighFives ?? 10} Awards
                                 </div>
                             )}
 
