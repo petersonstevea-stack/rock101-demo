@@ -140,11 +140,17 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
   ) {
     setSavingId(session.id);
     if (scope === "all" && session.rock_classes?.id) {
-      await supabase
+      console.log("[ScheduleView] bulk update:", {
+        class_id: session.rock_classes.id,
+        session_date: session.session_date,
+        staffId,
+      });
+      const { error: bulkError } = await supabase
         .from("class_sessions")
         .update({ instructor_override_user_id: staffId })
         .eq("class_id", session.rock_classes.id)
         .gte("session_date", session.session_date);
+      console.log("[ScheduleView] bulk update error:", bulkError);
       // Update all affected sessions in local state
       setOverrideStates((prev) => {
         const next = { ...prev };
@@ -159,10 +165,12 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
         return next;
       });
     } else {
-      await supabase
+      console.log("[ScheduleView] single update:", { sessionId: session.id, staffId });
+      const { error: singleError } = await supabase
         .from("class_sessions")
         .update({ instructor_override_user_id: staffId })
         .eq("id", session.id);
+      console.log("[ScheduleView] single update error:", singleError);
       setOverrideStates((prev) => ({ ...prev, [session.id]: staffId }));
     }
     setActiveDropdownId(null);

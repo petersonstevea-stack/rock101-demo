@@ -113,6 +113,11 @@ export default function ClassDetailView({
     }
     setOverrideSaving(true);
     if (scope === "all" && selectedSession?.session_date) {
+      console.log("[ClassDetailView] bulk update:", {
+        class_id: rockClass.id,
+        session_date: selectedSession.session_date,
+        staffId,
+      });
       const { error } = await supabase
         .from("class_sessions")
         .update({ instructor_override_user_id: staffId })
