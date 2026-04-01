@@ -105,6 +105,7 @@ export default function Rock101App() {
     const [weeklySessions, setWeeklySessions] = useState<any[]>([]);
     const [classSongReadiness, setClassSongReadiness] = useState<Record<string, Record<string, number>>>({});
     const [editingClass, setEditingClass] = useState<any | null>(null);
+    const [studentSearch, setStudentSearch] = useState("");
     const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -289,7 +290,7 @@ export default function Rock101App() {
         async function loadSessions() {
             if (!currentUser?.schoolId) return;
 
-            const sessions = await getThisWeeksSessions(currentUser.schoolId);
+            const sessions = await getThisWeeksSessions();
             setWeeklySessions(sessions);
         }
 
@@ -1518,8 +1519,27 @@ export default function Rock101App() {
                                 </div>
                             </div>
 
+                            <div className="mt-4 relative">
+                                <input
+                                    type="text"
+                                    value={studentSearch}
+                                    onChange={(e) => setStudentSearch(e.target.value)}
+                                    placeholder="Search students..."
+                                    className="w-full rounded-none border border-zinc-700 bg-zinc-950 px-4 py-2 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                                />
+                                {studentSearch && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setStudentSearch("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
                             {role === "music_director" && (
-                                <div className="mt-6 flex gap-3">
+                                <div className="mt-4 flex gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setStudentViewFilter("myStudents")}
@@ -1559,7 +1579,14 @@ export default function Rock101App() {
 
                             {filteredStudentsBySchool.length ? (
                                 <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                    {visibleStudents.map((student) => (
+                                    {visibleStudents.filter((student) => {
+                                        if (!studentSearch.trim()) return true;
+                                        const q = studentSearch.toLowerCase();
+                                        return (
+                                            student.name?.toLowerCase().includes(q) ||
+                                            student.instrument?.toLowerCase().includes(q)
+                                        );
+                                    }).map((student) => (
                                         <button
                                             key={student.name}
                                             type="button"

@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 
-export async function getThisWeeksSessions(schoolId: string) {
-  // rock_classes.school_id stores the school slug (e.g. "del-mar") — use it directly.
+export async function getThisWeeksSessions() {
   // Week range: Monday 00:00 through Sunday 23:59 (inclusive)
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ...
@@ -37,9 +36,5 @@ export async function getThisWeeksSessions(schoolId: string) {
     return [];
   }
 
-  const filtered = (data ?? []).filter(
-    (s: any) => s.rock_classes?.school_id === schoolId
-  );
-
-  return filtered;
+  return data ?? [];
 }
