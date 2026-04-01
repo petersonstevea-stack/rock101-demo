@@ -311,36 +311,20 @@ export default function ParentDashboardOverview({
         <div className="min-h-screen bg-white">
         <div className="p-6 space-y-6">
             <section className="bg-[#111111] overflow-hidden rounded-none p-6">
-                <div className="grid gap-6 xl:grid-cols-[1.1fr_1.9fr] xl:items-end">
-                    <div>
-                        <h1 className="sor-display mt-2 text-4xl leading-none md:text-6xl">
-                            <span className="text-white">{data.student.name}</span>
-                        </h1>
-                        <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
-                                {data.student.instrument}
-                            </span>
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
-                                {data.student.className}
-                            </span>
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
-                                {data.student.schoolName}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex-1">
-                        <div className="rounded-none border border-zinc-800 bg-[#1a1a1a] p-4">
-                            <div className="text-sm text-zinc-400">Next Performance</div>
-                            <div className="mt-1 text-lg font-bold text-white">
-                                {formatPerformanceDate(data.student.nextPerformanceDate)}
-                            </div>
-                            <div className="mt-2 text-sm text-zinc-400">
-                                {data.student.nextPerformanceDate
-                                    ? "Scheduled show date"
-                                    : "Add a performance date to track the next show"}
-                            </div>
-                        </div>
+                <div>
+                    <h1 className="sor-display mt-2 text-4xl leading-none md:text-6xl">
+                        <span className="text-white">{data.student.name}</span>
+                    </h1>
+                    <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
+                        <span className="rounded-none bg-[#333333] px-3 py-1">
+                            {data.student.instrument}
+                        </span>
+                        <span className="rounded-none bg-[#333333] px-3 py-1">
+                            {data.student.className}
+                        </span>
+                        <span className="rounded-none bg-[#333333] px-3 py-1">
+                            {data.student.schoolName}
+                        </span>
                     </div>
                 </div>
             </section>
@@ -348,8 +332,7 @@ export default function ParentDashboardOverview({
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
                     {...data.stats.privateLessons}
-                    label="Method App Lessons Completed"
-                    highlight
+                    label="Method App Lessons"
                 />
 
                 <StatCard
@@ -362,34 +345,19 @@ export default function ParentDashboardOverview({
                     label="Group Rehearsal"
                 />
 
-                {/* Badges hidden per ROADMAP UI review — evaluate later */}
-                {false && (
-                    <StatCard
-                        {...data.stats.badgesEarned}
-                        label="Badges Earned"
-                    />
-                )}
-
                 <StatCard
                     {...data.stats.highFives}
-                    label=""
+                    label="Rehearsal Awards"
+                />
+
+                <StatCard
+                    label="Next Performance"
+                    value={formatPerformanceDate(data.student.nextPerformanceDate)}
                 />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-                <SectionCard
-                    title="Progress"
-                    rightSlot={
-                        <span
-                            className={`rounded-none px-3 py-1 text-sm font-semibold uppercase ${data.rehearsalReady.ready
-                                ? "bg-[#cc0000] text-white"
-                                : "bg-zinc-700 text-zinc-200"
-                                }`}
-                        >
-                            {data.rehearsalReady.label}
-                        </span>
-                    }
-                >
+                <SectionCard title="Progress">
                     <div className="space-y-4">
                         <ProgressNavCard
                             label={data.progress.graduationRequirements.label}
