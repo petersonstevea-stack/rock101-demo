@@ -65,25 +65,14 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  // Resolve slug to UUID and load sessions + staff
+  // Load sessions + staff for this school slug
   const loadData = useCallback(async () => {
     if (!schoolSlug) return;
 
     setLoading(true);
 
-    // Resolve slug to school UUID
-    const normalize = (name: string) =>
-      name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-    const { data: schools } = await supabase
-      .from("schools")
-      .select("id, name")
-      .eq("is_sandbox", false);
-
-    const matched = (schools ?? []).find(
-      (s) => s.id === schoolSlug || normalize(s.name) === schoolSlug
-    );
-    const schoolUUID = matched?.id ?? schoolSlug;
+    // rock_classes.school_id stores the school slug — use it directly
+    const schoolUUID = schoolSlug;
 
     // Load staff for this school
     const [staffResult, sessionsResult] = await Promise.all([
