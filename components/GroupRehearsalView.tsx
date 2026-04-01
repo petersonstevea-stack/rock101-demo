@@ -95,8 +95,8 @@ export default function GroupRehearsalView({
         ? (student.songReadiness?.[classId] ?? {})
         : {};
 
-    const songHeader = splitRehearsalTitle("Song Readiness");
-    const rehearsalHeader = splitRehearsalTitle("Rehearsal Readiness");
+    const songHeader = splitRehearsalTitle("Song Progress");
+    const rehearsalHeader = splitRehearsalTitle("Rockstar Habits");
 
     return (
         <div className="min-h-screen bg-white">
@@ -202,7 +202,7 @@ export default function GroupRehearsalView({
 
                         <div className="rounded-none border border-zinc-800 bg-zinc-900 p-1">
                             <ChecklistSection
-                                title="Rehearsal Readiness"
+                                title="Rockstar Habits"
                                 items={rehearsalItems}
                                 curriculum={student.curriculum}
                                 onToggleDone={onToggleDone}
