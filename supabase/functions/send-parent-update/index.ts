@@ -127,13 +127,20 @@ serve(async (req: Request) => {
     for (const item of Object.values(curriculum)) { if (item.highFives) totalHF += item.highFives; }
 
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000);
-    const completedThisWeek: string[] = [];
+    const completedThisWeek: Array<{ title: string; type: string }> = [];
     for (const lessonId of Object.keys(lessonTitleById)) {
       const item = curriculum[lessonId];
       if (!item || !item.signed || !item.date) continue;
       const d = new Date(item.date);
       if (isNaN(d.getTime())) continue;
-      if (d >= sevenDaysAgo) completedThisWeek.push(lessonTitleById[lessonId]);
+      if (d >= sevenDaysAgo) completedThisWeek.push({ title: lessonTitleById[lessonId], type: "Method Lesson" });
+    }
+    for (const reqId of Object.keys(reqLabelById)) {
+      const item = curriculum[reqId];
+      if (!item || !item.signed || !item.date) continue;
+      const d = new Date(item.date);
+      if (isNaN(d.getTime())) continue;
+      if (d >= sevenDaysAgo) completedThisWeek.push({ title: reqLabelById[reqId], type: "Graduation Requirement" });
     }
 
     const songByName: Record<string, number> = {};
@@ -212,18 +219,18 @@ serve(async (req: Request) => {
     if (completedThisWeek.length > 0) {
       html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Completed This Week</div>`;
-      for (const title of completedThisWeek) {
-        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px;border-left:2px solid #cc0000"><span style="font-size:13px;color:#fff">&#10003; ${title}</span></div>`;
+      for (const entry of completedThisWeek) {
+        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px;border-left:2px solid #cc0000"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">&#10003; ${entry.title}</td><td align="right" style="font-size:10px;color:#cc0000;white-space:nowrap">${entry.type}</td></tr></table></div>`;
       }
       html += `</td></tr>`;
     }
 
-    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
+    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a;border-left:3px solid #cc0000">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Private Lesson Notes</div>
   ${lessonNotes ? `<div style="background:#1a1a1a;padding:14px 16px;border-left:2px solid #cc0000;font-size:14px;line-height:1.7;color:#fff">${lessonNotes}</div>` : `<div style="color:#666;font-style:italic;font-size:13px">No lesson notes this week.</div>`}
 </td></tr>`;
 
-    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
+    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a;border-left:3px solid #cc0000">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Group Rehearsal Notes</div>
   ${rehearsalNotes ? `<div style="background:#1a1a1a;padding:14px 16px;border-left:2px solid #cc0000;font-size:14px;line-height:1.7;color:#fff">${rehearsalNotes}</div>` : `<div style="color:#666;font-style:italic;font-size:13px">No rehearsal notes this week.</div>`}
 </td></tr>`;
