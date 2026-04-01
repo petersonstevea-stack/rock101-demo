@@ -601,9 +601,6 @@ export default function ClassSetupView({
                                                 {rockClass.dayOfWeek} · {rockClass.time || "Time not set"}
                                             </div>
                                             <div className="mt-2 text-sm text-zinc-400">
-                                                Instructor: {instructorName || "Not assigned"}
-                                            </div>
-                                            <div className="mt-2 text-sm text-zinc-400">
                                                 Performance: {rockClass.performanceTitle || "Not set"}
                                                 {rockClass.performanceDate
                                                     ? ` · ${rockClass.performanceDate}`
