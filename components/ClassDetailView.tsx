@@ -26,6 +26,7 @@ type ClassDetailViewProps = {
   users: AppUser[];
   allStudents: Student[];
   currentUserRole: string;
+  currentUserStaffId?: string;
   schoolSlug: string;
   onBackToClasses: () => void;
   onDeleteClass: () => void;
@@ -55,6 +56,7 @@ export default function ClassDetailView({
   users,
   allStudents,
   currentUserRole,
+  currentUserStaffId,
   schoolSlug,
   onBackToClasses,
   onDeleteClass,
@@ -205,6 +207,15 @@ export default function ClassDetailView({
     currentUserRole === "gm" ||
     currentUserRole === "director";
 
+  // Edit/Delete: owner, GM, or the assigned class instructor (by directorUserId or session override)
+  const canEditOrDeleteClass =
+    currentUserRole === "owner" ||
+    currentUserRole === "gm" ||
+    (!!currentUserStaffId && (
+      rockClass.directorUserId === currentUserStaffId ||
+      selectedSession?.instructor_override_user_id === currentUserStaffId
+    ));
+
   const availableStudents = allStudents.filter(
     (student) =>
       student.schoolId === rockClass.schoolId &&
@@ -249,23 +260,25 @@ export default function ClassDetailView({
           Back to Classes
         </button>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onEditClass}
-            className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
-          >
-            Edit Class
-          </button>
+        {canEditOrDeleteClass && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onEditClass}
+              className="rounded-none bg-[#cc0000] px-4 py-2 text-white hover:bg-[#b30000]"
+            >
+              Edit Class
+            </button>
 
-          <button
-            type="button"
-            onClick={onDeleteClass}
-            className="rounded-none bg-zinc-700 px-4 py-2 text-white hover:bg-zinc-600"
-          >
-            Delete Class
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onDeleteClass}
+              className="rounded-none bg-zinc-700 px-4 py-2 text-white hover:bg-zinc-600"
+            >
+              Delete Class
+            </button>
+          </div>
+        )}
       </div>
 
       <PageHero

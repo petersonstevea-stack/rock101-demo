@@ -9,6 +9,7 @@ export type RockClass = {
   time: string;
 
   directorEmail: string; // REQUIRED
+  directorUserId?: string | null;
   instructorEmail: string;
 
   studentIds: string[];

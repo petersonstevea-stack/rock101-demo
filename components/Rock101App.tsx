@@ -337,29 +337,10 @@ export default function Rock101App() {
 
 
     const filteredClassesBySchool = useMemo(() => {
-        let classes = effectiveSchoolFilter === "all"
-            ? savedClasses
-            : savedClasses.filter((rockClass) => rockClass.schoolId === effectiveSchoolFilter);
-
-        // Owner and GM see all classes for their school.
-        // Music Director (director) and Instructor only see classes they are assigned to:
-        //   - rock_classes.director_user_id matches their staff id, OR
-        //   - any student in rock_classes.student_ids has primary_instructor_user_id matching their staff id
-        if (role === "director" || role === "instructor") {
-            const staffId = currentUser?.staffId;
-            if (staffId) {
-                classes = classes.filter((rockClass) => {
-                    if (rockClass.directorUserId === staffId) return true;
-                    const classStudentIds: string[] = rockClass.studentIds ?? [];
-                    return students.some(
-                        (s) => classStudentIds.includes(s.id) && s.primaryInstructorUserId === staffId
-                    );
-                });
-            }
-        }
-
-        return classes;
-    }, [savedClasses, effectiveSchoolFilter, role, currentUser?.staffId, students]);
+        // All staff at the school see all classes. Filter by school only.
+        if (effectiveSchoolFilter === "all") return savedClasses;
+        return savedClasses.filter((rockClass) => rockClass.schoolId === effectiveSchoolFilter);
+    }, [savedClasses, effectiveSchoolFilter]);
 
     const selectedClass =
         savedClasses.find((rockClass) => rockClass.id === selectedClassId) ??
@@ -474,6 +455,16 @@ export default function Rock101App() {
 
     const canSeeStudentTabs: boolean =
         role === "parent" || role === "instructor" || canManageRock101;
+
+    // Can edit/sign group rehearsal: owner/GM always; others only if their staffId
+    // matches the class's director_user_id OR the session's instructor_override_user_id.
+    const canEditGroupClass =
+        role === "owner" ||
+        role === "generalManager" ||
+        (!!currentUser?.staffId && (
+            activeClassForSelectedStudent?.directorUserId === currentUser.staffId ||
+            selectedSession?.instructor_override_user_id === currentUser.staffId
+        ));
 
     const canSeeStudentContent: boolean =
         canSeeStudentTabs &&
@@ -1616,6 +1607,7 @@ export default function Rock101App() {
                         users={filteredUsersBySchool}
                         allStudents={filteredStudentsBySchool}
                         currentUserRole={role ?? ""}
+                        currentUserStaffId={currentUser?.staffId}
                         schoolSlug={currentUser?.schoolId ?? ""}
                         onAddStudentToClass={handleAddStudentToClass}
                         onRemoveStudentFromClass={handleRemoveStudentFromClass}
@@ -1946,22 +1938,11 @@ export default function Rock101App() {
                             onToggleSigned={handleToggleSigned}
                             onAddFistBump={handleAddFistBump}
                             onUpdateSongReadiness={handleUpdateStudentSongReadiness}
-                            canEdit={
-                                role === "owner" ||
-                                role === "generalManager" ||
-                                (role === "director" &&
-                                    currentUser?.email === activeClassForSelectedStudent?.directorEmail)
-                            }
-                            canSign={
-                                role === "director" ||
-                                role === "generalManager" ||
-                                role === "owner"
-                            }
+                            canEdit={canEditGroupClass}
+                            canSign={canEditGroupClass}
                         />
 
-                        {(role === "owner" ||
-                            role === "generalManager" ||
-                            role === "director") && (
+                        {canEditGroupClass && (
                                 <>
                                     <div className="mb-2 text-lg font-semibold text-white">
                                         Class Instructor Weekly Feedback
@@ -1975,7 +1956,7 @@ export default function Rock101App() {
                                         saved={selectedStudent.workflow.classInstructorSubmitted}
                                         onChange={(v) => handleNoteChange("director", v)}
                                         onSave={() => handleSaveFeedback("director")}
-                                        canEdit={role === "owner" || role === "generalManager" || role === "director"}
+                                        canEdit={canEditGroupClass}
                                     />
                                 </>
                             )}
