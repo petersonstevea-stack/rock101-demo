@@ -241,8 +241,7 @@ serve(async (req: Request) => {
       for (const b of behaviors) {
         const earned = curriculum[b.id]?.highFives ?? 0;
         const req = b.required_high_fives ?? 10;
-        const p = Math.round(Math.min(earned, req) / req * 100);
-        html += `<div style="background:#1a1a1a;padding:12px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${b.label}</td><td align="right" style="font-size:11px;color:#cc0000;white-space:nowrap">${earned} / ${req} Awards</td></tr></table>${bar(p, 4)}</div>`;
+        html += `<div style="background:#1a1a1a;padding:12px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${b.label}</td><td align="right" style="font-size:11px;color:#cc0000;white-space:nowrap">${earned} / ${req} Awards</td></tr></table></div>`;
       }
       html += `</td></tr>`;
     }
