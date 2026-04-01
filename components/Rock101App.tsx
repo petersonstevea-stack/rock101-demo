@@ -48,6 +48,7 @@ type Tab =
     | "badges"
     | "parent"
     | "certificate"
+    | "classes"
     | "classSetup"
     | "schedule"
     | "performanceDashboard"
@@ -161,6 +162,8 @@ export default function Rock101App() {
 
         if (role === "music_director") {
             setTab("groupRehearsal");  // Music Directors always land on Group Rehearsal
+        } else if (role === "instructor" && !savedTab) {
+            setTab("classes");  // Instructors default to the class list
         } else if (savedTab) {
             setTab(savedTab as Tab);  // For others, restore saved tab
         }
@@ -1230,10 +1233,13 @@ export default function Rock101App() {
 
                     setCurrentUser(normalizedUser);
 
+                    const userRole = String(user.role).toLowerCase();
                     const defaultTab: Tab =
-                        String(user.role).toLowerCase() === "parent"
+                        userRole === "parent"
                             ? "parent"
-                            : "privateLesson";
+                            : userRole === "instructor"
+                                ? "classes"
+                                : "privateLesson";
 
                     setTab(defaultTab);
                     if (!getSavedTab()) {
@@ -1469,6 +1475,34 @@ export default function Rock101App() {
                         </>
                     )}
 
+                {role === "instructor" &&
+                    tab === "classes" &&
+                    !selectedClass &&
+                    !selectedStudentName && (
+                        filteredClassesBySchool.length === 0 ? (
+                            <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
+                                <h2 className="text-2xl font-bold text-white">No classes found</h2>
+                                <p className="mt-3 text-zinc-300">
+                                    No Rock 101 classes have been set up for this school yet.
+                                </p>
+                            </div>
+                        ) : (
+                            <ClassSelectorView
+                                classes={filteredClassesBySchool}
+                                weeklySessions={weeklySessions}
+                                users={filteredUsersBySchool}
+                                onSelectClass={(classId, sessionId) => {
+                                    const matchedSession =
+                                        weeklySessions.find((session) => session.id === sessionId) ?? null;
+                                    setSelectedClassId(classId);
+                                    setSelectedSessionId(sessionId ?? null);
+                                    setSelectedSession(matchedSession);
+                                    setSelectedStudentName("");
+                                }}
+                            />
+                        )
+                    )}
+
                 {canManageRock101 &&
                     managementLandingView === "students" &&
                     !selectedClass &&
@@ -1559,7 +1593,7 @@ export default function Rock101App() {
                         </div>
                     )}
 
-                {canManageRock101 && selectedClass && !selectedStudentName && (
+                {(canManageRock101 || role === "instructor") && selectedClass && !selectedStudentName && (
                     <ClassDetailView
                         rockClass={selectedClass}
                         selectedSessionId={selectedSessionId}
@@ -1625,7 +1659,7 @@ export default function Rock101App() {
 
                 {(canSeeManagementTabs || canSeeStudentTabs) && (
                     <div>
-                        {canManageRock101 && selectedClass && selectedStudentName && (
+                        {(canManageRock101 || role === "instructor") && selectedClass && selectedStudentName && (
                             <div className="mb-4">
                                 <button
                                     type="button"
@@ -1967,7 +2001,7 @@ export default function Rock101App() {
                     />
                 )}
 
-                {tab === "schedule" && canManageRock101 && (
+                {tab === "schedule" && (canManageRock101 || role === "instructor") && (
                     <ScheduleView schoolSlug={currentUser?.schoolId ?? ""} />
                 )}
 

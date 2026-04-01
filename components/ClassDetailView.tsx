@@ -324,7 +324,10 @@ export default function ClassDetailView({
               <span className="text-sm text-white">{displayInstructorName}</span>
               <button
                 type="button"
-                onClick={() => setShowScopePrompt(true)}
+                onClick={() => {
+                  console.log("[ClassDetailView] Change clicked — setShowScopePrompt(true)");
+                  setShowScopePrompt(true);
+                }}
                 className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
               >
                 Change

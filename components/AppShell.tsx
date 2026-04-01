@@ -26,9 +26,15 @@ const STUDENT_NAV: NavItem[] = [
   { tab: "certificate", label: "Certificate" },
 ];
 
-const SCHOOL_NAV: NavItem[] = [
-  { tab: "classSetup", label: "Class Setup" },
+// Visible to all staff (owner, general_manager, music_director, instructor)
+const SCHOOL_NAV_BASE: NavItem[] = [
+  { tab: "classes", label: "Classes" },
   { tab: "schedule", label: "Schedule" },
+];
+
+// Visible to management only (owner, general_manager, music_director)
+const SCHOOL_NAV_MANAGEMENT: NavItem[] = [
+  { tab: "classSetup", label: "Class Setup" },
   { tab: "bandsDashboard", label: "Bands" },
   { tab: "pipeline", label: "Pipeline" },
   { tab: "admin", label: "Admin" },
@@ -51,17 +57,69 @@ type AppShellProps = {
   onSchoolChange?: (schoolId: string) => void;
 };
 
+function NavButton({
+  item,
+  currentTab,
+  onTabChange,
+}: {
+  item: NavItem;
+  currentTab: string;
+  onTabChange: (tab: string) => void;
+}) {
+  const isActive = currentTab === item.tab;
+  return (
+    <button
+      key={item.tab}
+      type="button"
+      onClick={() => onTabChange(item.tab)}
+      className="w-full px-4 py-2.5 text-left transition-colors"
+      style={{
+        backgroundColor: isActive ? "#cc0000" : "transparent",
+        color: "#ffffff",
+        fontSize: "14px",
+        fontWeight: 400,
+        borderRadius: 0,
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = "#1a1a1a";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = "transparent";
+        }
+      }}
+    >
+      {item.label}
+    </button>
+  );
+}
+
 function NavItems({
   currentTab,
   onTabChange,
   canSeeStudentTabs,
   canSeeManagementTabs,
+  role,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
   canSeeStudentTabs: boolean;
   canSeeManagementTabs: boolean;
+  role: string;
 }) {
+  const isStaff =
+    role === "owner" ||
+    role === "general_manager" ||
+    role === "music_director" ||
+    role === "instructor";
+
+  const schoolNavItems: NavItem[] = [
+    ...(isStaff ? SCHOOL_NAV_BASE : []),
+    ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
+  ];
+
   return (
     <>
       {canSeeStudentTabs && (
@@ -69,74 +127,20 @@ function NavItems({
           <div className="px-4 pt-4 pb-1" style={{ color: "#666666", fontSize: "11px", fontWeight: 400 }}>
             Student
           </div>
-          {STUDENT_NAV.map((item) => {
-            const isActive = currentTab === item.tab;
-            return (
-              <button
-                key={item.tab}
-                type="button"
-                onClick={() => onTabChange(item.tab)}
-                className="w-full px-4 py-2.5 text-left transition-colors"
-                style={{
-                  backgroundColor: isActive ? "#cc0000" : "transparent",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  borderRadius: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "#1a1a1a";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+          {STUDENT_NAV.map((item) => (
+            <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
+          ))}
         </div>
       )}
 
-      {canSeeManagementTabs && (
+      {schoolNavItems.length > 0 && (
         <div>
           <div className="px-4 pt-4 pb-1" style={{ color: "#666666", fontSize: "11px", fontWeight: 400 }}>
             School
           </div>
-          {SCHOOL_NAV.map((item) => {
-            const isActive = currentTab === item.tab;
-            return (
-              <button
-                key={item.tab}
-                type="button"
-                onClick={() => onTabChange(item.tab)}
-                className="w-full px-4 py-2.5 text-left transition-colors"
-                style={{
-                  backgroundColor: isActive ? "#cc0000" : "transparent",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  borderRadius: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "#1a1a1a";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                  }
-                }}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+          {schoolNavItems.map((item) => (
+            <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
+          ))}
         </div>
       )}
     </>
@@ -228,6 +232,7 @@ function SidebarContent({
           onTabChange={onTabChange}
           canSeeStudentTabs={canSeeStudentTabs}
           canSeeManagementTabs={canSeeManagementTabs}
+          role={role}
         />
       </nav>
 
