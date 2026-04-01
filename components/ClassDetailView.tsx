@@ -94,13 +94,15 @@ export default function ClassDetailView({
       });
   }, [schoolSlug]);
 
-  // Sync override from session when session changes
+  // Sync override from session when session changes.
+  // Depend on selectedSessionId (stable string) not selectedSession (object reference),
+  // so the reset doesn't fire on every parent re-render and wipe the scope prompt state.
   useEffect(() => {
     setOverrideUserId(selectedSession?.instructor_override_user_id ?? null);
     setShowScopePrompt(false);
     setShowOverrideDropdown(false);
     setPendingScope(null);
-  }, [selectedSession]);
+  }, [selectedSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleInstructorOverrideChange(staffId: string | null, scope: "single" | "all") {
     if (!selectedSessionId) return;
