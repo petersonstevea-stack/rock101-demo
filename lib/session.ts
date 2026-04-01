@@ -8,6 +8,7 @@ export type SessionUser = {
     name: string;
     role: AppUser["role"];
     schoolId: string;
+    staffId?: string;
 };
 
 type StaffRow = {
@@ -68,6 +69,7 @@ export async function findStaffUserByEmail(
         name: staffRow.name,
         role: primaryRole.role,
         schoolId: primaryRole.school_slug,
+        staffId: staffRow.id,
     };
 }
 

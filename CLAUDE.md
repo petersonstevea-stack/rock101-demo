@@ -183,6 +183,22 @@ Pike 13 is School of Rock's school management system — it handles scheduling, 
 
 ---
 
+## Terminology — Use These Terms Consistently
+
+| Term | Meaning | Notes |
+|---|---|---|
+| **Class Instructor** | Staff member who leads a group class | DB column is `director_user_id` (legacy name — do not rename). All UI labels must say "Class Instructor" |
+| **Music Director** | A real School of Rock staff role (DB value: `director`) | Keep this term exactly as-is wherever it appears |
+| **Instructor** | Staff member teaching a student's private lesson | Stored as `primary_instructor_user_id` on students |
+
+**Rules:**
+- Never use the standalone word "Director" in any UI label, button, heading, or user-facing string
+- It is always either "Class Instructor" or "Music Director" — never bare "Director"
+- `director_user_id` and `director_email` are legacy DB column names — keep them, do not rename
+- Variable names and code comments may use `director` — this rule is for UI strings only
+
+---
+
 ## Working Style — NON-NEGOTIABLE
 - **Move in small, safe, reversible steps — always**
 - **Explain everything in beginner-friendly language** — the developer is a domain expert, not a seasoned coder

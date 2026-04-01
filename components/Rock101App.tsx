@@ -147,6 +147,7 @@ export default function Rock101App() {
                         name: dbUser.name,
                         role: dbUser.role ?? "owner",
                         schoolId: mapSchoolNameToId(dbUser.school_slug),
+                        staffId: dbUser.id,
                     };
                     setCurrentUser(sessionUser);
                 }
@@ -195,6 +196,7 @@ export default function Rock101App() {
                     className: s.class_name ?? "Rock 101",
                     band: s.class_name ?? "Rock 101",
                     primaryInstructorEmail: s.primary_instructor_email ?? "",
+                    primaryInstructorUserId: s.primary_instructor_user_id ?? null,
                     curriculum: s.curriculum ?? {},
                     notes: {
                         instructor: s.notes?.instructor ?? "",
@@ -261,6 +263,7 @@ export default function Rock101App() {
                     name: c.name,
                     schoolId: c.school_id ?? "",
                     directorEmail: c.director_email ?? "",
+                    directorUserId: c.director_user_id ?? null,
                     instructorEmail: c.instructor_email ?? "",
                     dayOfWeek: c.day_of_week ?? "Monday",
                     time: c.time ?? "",
@@ -334,12 +337,29 @@ export default function Rock101App() {
 
 
     const filteredClassesBySchool = useMemo(() => {
-        if (effectiveSchoolFilter === "all") return savedClasses;
+        let classes = effectiveSchoolFilter === "all"
+            ? savedClasses
+            : savedClasses.filter((rockClass) => rockClass.schoolId === effectiveSchoolFilter);
 
-        return savedClasses.filter(
-            (rockClass) => rockClass.schoolId === effectiveSchoolFilter
-        );
-    }, [savedClasses, effectiveSchoolFilter]);
+        // Owner and GM see all classes for their school.
+        // Music Director (director) and Instructor only see classes they are assigned to:
+        //   - rock_classes.director_user_id matches their staff id, OR
+        //   - any student in rock_classes.student_ids has primary_instructor_user_id matching their staff id
+        if (role === "director" || role === "instructor") {
+            const staffId = currentUser?.staffId;
+            if (staffId) {
+                classes = classes.filter((rockClass) => {
+                    if (rockClass.directorUserId === staffId) return true;
+                    const classStudentIds: string[] = rockClass.studentIds ?? [];
+                    return students.some(
+                        (s) => classStudentIds.includes(s.id) && s.primaryInstructorUserId === staffId
+                    );
+                });
+            }
+        }
+
+        return classes;
+    }, [savedClasses, effectiveSchoolFilter, role, currentUser?.staffId, students]);
 
     const selectedClass =
         savedClasses.find((rockClass) => rockClass.id === selectedClassId) ??

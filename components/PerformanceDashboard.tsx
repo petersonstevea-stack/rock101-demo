@@ -77,7 +77,7 @@ export default function PerformanceDashboard({
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-2xl font-bold">Shows Overview</h2>
         <p className="mt-2 text-zinc-400">
-          Director view of class readiness, assigned songs, instructors, and
+          Music Director view of class readiness, assigned songs, instructors, and
           upcoming performances.
         </p>
       </div>
