@@ -58,13 +58,29 @@ function getWeekBounds(): { start: string; end: string } {
     };
 }
 
-function getStatusSummary(workflow: StudentRow["workflow"]): string {
+function getFirstName(email: string | null | undefined, staffMap: Record<string, string>): string | null {
+    if (!email) return null;
+    const fullName = staffMap[email];
+    if (!fullName) return null;
+    return fullName.split(" ")[0];
+}
+
+function getStatusSummary(workflow: StudentRow["workflow"], staffMap: Record<string, string>, primaryInstructorEmail: string | null | undefined): string[] {
     const w = workflow ?? {};
-    if (w.parentSubmitted) return "Sent";
-    if (w.instructorSubmitted && w.classInstructorSubmitted) return "Ready to send";
-    if (!w.instructorSubmitted && !w.classInstructorSubmitted) return "Waiting on instructor + class";
-    if (!w.instructorSubmitted) return "Waiting on instructor";
-    return "Waiting on class instructor";
+    if (w.parentSubmitted) return ["Sent"];
+    if (w.instructorSubmitted && w.classInstructorSubmitted) return ["Ready to send"];
+    if (!w.instructorSubmitted && !w.classInstructorSubmitted) {
+        const firstName = getFirstName(primaryInstructorEmail, staffMap);
+        return [
+            firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor",
+            "Waiting on Class Instructor",
+        ];
+    }
+    if (!w.instructorSubmitted) {
+        const firstName = getFirstName(primaryInstructorEmail, staffMap);
+        return [firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor"];
+    }
+    return ["Waiting on Class Instructor"];
 }
 
 function Check() {
@@ -251,8 +267,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                                         {col.map((student) => {
                                             const w = student.workflow ?? {};
-                                            const status = getStatusSummary(w);
-                                            const isReadyToSend = status === "Ready to send";
+                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email);
+                                            const isReadyToSend = statusLines[0] === "Ready to send";
                                             const isComplete = !!w.parentSubmitted;
 
                                             return (
@@ -278,16 +294,15 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                                             {w.parentSubmitted ? <Check /> : <Dash />}
                                                         </div>
                                                         <div className="text-right w-36">
-                                                            <span
-                                                                className="text-xs font-medium"
-                                                                style={{
-                                                                    color: status === "Sent" ? "#86efac"
-                                                                        : status === "Ready to send" ? "#cc0000"
+                                                            {statusLines.map((line, i) => (
+                                                                <div key={i} className="text-xs font-medium" style={{
+                                                                    color: line === "Sent" ? "#86efac"
+                                                                        : line === "Ready to send" ? "#cc0000"
                                                                         : "#71717a",
-                                                                }}
-                                                            >
-                                                                {status}
-                                                            </span>
+                                                                }}>
+                                                                    {line}
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 </div>
