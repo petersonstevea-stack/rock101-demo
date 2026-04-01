@@ -101,6 +101,9 @@ serve(async (req: Request) => {
     const reqLabelById: Record<string, string> = {};
     for (const r of reqs) reqLabelById[r.id] = r.label;
 
+    const behaviorLabelById: Record<string, string> = {};
+    for (const b of behaviors) behaviorLabelById[b.id] = b.label;
+
     const reqIdSet = new Set(reqs.map((r: {id: string}) => r.id));
     const behaviorIdSet = new Set(behaviors.map((b: {id: string}) => b.id));
 
@@ -146,8 +149,8 @@ serve(async (req: Request) => {
       if (!item.signed || !item.date) continue;
       const d = new Date(item.date);
       if (isNaN(d.getTime())) continue;
-      const label = lessonTitleById[key] ?? reqLabelById[key] ?? key;
-      const type = lessonTitleById[key] ? "Private Lesson" : reqLabelById[key] ? "Graduation Requirement" : "Private Lesson";
+      const label = lessonTitleById[key] ?? reqLabelById[key] ?? behaviorLabelById[key] ?? key;
+      const type = lessonTitleById[key] ? "Private Lesson" : reqLabelById[key] ? "Graduation Requirement" : behaviorLabelById[key] ? "Rockstar Habit" : "Private Lesson";
       recentItems.push({ label, date: d, dateStr: d.toLocaleDateString("en-US", { month: "long", day: "numeric" }), type });
     }
     recentItems.sort((a, b) => b.date.getTime() - a.date.getTime());
