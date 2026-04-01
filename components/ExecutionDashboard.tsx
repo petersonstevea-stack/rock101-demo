@@ -17,7 +17,8 @@ type SessionRow = {
 
 type StudentRow = {
     id: string;
-    name: string;
+    first_name: string;
+    last_initial: string | null;
     primary_instructor_email: string | null;
     workflow: {
         instructorSubmitted?: boolean;
@@ -102,7 +103,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .lte("session_date", end),
                 supabase
                     .from("students")
-                    .select("id, name, primary_instructor_email, workflow")
+                    .select("id, first_name, last_initial, primary_instructor_email, workflow")
                     .eq("school_id", schoolId)
                     .eq("active", true),
                 supabase
@@ -243,7 +244,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                 >
                                     <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
                                         <div>
-                                            <div className="text-white text-sm font-medium">{student.name}</div>
+                                            <div className="text-white text-sm font-medium">{`${student.first_name} ${student.last_initial ?? ""}`.trim()}</div>
                                             <div className="text-zinc-500 text-xs mt-0.5">{instructorName}</div>
                                         </div>
                                         <div className="text-center w-20 text-sm">
