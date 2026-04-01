@@ -43,7 +43,7 @@ function bar(pct: number, h = 6): string {
 
 function statTile(value: string, sub: string, label: string, accent = false): string {
   return `<td style="background:#1a1a1a;padding:14px 8px;text-align:center">
-    <div style="font-size:26px;font-weight:700;color:${accent ? "#cc0000" : "#fff"}">${value}</div>
+    <div style="font-size:26px;font-weight:700;color:#fff">${value}</div>
     <div style="font-size:10px;color:#cc0000;margin-top:1px">${sub}</div>
     <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.08em;margin-top:3px">${label}</div>
   </td>`;
@@ -180,14 +180,21 @@ serve(async (req: Request) => {
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%">`;
 
     html += `<tr><td style="background:#cc0000;padding:28px 28px 24px">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px">Rock 101 Weekly Progress</div>
-  <div style="font-size:28px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em">${studentName}</div>
-  <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:6px">Week of ${weekLabel}${instrLabel ? ` &bull; ${instrLabel}` : ""}</div>
-  ${rockClass && perfDateLabel ? `<div style="border-top:1px solid rgba(255,255,255,.2);margin-top:14px;padding-top:14px">
-    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:5px">Upcoming Performance</div>
-    <div style="font-size:15px;font-weight:700;color:#fff">${rockClass.performance_title ?? "Show"}</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">${perfDateLabel}${remStr}</div>
-  </div>` : ""}
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td valign="top">
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#ffffff;margin-bottom:6px">Rock 101 Weekly Progress</div>
+      <div style="font-size:28px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em">${studentName}</div>
+      <div style="font-size:13px;color:#ffffff;margin-top:6px">Week of ${weekLabel}${instrLabel ? ` &bull; ${instrLabel}` : ""}</div>
+      ${rockClass && perfDateLabel ? `<div style="border-top:1px solid rgba(255,255,255,.3);margin-top:14px;padding-top:14px">
+        <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#ffffff;margin-bottom:5px">Upcoming Performance</div>
+        <div style="font-size:15px;font-weight:700;color:#fff">${rockClass.performance_title ?? "Show"}</div>
+        <div style="font-size:12px;color:#ffffff;margin-top:3px">${perfDateLabel}${remStr}</div>
+      </div>` : ""}
+    </td>
+    <td valign="middle" align="right" width="140" style="padding-left:12px">
+      <img src="https://qkshyyydmewegfdplhfv.supabase.co/storage/v1/object/public/email-assets/guitar-swirl-white.png" width="130" height="130" alt="" style="display:block;opacity:0.15;filter:alpha(opacity=15)" />
+    </td>
+  </tr></table>
 </td></tr>`;
 
     html += `<tr><td style="background:#111;padding:16px 28px;border-top:4px solid #0a0a0a">
