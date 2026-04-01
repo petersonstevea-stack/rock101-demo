@@ -104,6 +104,7 @@ export default function AdminView({
     const [showInactiveStudents, setShowInactiveStudents] = useState(false);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const inactiveStudentCount = students.filter((student) => !student.active).length;
+    console.log("[AdminView] first student:", students[0]);
 
     useEffect(() => {
         supabase
@@ -394,7 +395,7 @@ export default function AdminView({
 
                                     return (
                                         <tr key={student.name} className="border-b border-zinc-800">
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-3 text-white">
                                                 {editingStudentRecordName === student.name ? (
                                                     <div className="grid gap-3">
                                                         <input
@@ -498,7 +499,7 @@ export default function AdminView({
                                                 )}
                                             </td>
 
-                                            <td className="px-3 py-3">
+                                            <td className="px-3 py-3 text-white">
                                                 {editingStudentName === student.name ? (
                                                     <div className="flex gap-2">
                                                         <input
@@ -535,7 +536,7 @@ export default function AdminView({
                                                 )}
                                             </td>
 
-                                            <td className="px-3 py-3">{student.parentEmail || "—"}</td>
+                                            <td className="px-3 py-3 text-white">{student.parentEmail || "—"}</td>
 
                                             <td className="px-3 py-3">
                                                 <select
