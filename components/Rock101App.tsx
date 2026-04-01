@@ -491,10 +491,11 @@ export default function Rock101App() {
             (student) => student.name === selectedStudentName
         );
 
-        if (!selectedStudentName || !hasSelectedStudent) {
+        const studentTabs: Tab[] = ["privateLesson", "groupRehearsal", "graduationRequirements", "parent", "certificate", "badges"];
+        if ((!selectedStudentName || !hasSelectedStudent) && studentTabs.includes(tab)) {
             setSelectedStudentName(visibleStudents[0].name);
         }
-    }, [visibleStudents, selectedStudentName, canManageRock101]);
+    }, [visibleStudents, selectedStudentName, canManageRock101, tab]);
     useEffect(() => {
         async function loadUsers() {
             const { data, error } = await supabase
@@ -1473,8 +1474,7 @@ export default function Rock101App() {
 
                 {role === "instructor" &&
                     tab === "classes" &&
-                    !selectedClass &&
-                    !selectedStudentName && (
+                    !selectedClass && (
                         filteredClassesBySchool.length === 0 ? (
                             <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
                                 <h2 className="text-2xl font-bold text-white">No classes found</h2>
