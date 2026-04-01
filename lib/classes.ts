@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 
-export async function getThisWeeksSessions() {
+export async function getThisWeeksSessions(schoolSlug: string) {
   // Week range: Monday 00:00 through Sunday 23:59 (inclusive)
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ...
@@ -36,5 +36,7 @@ export async function getThisWeeksSessions() {
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).filter(
+    (s: any) => s.rock_classes?.school_id === schoolSlug
+  );
 }

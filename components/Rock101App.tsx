@@ -290,7 +290,7 @@ export default function Rock101App() {
         async function loadSessions() {
             if (!currentUser?.schoolId) return;
 
-            const sessions = await getThisWeeksSessions();
+            const sessions = await getThisWeeksSessions(currentUser.schoolId);
             setWeeklySessions(sessions);
         }
 
