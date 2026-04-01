@@ -14,8 +14,6 @@ export async function getThisWeeksSessions(schoolId: string) {
   const weekStart = monday.toISOString().split("T")[0];
   const weekEnd = sunday.toISOString().split("T")[0];
 
-  console.log("[getThisWeeksSessions] schoolId:", schoolId, "week:", weekStart, "→", weekEnd);
-
   const { data, error } = await supabase
     .from("class_sessions")
     .select(`
@@ -34,8 +32,6 @@ export async function getThisWeeksSessions(schoolId: string) {
     .gte("session_date", weekStart)
     .lte("session_date", weekEnd);
 
-  console.log("[getThisWeeksSessions] raw result count:", data?.length ?? 0, "error:", error);
-
   if (error) {
     console.error("Error loading sessions:", error);
     return [];
@@ -44,8 +40,6 @@ export async function getThisWeeksSessions(schoolId: string) {
   const filtered = (data ?? []).filter(
     (s: any) => s.rock_classes?.school_id === schoolId
   );
-
-  console.log("[getThisWeeksSessions] filtered for school", schoolId, "→", filtered.length, "sessions");
 
   return filtered;
 }
