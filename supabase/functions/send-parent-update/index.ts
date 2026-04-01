@@ -66,21 +66,19 @@ serve(async (req: Request) => {
 
     const { data: student, error: sErr } = await db
       .from("students")
-      .select("first_name, last_initial, instrument, school_id, curriculum, notes, parent_email")
+      .select("first_name, last_initial, instrument, school_id, curriculum, notes, parent_email, song_readiness")
       .eq("id", studentId).single();
     if (sErr || !student) return new Response(JSON.stringify({ error: "Student not found" }), { status: 404, headers: CORS });
     if (!student.parent_email) return new Response(JSON.stringify({ error: "No parent email" }), { status: 400, headers: CORS });
 
     const curriculum: Record<string, { done?: boolean; signed?: boolean; date?: string; highFives?: number }> = student.curriculum ?? {};
-    const ago30 = new Date(Date.now() - 30*24*60*60*1000).toISOString();
 
-    const [mL, lM, gR, beh, cls, sng] = await Promise.all([
+    const [mL, lM, gR, beh, cls] = await Promise.all([
       db.from("method_lessons").select("id, title, lesson_order").eq("instrument", student.instrument).eq("is_active", true).order("lesson_order"),
       db.from("rock101_method_lesson_months").select("lesson_id, month"),
       db.from("rock101_graduation_requirements").select("id, label, month, sort_order").eq("instrument", student.instrument).eq("is_active", true).order("month").order("sort_order"),
       db.from("rock101_rehearsal_behaviors").select("id, label, required_high_fives, sort_order").eq("is_active", true).order("sort_order"),
       db.from("rock_classes").select("id, name, performance_date, performance_title, day_of_week, student_ids").eq("school_id", student.school_id),
-      db.from("session_song_readiness").select("song_name, readiness, recorded_at").eq("student_id", studentId).gte("recorded_at", ago30).order("song_name").order("recorded_at", { ascending: false }),
     ]);
 
     const lessons = mL.data ?? [];
@@ -88,7 +86,6 @@ serve(async (req: Request) => {
     const reqs = gR.data ?? [];
     const behaviors = beh.data ?? [];
     const allClasses = cls.data ?? [];
-    const songRows = sng.data ?? [];
 
     const rockClass = allClasses.find((rc) => {
       const ids: string[] = Array.isArray(rc.student_ids) ? rc.student_ids : [];
@@ -140,8 +137,12 @@ serve(async (req: Request) => {
     }
 
     const songByName: Record<string, number> = {};
-    for (const row of songRows) {
-      if (!(row.song_name in songByName)) songByName[row.song_name] = row.readiness;
+    if (rockClass) {
+      const classSongs = (student.song_readiness ?? {})[rockClass.id] ?? {};
+      for (const [songName, val] of Object.entries(classSongs)) {
+        const v = val as { readiness?: number };
+        if (typeof v?.readiness === "number") songByName[songName] = v.readiness;
+      }
     }
 
     const recentItems: Array<{ label: string; date: Date; dateStr: string; type: string }> = [];
