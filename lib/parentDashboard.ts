@@ -21,6 +21,7 @@ type CurriculumItem = {
   area?: string;
   location?: string;
   required?: boolean;
+  requiredHighFives?: number;
 };
 
 type Badge = {
@@ -57,8 +58,6 @@ function clampPercent(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-const FIST_BUMPS_TO_EARN = 10;
-
 function isItemEarned(
   item: CurriculumItem,
   progress?: {
@@ -72,7 +71,7 @@ function isItemEarned(
 
   if (
     item.location === "groupRehearsal" &&
-    (progress.highFives ?? 0) >= FIST_BUMPS_TO_EARN
+    (progress.highFives ?? 0) >= (item.requiredHighFives ?? 10)
   ) {
     return true;
   }
@@ -260,7 +259,7 @@ function getRehearsalReady(
   if (ready) {
     return {
       ready: true,
-      label: "Rehearsal Ready",
+      label: "Rockstar Habits On Track",
       description:
         "Your student is on track and looking prepared for rehearsal.",
     };
@@ -269,9 +268,9 @@ function getRehearsalReady(
   if (rehearsalReadinessPercent < 80) {
     return {
       ready: false,
-      label: "Needs Rehearsal Focus",
+      label: "Building Rockstar Habits",
       description:
-        "A few rehearsal-readiness skills still need attention before full readiness.",
+        "A few Rockstar Habits still need attention before full readiness.",
     };
   }
 
@@ -513,7 +512,7 @@ export function buildParentDashboardData({
         targetTab: "privateLesson",
       },
       rehearsalReadiness: {
-        label: "Rehearsal Readiness",
+        label: "Rockstar Habits",
         completed: rehearsalReadiness.completed,
         total: rehearsalReadiness.total,
         percent: rehearsalReadiness.percent,
