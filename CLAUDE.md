@@ -27,9 +27,27 @@ All other programs (Little Wing, Rookies, Summer Camps) are **future phase**. Re
 
 ---
 
-## Role Hierarchy
+## Staff Roles & Permissions
 
-### Per-School Roles
+DB role values (exact strings — never use any other values):
+- `owner` — full access all schools
+- `general_manager` — full access their school only
+- `music_director` — full access their school only
+- `instructor` — view all, edit only assigned classes
+
+**Never use:** `"gm"` or `"director"` as role values anywhere in code or RLS policies.
+
+**UI labels:** "Owner", "General Manager", "Music Director", "Instructor"
+
+### Permission Tiers
+
+**TIER 1 (`owner`):** Full edit + admin across all schools
+
+**TIER 2 (`general_manager`, `music_director`):** Full edit + admin for their school only
+
+**TIER 3 (`instructor`):** View all classes at their school, edit only where assigned as class instructor or session override. Graduation requirements are read-only — sign-off requires Tier 1 or Tier 2.
+
+### Role Hierarchy (display only)
 ```
 Owner (= Franchise Owner)
 └── General Manager  (peer authority with Music Director)
@@ -39,23 +57,7 @@ Owner (= Franchise Owner)
             └── Student (no login — future phase may add student login)
 ```
 
-### Actual Role Values in Database (use these exactly in RLS policies and role checks)
-| Display Name | DB Value | Notes |
-|---|---|---|
-| Owner | `owner` | Franchise owner |
-| General Manager | `gm` | Pending rename to `general_manager` |
-| Music Director | `director` | Pending rename to `music_director` |
-| Instructor | `instructor` | Stable |
-
-### ⚠️ Pending Role Value Migration
-The following `staff.role` values need to be renamed before going to multi-school production:
-- `gm` → `general_manager`
-- `director` → `music_director`
-
-Do NOT run this migration until all RLS policies and role checks in the codebase have been updated to use the new values first. Current RLS policies use the old values (`gm`, `director`, `owner`).
-
-### Critical Role Rules
-- **The "Director" role has been eliminated.** Any references to a standalone "Director" role in the codebase are legacy and must be refactored out.
+### Other Role Rules
 - **Show Director** is a *function*, not a role. Any staff member can be designated Show Director for a specific show group. It is an assignment, not a permission level.
 - The term `director_user_id` in existing tables means "the staff member assigned to lead this show/class" — not a role check.
 - Instructors can be assigned to **multiple schools** with different roles at each.
@@ -65,10 +67,6 @@ Do NOT run this migration until all RLS policies and role checks in the codebase
 ### Platform-Level Roles (above school)
 **Franchise:** International Franchise Rollup → Regional Franchise Leader → Franchise Group / Owner
 **Corporate:** Corporate System Leader → Regional Manager → District Manager → Territory Manager
-
-### Permission Model
-Role alone is not enough — the system requires **role + scope**.
-Scope examples: `global`, `franchise_rollup`, `franchise_region`, `franchise_group`, `corporate_region`, `corporate_district`, `corporate_territory`, `school`, `family`
 
 ---
 
@@ -127,10 +125,9 @@ Scope examples: `global`, `franchise_rollup`, `franchise_region`, `franchise_gro
 | `data/methodLessons.ts` | Needs `method_lessons` table first, then seed and delete |
 | `data/rock101Curriculum.ts` | Needs table design first, then seed and delete |
 
-### 4. Remove Legacy "Director" Role References (MEDIUM)
-- Search for role checks, UI labels, permission logic referencing "Director" as a role
-- Replace with assignment-based logic
-- Do NOT delete `director_user_id` / `director_email` columns until confirmed safe
+### 4. Remove Legacy "Director" Role References (DONE)
+- Role strings standardized: `gm` → `general_manager`, `director` → `music_director`
+- Do NOT delete `director_user_id` / `director_email` DB columns — still in use as class assignment fields
 
 ### 5. Evaluate Static Reference Data (MEDIUM)
 | File | Decision Needed |
@@ -188,7 +185,7 @@ Pike 13 is School of Rock's school management system — it handles scheduling, 
 | Term | Meaning | Notes |
 |---|---|---|
 | **Class Instructor** | Staff member who leads a group class | DB column is `director_user_id` (legacy name — do not rename). All UI labels must say "Class Instructor" |
-| **Music Director** | A real School of Rock staff role (DB value: `director`) | Keep this term exactly as-is wherever it appears |
+| **Music Director** | A real School of Rock staff role (DB value: `music_director`) | Keep this term exactly as-is wherever it appears |
 | **Instructor** | Staff member teaching a student's private lesson | Stored as `primary_instructor_user_id` on students |
 
 **Rules:**

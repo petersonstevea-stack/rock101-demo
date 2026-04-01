@@ -9,7 +9,7 @@ export type ProgramId =
 
 export type InstrumentId = "guitar" | "bass" | "drums" | "keys" | "vocals";
 
-export type StaffRole = "owner" | "gm" | "director" | "instructor";
+export type StaffRole = "owner" | "general_manager" | "music_director" | "instructor";
 
 export type Option<T extends string> = {
   value: T;
@@ -39,8 +39,8 @@ export const INSTRUMENT_OPTIONS: Option<InstrumentId>[] = [
 
 export const STAFF_ROLE_OPTIONS: Option<StaffRole>[] = [
   { value: "owner", label: "Owner" },
-  { value: "gm", label: "GM" },
-  { value: "director", label: "Director" },
+  { value: "general_manager", label: "General Manager" },
+  { value: "music_director", label: "Music Director" },
   { value: "instructor", label: "Instructor" },
 ];
 

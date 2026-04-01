@@ -327,7 +327,7 @@ export default function FamiliesEnrollmentPage() {
                         const instructorOptions = staffList
                             .filter(
                                 (staff) =>
-                                    (staff.role === "instructor" || staff.role === "director") &&
+                                    (staff.role === "instructor" || staff.role === "music_director") &&
                                     (!student.school || staffIdsForSchool?.has(staff.id))
                             )
                             .map((staff) => ({

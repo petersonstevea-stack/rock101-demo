@@ -41,7 +41,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "change_student_instructor",
     "change_class_director",
   ],
-  generalManager: [
+  general_manager: [
     "view_parent_dashboard",
     "view_private_lesson",
     "edit_private_lesson",
@@ -60,7 +60,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "change_student_instructor",
     "change_class_director",
   ],
-  director: [
+  music_director: [
     "view_parent_dashboard",
     "view_private_lesson",
     "view_group_rehearsal",

@@ -25,7 +25,7 @@ export const isOwner = (user: AppUser | null | undefined) =>
   user?.role === "owner";
 
 export const isGeneralManager = (user: AppUser | null | undefined) =>
-  user?.role === "generalManager";
+  user?.role === "general_manager";
 
 export const isAssignedDirectorForClass = (
   user: AppUser | null | undefined,
@@ -34,7 +34,7 @@ export const isAssignedDirectorForClass = (
   return (
     !!user &&
     !!currentClass &&
-    user.role === "director" &&
+    user.role === "music_director" &&
     user.id === currentClass.director_user_id
   );
 };

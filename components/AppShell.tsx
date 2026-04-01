@@ -5,8 +5,8 @@ import { useState } from "react";
 function getRoleLabel(role: string): string {
   switch (role) {
     case "owner": return "Owner";
-    case "gm": return "General Manager";
-    case "director": return "Music Director";
+    case "general_manager": return "General Manager";
+    case "music_director": return "Music Director";
     case "instructor": return "Instructor";
     case "parent": return "Parent";
     default: return role;

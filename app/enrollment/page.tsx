@@ -370,7 +370,7 @@ export default function EnrollmentPage() {
     const instructorOptions: SelectOption[] = staffList
         .filter(
             (staff) =>
-                (staff.role === "instructor" || staff.role === "director") &&
+                (staff.role === "instructor" || staff.role === "music_director") &&
                 (!studentValues.school || staff.school_slug === studentValues.school)
         )
         .map((staff) => ({

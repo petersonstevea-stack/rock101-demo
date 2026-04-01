@@ -159,8 +159,8 @@ export default function Rock101App() {
     useEffect(() => {
         const savedTab = getSavedTab();
 
-        if (role === "director") {
-            setTab("groupRehearsal");  // Directors always land on Group Rehearsal
+        if (role === "music_director") {
+            setTab("groupRehearsal");  // Music Directors always land on Group Rehearsal
         } else if (savedTab) {
             setTab(savedTab as Tab);  // For others, restore saved tab
         }
@@ -301,8 +301,8 @@ export default function Rock101App() {
     const role = currentUser?.role ?? null;
     const isOwner = role === "owner";
     const canManageRock101 =
-        role === "director" || role === "generalManager" || role === "owner";
-    const isGeneralManager = role === "generalManager";
+        role === "music_director" || role === "general_manager" || role === "owner";
+    const isGeneralManager = role === "general_manager";
     const canSeeManagementTabs = canManageRock101;
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
@@ -353,7 +353,7 @@ export default function Rock101App() {
         : [];
 
     const directedStudentNames = useMemo(() => {
-        if (!currentUser || role !== "director") return new Set<string>();
+        if (!currentUser || role !== "music_director") return new Set<string>();
 
         return new Set(
             filteredClassesBySchool
@@ -395,7 +395,7 @@ export default function Rock101App() {
             }
 
             if (managementLandingView === "students") {
-                if (role === "director" && studentViewFilter === "myStudents") {
+                if (role === "music_director" && studentViewFilter === "myStudents") {
                     return filteredStudentsBySchool.filter((student) => {
                         const assignedAsInstructor =
                             student.primaryInstructorEmail?.toLowerCase() ===
@@ -460,7 +460,7 @@ export default function Rock101App() {
     // matches the class's director_user_id OR the session's instructor_override_user_id.
     const canEditGroupClass =
         role === "owner" ||
-        role === "generalManager" ||
+        role === "general_manager" ||
         (!!currentUser?.staffId && (
             activeClassForSelectedStudent?.directorUserId === currentUser.staffId ||
             selectedSession?.instructor_override_user_id === currentUser.staffId
@@ -617,7 +617,7 @@ export default function Rock101App() {
     function handleSelectStudent(studentName: string) {
         setSelectedStudentName(studentName);
 
-        if (role === "director") {
+        if (role === "music_director") {
             setTab("groupRehearsal");
             saveSelectedTab("groupRehearsal");
         } else {
@@ -858,43 +858,6 @@ export default function Rock101App() {
         updateSelectedStudent((student) => ({
             ...student,
             curriculum: nextCurriculum,
-            workflow: nextWorkflow,
-        }));
-    }
-    async function handleInstructorGraduationSubmit() {
-        if (!selectedStudent) return;
-
-        if (
-            role !== "instructor" &&
-            role !== "generalManager" &&
-            role !== "owner"
-        ) {
-            alert("You do not have permission to submit instructor graduation signoff.");
-            return;
-        }
-
-        const student = selectedStudent;
-
-        const nextWorkflow = {
-            ...student.workflow,
-            graduationInstructorSubmitted: true,
-        };
-
-        const { error } = await supabase
-            .from("students")
-            .update({
-                workflow: nextWorkflow,
-            })
-            .eq("id", student.id);
-
-        if (error) {
-            console.error("Supabase graduation instructor signoff save failed:", error);
-            alert("Graduation instructor signoff save failed");
-            return;
-        }
-
-        updateSelectedStudent((student) => ({
-            ...student,
             workflow: nextWorkflow,
         }));
     }
@@ -1414,9 +1377,9 @@ export default function Rock101App() {
                     !!selectedStudentName &&
                     (tab === "parent" || tab === "privateLesson" || tab === "groupRehearsal" || tab === "graduationRequirements" || tab === "certificate") &&
                     (role === "owner" ||
-                        role === "generalManager" ||
+                        role === "general_manager" ||
                         role === "instructor" ||
-                        (role === "director" &&
+                        (role === "music_director" &&
                             currentUser?.email === activeClassForSelectedStudent?.directorEmail)) && (
                         <div className="px-6 pt-6">
                             <WorkflowBanner
@@ -1526,7 +1489,7 @@ export default function Rock101App() {
                                 </div>
                             </div>
 
-                            {role === "director" && (
+                            {role === "music_director" && (
                                 <div className="mt-6 flex gap-3">
                                     <button
                                         type="button"
@@ -1852,20 +1815,20 @@ export default function Rock101App() {
                             onToggleSigned={handleToggleSigned}
                             canEdit={
                                 role === "owner" ||
-                                role === "generalManager" ||
+                                role === "general_manager" ||
                                 (role === "instructor" &&
                                     currentUser?.email === selectedStudent.primaryInstructorEmail)
                             }
                             canSign={
                                 role === "instructor" ||
-                                role === "director" ||
-                                role === "generalManager" ||
+                                role === "music_director" ||
+                                role === "general_manager" ||
                                 role === "owner"
                             }
                         />
 
                         {(role === "owner" ||
-                            role === "generalManager" ||
+                            role === "general_manager" ||
                             (role === "instructor" &&
                                 currentUser?.email === selectedStudent.primaryInstructorEmail)) && (
                                 <NotesPanel
@@ -1879,7 +1842,7 @@ export default function Rock101App() {
                                     onSave={() => handleSaveFeedback("instructor")}
                                     canEdit={
                                         role === "owner" ||
-                                        role === "generalManager" ||
+                                        role === "general_manager" ||
                                         (role === "instructor" &&
                                             currentUser?.email === selectedStudent.primaryInstructorEmail)
                                     }
@@ -1894,36 +1857,26 @@ export default function Rock101App() {
                         <GraduationRequirementsView
                             student={selectedStudent}
                             workflow={{
-                                graduationInstructorSubmitted:
-                                    selectedStudent.workflow?.graduationInstructorSubmitted ?? false,
-                                graduationDirectorSubmitted:
+                                graduationSubmitted:
                                     selectedStudent.workflow?.graduationDirectorSubmitted ?? false,
                             }}
                             onToggleDone={handleToggleDone}
                             onToggleSigned={handleToggleSigned}
-                            onInstructorGraduationSubmit={handleInstructorGraduationSubmit}
-                            onDirectorGraduationSubmit={handleDirectorGraduationSubmit}
-                            canInstructorGraduationSubmit={
-                                role === "instructor" ||
-                                role === "generalManager" ||
-                                role === "owner"
-                            }
-                            canDirectorGraduationSubmit={
-                                role === "director" ||
-                                role === "generalManager" ||
-                                role === "owner"
+                            onGraduationSubmit={handleDirectorGraduationSubmit}
+                            canGraduationSubmit={
+                                role === "owner" ||
+                                role === "general_manager" ||
+                                role === "music_director"
                             }
                             canEdit={
-                                role === "instructor" ||
-                                role === "director" ||
-                                role === "generalManager" ||
-                                role === "owner"
+                                role === "owner" ||
+                                role === "general_manager" ||
+                                role === "music_director"
                             }
                             canSign={
-                                role === "instructor" ||
-                                role === "director" ||
-                                role === "generalManager" ||
-                                role === "owner"
+                                role === "owner" ||
+                                role === "general_manager" ||
+                                role === "music_director"
                             }
                         />
                     )}
@@ -2038,7 +1991,7 @@ export default function Rock101App() {
                     <AdminView
                         users={filteredUsersBySchool}
                         students={filteredStudentsBySchool}
-                        canManageUsers={role === "owner" || role === "generalManager"}
+                        canManageUsers={role === "owner" || role === "general_manager"}
                         onUpdateStudentParentEmail={async (studentName, parentEmail) => {
                             const targetStudent = students.find(
                                 (student) => student.name === studentName

@@ -2,8 +2,8 @@ type AppHeaderProps = {
     role:
     | "owner"
     | "instructor"
-    | "director"
-    | "generalManager"
+    | "music_director"
+    | "general_manager"
     | "parent"
     | null;
     studentName: string;

@@ -1,7 +1,7 @@
 export type UserRole =
   | "owner"
-  | "generalManager"
-  | "director"
+  | "general_manager"
+  | "music_director"
   | "instructor"
   | "parent";
 

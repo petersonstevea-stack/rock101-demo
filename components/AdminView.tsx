@@ -121,7 +121,7 @@ export default function AdminView({
             const { data: staffData, error: staffError } = await supabase
                 .from("staff")
                 .select("id, name, email, role, school_slug, school_type")
-                .in("role", ["instructor", "director"])
+                .in("role", ["instructor", "music_director"])
                 .order("name", { ascending: true });
 
             if (staffError) {

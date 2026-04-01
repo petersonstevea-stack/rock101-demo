@@ -204,13 +204,13 @@ export default function ClassDetailView({
 
   const canOverrideInstructor =
     currentUserRole === "owner" ||
-    currentUserRole === "gm" ||
-    currentUserRole === "director";
+    currentUserRole === "general_manager" ||
+    currentUserRole === "music_director";
 
   // Edit/Delete: owner, GM, or the assigned class instructor (by directorUserId or session override)
   const canEditOrDeleteClass =
     currentUserRole === "owner" ||
-    currentUserRole === "gm" ||
+    currentUserRole === "general_manager" ||
     (!!currentUserStaffId && (
       rockClass.directorUserId === currentUserStaffId ||
       selectedSession?.instructor_override_user_id === currentUserStaffId

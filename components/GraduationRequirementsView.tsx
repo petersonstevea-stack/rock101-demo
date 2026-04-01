@@ -27,18 +27,15 @@ type LessonStudent = {
     >;
 };
 type GraduationWorkflowState = {
-    graduationInstructorSubmitted: boolean;
-    graduationDirectorSubmitted: boolean;
+    graduationSubmitted: boolean;
 };
 type GraduationRequirementsViewProps = {
     student: LessonStudent;
     workflow: GraduationWorkflowState;
     onToggleDone: (item: string) => void;
     onToggleSigned: (item: string) => void;
-    onInstructorGraduationSubmit: () => void;
-    onDirectorGraduationSubmit: () => void;
-    canInstructorGraduationSubmit: boolean;
-    canDirectorGraduationSubmit: boolean;
+    onGraduationSubmit: () => void;
+    canGraduationSubmit: boolean;
     canEdit: boolean;
     canSign: boolean;
 };
@@ -100,10 +97,8 @@ export default function GraduationRequirementsView({
     workflow,
     onToggleDone,
     onToggleSigned,
-    onInstructorGraduationSubmit,
-    onDirectorGraduationSubmit,
-    canInstructorGraduationSubmit,
-    canDirectorGraduationSubmit,
+    onGraduationSubmit,
+    canGraduationSubmit,
     canEdit,
     canSign,
 }: GraduationRequirementsViewProps) {
@@ -132,64 +127,37 @@ export default function GraduationRequirementsView({
                     Graduation Workflow Status
                 </h3>
 
-                <div className="mt-3 space-y-2 text-sm text-zinc-300">
+                <div className="mt-3 text-sm text-zinc-300">
                     <div>
-                        Instructor graduation signoff:{" "}
+                        Graduation sign-off:{" "}
                         <span className="font-medium text-white">
-                            {workflow.graduationInstructorSubmitted ? "Submitted" : "Not submitted"}
-                        </span>
-                    </div>
-                    <div>
-                        Class Instructor graduation signoff:{" "}
-                        <span className="font-medium text-white">
-                            {workflow.graduationDirectorSubmitted ? "Submitted" : "Not submitted"}
+                            {workflow.graduationSubmitted ? "Submitted" : "Not submitted"}
                         </span>
                     </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-3">
-                    <button
-                        type="button"
-                        onClick={onInstructorGraduationSubmit}
-                        disabled={
-                            workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit
-                        }
-                        className={`rounded-none px-4 py-2 font-medium text-white ${workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit
-                            ? "bg-zinc-700 cursor-not-allowed"
-                            : "hover:bg-[#b30000]"
-                            }`}
-                        style={
-                            !(workflow.graduationInstructorSubmitted || !canInstructorGraduationSubmit)
-                                ? { backgroundColor: "#cc0000" }
-                                : undefined
-                        }
-                    >
-                        {workflow.graduationInstructorSubmitted
-                            ? "Instructor Signoff Complete"
-                            : "Instructor Graduation Signoff"}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onDirectorGraduationSubmit}
-                        disabled={
-                            workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit
-                        }
-                        className={`rounded-none px-4 py-2 font-medium text-white ${workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit
-                            ? "bg-zinc-700 cursor-not-allowed"
-                            : "hover:bg-[#b30000]"
-                            }`}
-                        style={
-                            !(workflow.graduationDirectorSubmitted || !canDirectorGraduationSubmit)
-                                ? { backgroundColor: "#cc0000" }
-                                : undefined
-                        }
-                    >
-                        {workflow.graduationDirectorSubmitted
-                            ? "Class Instructor Signoff Complete"
-                            : "Class Instructor Graduation Signoff"}
-                    </button>
-                </div>
+                {canGraduationSubmit && (
+                    <div className="mt-4">
+                        <button
+                            type="button"
+                            onClick={onGraduationSubmit}
+                            disabled={workflow.graduationSubmitted}
+                            className={`rounded-none px-4 py-2 font-medium text-white ${workflow.graduationSubmitted
+                                ? "bg-zinc-700 cursor-not-allowed"
+                                : "hover:bg-[#b30000]"
+                                }`}
+                            style={
+                                !workflow.graduationSubmitted
+                                    ? { backgroundColor: "#cc0000" }
+                                    : undefined
+                            }
+                        >
+                            {workflow.graduationSubmitted
+                                ? "Graduation Signoff Complete"
+                                : "Graduation Signoff"}
+                        </button>
+                    </div>
+                )}
             </div>
             <div className="space-y-10">
                 {monthGroups.map((group) => {
