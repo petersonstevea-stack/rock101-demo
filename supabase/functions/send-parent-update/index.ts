@@ -225,12 +225,12 @@ serve(async (req: Request) => {
       html += `</td></tr>`;
     }
 
-    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a;border-left:3px solid #cc0000">
+    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Private Lesson Notes</div>
   ${lessonNotes ? `<div style="background:#1a1a1a;padding:14px 16px;border-left:2px solid #cc0000;font-size:14px;line-height:1.7;color:#fff">${lessonNotes}</div>` : `<div style="color:#666;font-style:italic;font-size:13px">No lesson notes this week.</div>`}
 </td></tr>`;
 
-    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a;border-left:3px solid #cc0000">
+    html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Group Rehearsal Notes</div>
   ${rehearsalNotes ? `<div style="background:#1a1a1a;padding:14px 16px;border-left:2px solid #cc0000;font-size:14px;line-height:1.7;color:#fff">${rehearsalNotes}</div>` : `<div style="color:#666;font-style:italic;font-size:13px">No rehearsal notes this week.</div>`}
 </td></tr>`;
