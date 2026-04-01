@@ -76,6 +76,8 @@ export default function ClassDetailView({
   const [submitConfirmedAt, setSubmitConfirmedAt] = useState<string | null>(null);
   const [schoolStaff, setSchoolStaff] = useState<{ id: string; name: string }[]>([]);
   const [overrideUserId, setOverrideUserId] = useState<string | null>(null);
+  const [showScopePrompt, setShowScopePrompt] = useState(false);
+  const [pendingScope, setPendingScope] = useState<"single" | "all" | null>(null);
   const [showOverrideDropdown, setShowOverrideDropdown] = useState(false);
   const [overrideSaving, setOverrideSaving] = useState(false);
 
@@ -95,18 +97,30 @@ export default function ClassDetailView({
   // Sync override from session when session changes
   useEffect(() => {
     setOverrideUserId(selectedSession?.instructor_override_user_id ?? null);
+    setShowScopePrompt(false);
     setShowOverrideDropdown(false);
+    setPendingScope(null);
   }, [selectedSession]);
 
-  async function handleInstructorOverrideChange(staffId: string | null) {
+  async function handleInstructorOverrideChange(staffId: string | null, scope: "single" | "all") {
     if (!selectedSessionId) return;
     setOverrideSaving(true);
-    await supabase
-      .from("class_sessions")
-      .update({ instructor_override_user_id: staffId })
-      .eq("id", selectedSessionId);
+    if (scope === "all" && selectedSession?.session_date) {
+      await supabase
+        .from("class_sessions")
+        .update({ instructor_override_user_id: staffId })
+        .eq("class_id", rockClass.id)
+        .gte("session_date", selectedSession.session_date);
+    } else {
+      await supabase
+        .from("class_sessions")
+        .update({ instructor_override_user_id: staffId })
+        .eq("id", selectedSessionId);
+    }
     setOverrideUserId(staffId);
     setShowOverrideDropdown(false);
+    setShowScopePrompt(false);
+    setPendingScope(null);
     setOverrideSaving(false);
   }
 
@@ -301,26 +315,62 @@ export default function ClassDetailView({
       />
 
       {canOverrideInstructor && selectedSessionId && (
-        <div className="flex items-center gap-3 rounded-none border border-zinc-800 bg-zinc-900 px-5 py-3">
-          {!showOverrideDropdown ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-none border border-zinc-800 bg-zinc-900 px-5 py-3">
+          {!showScopePrompt && !showOverrideDropdown ? (
             <>
               <span className="text-sm text-zinc-400">Instructor:</span>
               <span className="text-sm text-white">{displayInstructorName}</span>
               <button
                 type="button"
-                onClick={() => setShowOverrideDropdown(true)}
+                onClick={() => setShowScopePrompt(true)}
                 className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
               >
                 Change
               </button>
             </>
+          ) : showScopePrompt ? (
+            <>
+              <span className="text-xs text-zinc-400">Change instructor for:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingScope("single");
+                  setShowScopePrompt(false);
+                  setShowOverrideDropdown(true);
+                }}
+                className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
+              >
+                Just this session
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingScope("all");
+                  setShowScopePrompt(false);
+                  setShowOverrideDropdown(true);
+                }}
+                className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
+              >
+                All remaining sessions
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowScopePrompt(false)}
+                className="text-xs text-zinc-500 hover:text-zinc-300"
+              >
+                Cancel
+              </button>
+            </>
           ) : (
             <>
               <span className="text-sm text-zinc-400">Instructor:</span>
+              <span className="text-xs text-zinc-500">
+                ({pendingScope === "all" ? "all remaining sessions" : "this session"})
+              </span>
               <select
                 className="rounded-none border border-zinc-700 bg-black px-3 py-1.5 text-sm text-white"
                 defaultValue={overrideUserId ?? ""}
-                onChange={(e) => handleInstructorOverrideChange(e.target.value || null)}
+                onChange={(e) => handleInstructorOverrideChange(e.target.value || null, pendingScope!)}
                 disabled={overrideSaving}
                 autoFocus
               >
@@ -333,7 +383,10 @@ export default function ClassDetailView({
               </select>
               <button
                 type="button"
-                onClick={() => setShowOverrideDropdown(false)}
+                onClick={() => {
+                  setShowOverrideDropdown(false);
+                  setPendingScope(null);
+                }}
                 className="text-xs text-zinc-500 hover:text-zinc-300"
               >
                 Cancel

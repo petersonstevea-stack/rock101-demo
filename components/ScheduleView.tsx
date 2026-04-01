@@ -62,7 +62,9 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
   const [weeksToShow, setWeeksToShow] = useState(WEEKS_PER_PAGE);
   const [loading, setLoading] = useState(true);
   const [overrideStates, setOverrideStates] = useState<Record<string, string | null>>({});
+  const [scopePromptId, setScopePromptId] = useState<string | null>(null);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [pendingScope, setPendingScope] = useState<"single" | "all" | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   // Load sessions + staff for this school slug
@@ -131,14 +133,40 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
     loadData();
   }, [loadData]);
 
-  async function handleOverrideChange(sessionId: string, staffId: string | null) {
-    setSavingId(sessionId);
-    await supabase
-      .from("class_sessions")
-      .update({ instructor_override_user_id: staffId })
-      .eq("id", sessionId);
-    setOverrideStates((prev) => ({ ...prev, [sessionId]: staffId }));
+  async function handleOverrideChange(
+    session: ScheduleSession,
+    staffId: string | null,
+    scope: "single" | "all"
+  ) {
+    setSavingId(session.id);
+    if (scope === "all" && session.rock_classes?.id) {
+      await supabase
+        .from("class_sessions")
+        .update({ instructor_override_user_id: staffId })
+        .eq("class_id", session.rock_classes.id)
+        .gte("session_date", session.session_date);
+      // Update all affected sessions in local state
+      setOverrideStates((prev) => {
+        const next = { ...prev };
+        for (const s of sessions) {
+          if (
+            s.rock_classes?.id === session.rock_classes?.id &&
+            s.session_date >= session.session_date
+          ) {
+            next[s.id] = staffId;
+          }
+        }
+        return next;
+      });
+    } else {
+      await supabase
+        .from("class_sessions")
+        .update({ instructor_override_user_id: staffId })
+        .eq("id", session.id);
+      setOverrideStates((prev) => ({ ...prev, [session.id]: staffId }));
+    }
     setActiveDropdownId(null);
+    setPendingScope(null);
     setSavingId(null);
   }
 
@@ -206,6 +234,7 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
               <div className="rounded-none border border-zinc-800 bg-zinc-900 overflow-hidden">
                 {weekSessions.map((session, idx) => {
                   const instructorName = getInstructorName(session);
+                  const isScopePrompt = scopePromptId === session.id;
                   const isDropdownOpen = activeDropdownId === session.id;
                   const isSaving = savingId === session.id;
                   const classDefault =
@@ -233,25 +262,61 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
                       </div>
 
                       {/* Instructor + change control */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        {!isDropdownOpen ? (
+                      <div className="flex items-center gap-3 shrink-0 flex-wrap justify-end">
+                        {!isScopePrompt && !isDropdownOpen ? (
                           <>
                             <span className="text-sm text-zinc-300">{instructorName}</span>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(session.id)}
+                              onClick={() => setScopePromptId(session.id)}
                               className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
                             >
                               Change
                             </button>
                           </>
+                        ) : isScopePrompt ? (
+                          <>
+                            <span className="text-xs text-zinc-400">Change instructor for:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPendingScope("single");
+                                setScopePromptId(null);
+                                setActiveDropdownId(session.id);
+                              }}
+                              className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
+                            >
+                              Just this session
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPendingScope("all");
+                                setScopePromptId(null);
+                                setActiveDropdownId(session.id);
+                              }}
+                              className="rounded-none bg-zinc-700 px-3 py-1 text-xs text-white hover:bg-zinc-600"
+                            >
+                              All remaining sessions
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setScopePromptId(null)}
+                              className="text-xs text-zinc-500 hover:text-zinc-300"
+                            >
+                              Cancel
+                            </button>
+                          </>
                         ) : (
                           <>
+                            <span className="text-xs text-zinc-400">
+                              {pendingScope === "all" ? "All remaining sessions:" : "This session:"}
+                            </span>
                             <select
                               className="rounded-none border border-zinc-700 bg-black px-3 py-1.5 text-sm text-white"
                               defaultValue={overrideStates[session.id] ?? ""}
                               onChange={(e) =>
-                                handleOverrideChange(session.id, e.target.value || null)
+                                handleOverrideChange(session, e.target.value || null, pendingScope!)
                               }
                               disabled={isSaving}
                               autoFocus
@@ -265,7 +330,10 @@ export default function ScheduleView({ schoolSlug }: ScheduleViewProps) {
                             </select>
                             <button
                               type="button"
-                              onClick={() => setActiveDropdownId(null)}
+                              onClick={() => {
+                                setActiveDropdownId(null);
+                                setPendingScope(null);
+                              }}
                               className="text-xs text-zinc-500 hover:text-zinc-300"
                             >
                               Cancel
