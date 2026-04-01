@@ -220,7 +220,7 @@ serve(async (req: Request) => {
       html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Completed This Week</div>`;
       for (const entry of completedThisWeek) {
-        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px;border-left:2px solid #cc0000"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">&#10003; ${entry.title}</td><td align="right" style="font-size:10px;color:#cc0000;white-space:nowrap">${entry.type}</td></tr></table></div>`;
+        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">&#10003; ${entry.title}</td><td align="right" style="font-size:10px;color:#cc0000;white-space:nowrap">${entry.type}</td></tr></table></div>`;
       }
       html += `</td></tr>`;
     }
@@ -262,7 +262,7 @@ serve(async (req: Request) => {
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#999;margin-bottom:12px">Recent Activity</div>`;
     if (top5Recent.length > 0) {
       for (const entry of top5Recent) {
-        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px;border-left:2px solid #cc0000"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${entry.label}</td><td align="right" style="font-size:11px;color:#999;white-space:nowrap">${entry.dateStr}</td></tr><tr><td style="font-size:10px;color:#cc0000;padding-top:2px">${entry.type}</td><td></td></tr></table></div>`;
+        html += `<div style="background:#1a1a1a;padding:10px 14px;margin-bottom:3px"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-size:13px;color:#fff">${entry.label}</td><td align="right" style="font-size:11px;color:#999;white-space:nowrap">${entry.dateStr}</td></tr><tr><td style="font-size:10px;color:#cc0000;padding-top:2px">${entry.type}</td><td></td></tr></table></div>`;
       }
     } else {
       html += `<div style="color:#666;font-style:italic;font-size:13px">No signed items yet.</div>`;
