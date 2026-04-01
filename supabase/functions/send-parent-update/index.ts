@@ -163,6 +163,12 @@ serve(async (req: Request) => {
       ? new Date(rockClass.performance_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
       : null;
 
+    let remStr = "";
+    if (rockClass && perfDateLabel) {
+      if (remaining === 0) remStr = " &bull; <span style=\"color:#fff\">Show week!</span>";
+      else if (remaining !== null) remStr = ` &bull; <span style="color:rgba(255,255,255,.7)">${remaining} rehearsal${remaining === 1 ? "" : "s"} remaining</span>`;
+    }
+
     let html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>Rock 101</title></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif">
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a">
@@ -173,6 +179,11 @@ serve(async (req: Request) => {
   <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px">Rock 101 Weekly Progress</div>
   <div style="font-size:28px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em">${studentName}</div>
   <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:6px">Week of ${weekLabel}${instrLabel ? ` &bull; ${instrLabel}` : ""}</div>
+  ${rockClass && perfDateLabel ? `<div style="border-top:1px solid rgba(255,255,255,.2);margin-top:14px;padding-top:14px">
+    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:5px">Upcoming Performance</div>
+    <div style="font-size:15px;font-weight:700;color:#fff">${rockClass.performance_title ?? "Show"}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">${perfDateLabel}${remStr}</div>
+  </div>` : ""}
 </td></tr>`;
 
     html += `<tr><td style="background:#111;padding:16px 28px;border-top:4px solid #0a0a0a">
@@ -183,20 +194,9 @@ serve(async (req: Request) => {
     <td width="4"></td>
     ${statTile(`${behaviorsPct}%`, `${behaviorsSigned}/${behaviorsTotal} complete`, "Group Rehearsal")}
     <td width="4"></td>
-    ${statTile(`${totalHF}`, `positive moments`, "Rehearsal Awards")}
+    ${statTile(`${totalHF}`, `Rockstar Habits`, "Rehearsal Awards")}
   </tr></table>
 </td></tr>`;
-
-    if (rockClass && perfDateLabel) {
-      let remStr = "";
-      if (remaining === 0) remStr = " &bull; <span style=\"color:#fff\">Show week!</span>";
-      else if (remaining !== null) remStr = ` &bull; <span style="color:#fff">${remaining} rehearsal${remaining === 1 ? "" : "s"} remaining</span>`;
-      html += `<tr><td style="background:#111;padding:20px 28px;border-top:4px solid #0a0a0a;border-left:4px solid #cc0000">
-  <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#cc0000;margin-bottom:8px">Upcoming Performance</div>
-  <div style="font-size:17px;font-weight:700;color:#fff">${rockClass.performance_title ?? "Show"}</div>
-  <div style="font-size:13px;color:#999;margin-top:4px">${perfDateLabel}${remStr}</div>
-</td></tr>`;
-    }
 
     if (completedThisWeek.length > 0) {
       html += `<tr><td style="background:#111;padding:24px 28px;border-top:4px solid #0a0a0a">
