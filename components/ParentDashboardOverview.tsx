@@ -227,7 +227,7 @@ function NotesPanelCard({
             </div>
 
             {hasContent ? (
-                <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-zinc-400">
+                <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-white">
                     {value}
                 </div>
             ) : (
@@ -330,7 +330,7 @@ export default function ParentDashboardOverview({
                     </div>
                     <div className="shrink-0 text-right">
                         <div className="text-xs uppercase tracking-[0.18em] text-zinc-400">Next Show</div>
-                        <div className="mt-1 text-lg font-bold text-white">
+                        <div className="mt-1 text-[1.6875rem] font-bold text-white">
                             {formatPerformanceDate(data.student.nextPerformanceDate)}
                         </div>
                     </div>
@@ -401,7 +401,7 @@ export default function ParentDashboardOverview({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* LEFT — Song Progress */}
                     <div className="space-y-3">
-                        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white">
                             Song Progress
                         </div>
                         {data.songs.length > 0 ? (
@@ -438,7 +438,7 @@ export default function ParentDashboardOverview({
 
                     {/* RIGHT — Metrics */}
                     <div className="space-y-3">
-                        <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                        <div className="text-xs uppercase tracking-[0.18em] text-white">
                             Curriculum Progress
                         </div>
                         <ProgressNavCard
