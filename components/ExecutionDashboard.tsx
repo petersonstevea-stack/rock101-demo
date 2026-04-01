@@ -62,6 +62,7 @@ function getStatusSummary(workflow: StudentRow["workflow"]): string {
     const w = workflow ?? {};
     if (w.parentSubmitted) return "Sent";
     if (w.instructorSubmitted && w.classInstructorSubmitted) return "Ready to send";
+    if (!w.instructorSubmitted && !w.classInstructorSubmitted) return "Waiting on instructor + class";
     if (!w.instructorSubmitted) return "Waiting on instructor";
     return "Waiting on class instructor";
 }
@@ -109,8 +110,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .eq("active", true),
                 supabase
                     .from("staff")
-                    .select("email, name")
-                    .eq("school_id", schoolId),
+                    .select("email, name"),
             ]);
 
             if (sessionsResult.error) {
