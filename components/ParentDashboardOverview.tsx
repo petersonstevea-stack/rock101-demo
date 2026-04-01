@@ -337,7 +337,7 @@ export default function ParentDashboardOverview({
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <NotesPanelCard
                     title={
                         data.notesMeta.lessonAuthorName
@@ -359,12 +359,6 @@ export default function ParentDashboardOverview({
                     emptyText="No group rehearsal notes have been added yet."
                     lastUpdated={rehearsalLastUpdated}
                     authorName={data.notesMeta.rehearsalAuthorName}
-                />
-                <NotesPanelCard
-                    title={`Rock 101 Class: ${data.student.className}`}
-                    value={data.classFeedback ?? ""}
-                    emptyText="No class update has been added yet."
-                    lastUpdated={null}
                 />
             </section>
 
@@ -464,6 +458,12 @@ export default function ParentDashboardOverview({
                             value={data.progress.graduationRequirements.percent}
                             meta={`${data.progress.graduationRequirements.completed}/${data.progress.graduationRequirements.total}`}
                             onClick={() => onNavigate?.(data.progress.graduationRequirements.targetTab)}
+                        />
+                        <NotesPanelCard
+                            title={`Rock 101 Class: ${data.student.className}`}
+                            value={data.classFeedback ?? ""}
+                            emptyText="No class update has been added yet."
+                            lastUpdated={null}
                         />
                     </div>
                 </div>
