@@ -219,7 +219,7 @@ export default function Rock101App() {
                             s.workflow?.graduationDirectorSubmitted ?? false,
                         parentSubmitted: s.workflow?.parentSubmitted ?? false,
                     },
-                    songReadiness: {},
+                    songReadiness: s.song_readiness ?? {},
                 };
             });
             const safeStudents = isOwner

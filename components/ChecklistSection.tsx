@@ -142,12 +142,12 @@ export default function ChecklistSection({
                                         <button
                                             type="button"
                                             onClick={() => onToggleSigned(item.id)}
-                                            className={`rounded-none px-3 py-2 text-sm font-medium transition ${state?.signed
+                                            className={`rounded-none px-3 py-2 text-sm font-medium transition ${(state?.signed || earned)
                                                 ? "bg-zinc-700 text-white hover:bg-zinc-600"
                                                 : "bg-[#cc0000] text-white hover:bg-[#b30000]"
                                                 }`}
                                         >
-                                            {state?.signed ? "Signed" : "Sign"}
+                                            {(state?.signed || earned) ? "Signed" : "Sign"}
                                         </button>
                                     )}
                                 </div>
