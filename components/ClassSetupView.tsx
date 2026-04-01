@@ -303,14 +303,20 @@ export default function ClassSetupView({
             const batchSize = 20;
             for (let i = 0; i < sessionDates.length; i += batchSize) {
                 const batch = sessionDates.slice(i, i + batchSize);
-                await supabase.from("class_sessions").upsert(
+                const { error: batchError } = await supabase.from("class_sessions").upsert(
                     batch.map((date) => ({
                         class_id: classId,
                         session_date: date,
                         status: "scheduled",
                     })),
-                    { onConflict: "class_id,session_date", ignoreDuplicates: true }
+                    { onConflict: "class_id,session_date" }
                 );
+                if (batchError) {
+                    console.error("Session batch error:", batchError);
+                    setSaving(false);
+                    setSaveMessage("Class saved but session generation failed: " + batchError.message);
+                    return;
+                }
             }
 
             const formattedStart = new Date(firstSessionDate + "T00:00:00").toLocaleDateString(
