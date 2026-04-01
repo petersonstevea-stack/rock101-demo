@@ -317,13 +317,13 @@ export default function ParentDashboardOverview({
                             <span className="text-white">{data.student.name}</span>
                         </h1>
                         <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-300">
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                            <span className="rounded-none bg-[#cc0000] px-3 py-1">
                                 {data.student.instrument}
                             </span>
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                            <span className="rounded-none bg-[#cc0000] px-3 py-1">
                                 {data.student.className}
                             </span>
-                            <span className="rounded-none bg-[#333333] px-3 py-1">
+                            <span className="rounded-none bg-[#cc0000] px-3 py-1">
                                 {data.student.schoolName}
                             </span>
                         </div>
