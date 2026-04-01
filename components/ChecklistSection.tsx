@@ -6,6 +6,7 @@ type ChecklistItem = {
     location?: string;
     allowedSigner?: string;
     required?: boolean;
+    requiredHighFives?: number;
 };
 
 type ChecklistSectionProps = {
@@ -28,8 +29,6 @@ type ChecklistSectionProps = {
     showHeader?: boolean;
 };
 
-const FIST_BUMPS_TO_EARN = 10;
-
 function isItemEarned(
     item: ChecklistItem,
     state?: {
@@ -41,7 +40,7 @@ function isItemEarned(
 ) {
     if (!state) return false;
 
-    if (item.location === "groupRehearsal" && state.highFives >= FIST_BUMPS_TO_EARN) {
+    if (item.location === "groupRehearsal" && state.highFives >= (item.requiredHighFives ?? 10)) {
         return true;
     }
 
@@ -98,7 +97,7 @@ export default function ChecklistSection({
                     const highFives = state?.highFives ?? 0;
                     const earnedByFistBumps =
                         item.location === "groupRehearsal" &&
-                        highFives >= FIST_BUMPS_TO_EARN &&
+                        highFives >= (item.requiredHighFives ?? 10) &&
                         !state?.signed;
 
                     return (
@@ -135,7 +134,7 @@ export default function ChecklistSection({
                                             onClick={() => onAddFistBump(item.id)}
                                             className="rounded-none bg-zinc-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
                                         >
-                                            🙌 High Fives {highFives}/{FIST_BUMPS_TO_EARN}
+                                            🏆 Awards {highFives}/{item.requiredHighFives ?? 10}
                                         </button>
                                     )}
 

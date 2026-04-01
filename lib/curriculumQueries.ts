@@ -17,6 +17,7 @@ export type CurriculumItem = {
     required: boolean;
     month?: CurriculumMonth;
     monthLabel?: string;
+    requiredHighFives?: number;
 };
 
 export const ROCK101_MONTH_LABELS: Record<CurriculumMonth, string> = {
@@ -64,7 +65,7 @@ export async function fetchGraduationRequirements(instrument: string): Promise<C
 export async function fetchRehearsalBehaviors(): Promise<CurriculumItem[]> {
     const { data, error } = await supabase
         .from("rock101_rehearsal_behaviors")
-        .select("id, label, required, month")
+        .select("id, label, required, month, required_high_fives")
         .order("sort_order", { ascending: true });
 
     if (error) {
@@ -81,6 +82,7 @@ export async function fetchRehearsalBehaviors(): Promise<CurriculumItem[]> {
         required: row.required,
         month: (row.month ?? undefined) as CurriculumMonth | undefined,
         monthLabel: row.month ? ROCK101_MONTH_LABELS[row.month as CurriculumMonth] : undefined,
+        requiredHighFives: row.required_high_fives ?? 10,
     }));
 }
 
