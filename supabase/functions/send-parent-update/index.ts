@@ -199,7 +199,7 @@ serve(async (req: Request) => {
 
     html += `<tr><td style="background:#111;padding:16px 28px;border-top:4px solid #0a0a0a">
   <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-    ${statTile(`${methodPct}%`, `${methodDone}/${methodTotal} complete`, "Method App Lessons", true)}
+    ${statTile(`${methodPct}%`, `${methodDone}/${methodTotal} complete`, "Method Lessons", true)}
     <td width="4"></td>
     ${statTile(`${gradPct}%`, `${gradSigned}/${gradTotal} complete`, "Graduation Reqs")}
     <td width="4"></td>
