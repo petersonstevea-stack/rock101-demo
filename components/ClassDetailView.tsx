@@ -89,7 +89,8 @@ export default function ClassDetailView({
       .select("id, name")
       .eq("school_slug", schoolSlug)
       .order("name")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        console.log("[ClassDetailView] staff loaded:", data, "error:", error);
         if (data) setSchoolStaff(data as { id: string; name: string }[]);
       });
   }, [schoolSlug]);
@@ -105,19 +106,25 @@ export default function ClassDetailView({
   }, [selectedSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleInstructorOverrideChange(staffId: string | null, scope: "single" | "all") {
-    if (!selectedSessionId) return;
+    console.log("[ClassDetailView] handleInstructorOverrideChange called:", { staffId, scope, selectedSessionId });
+    if (!selectedSessionId) {
+      console.warn("[ClassDetailView] selectedSessionId is null — update aborted");
+      return;
+    }
     setOverrideSaving(true);
     if (scope === "all" && selectedSession?.session_date) {
-      await supabase
+      const { error } = await supabase
         .from("class_sessions")
         .update({ instructor_override_user_id: staffId })
         .eq("class_id", rockClass.id)
         .gte("session_date", selectedSession.session_date);
+      console.log("[ClassDetailView] bulk update error:", error);
     } else {
-      await supabase
+      const { error } = await supabase
         .from("class_sessions")
         .update({ instructor_override_user_id: staffId })
         .eq("id", selectedSessionId);
+      console.log("[ClassDetailView] single update error:", error, "sessionId:", selectedSessionId);
     }
     setOverrideUserId(staffId);
     setShowOverrideDropdown(false);
