@@ -79,7 +79,6 @@ export default function ClassDetailView({
   const [showScopePrompt, setShowScopePrompt] = useState(false);
   const [pendingScope, setPendingScope] = useState<"single" | "all" | null>(null);
   const [addStudentSearch, setAddStudentSearch] = useState("");
-  const [rosterSearch, setRosterSearch] = useState("");
   const [showOverrideDropdown, setShowOverrideDropdown] = useState(false);
   const [overrideSaving, setOverrideSaving] = useState(false);
 
@@ -610,34 +609,8 @@ export default function ClassDetailView({
         {students.length === 0 ? (
           <p className="mt-4 text-zinc-300">No students assigned to this class.</p>
         ) : (
-          <>
-            <div className="relative mt-4">
-              <input
-                type="text"
-                value={rosterSearch}
-                onChange={(e) => setRosterSearch(e.target.value)}
-                placeholder="Search students..."
-                className="w-full rounded-none border border-zinc-700 bg-zinc-950 px-4 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
-              />
-              {rosterSearch && (
-                <button
-                  type="button"
-                  onClick={() => setRosterSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {students.filter((student) => {
-              if (!rosterSearch.trim()) return true;
-              const q = rosterSearch.toLowerCase();
-              return (
-                student.name?.toLowerCase().includes(q) ||
-                student.instrument?.toLowerCase().includes(q)
-              );
-            }).map((student) => (
+            {students.map((student) => (
               <div
                 key={student.id ?? student.name}
                 className="rounded-none border border-zinc-800 bg-zinc-950 p-4"
@@ -676,7 +649,6 @@ export default function ClassDetailView({
               </div>
             ))}
           </div>
-          </>
         )}
       </div>
       <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">

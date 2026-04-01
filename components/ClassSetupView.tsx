@@ -63,6 +63,7 @@ export default function ClassSetupView({
     const [performanceDate, setPerformanceDate] = useState("");
     const [saveMessage, setSaveMessage] = useState("");
     const [saving, setSaving] = useState(false);
+    const [studentSearch, setStudentSearch] = useState("");
 
     useEffect(() => {
         if (mode !== "edit" || !classToEdit) {
@@ -511,8 +512,30 @@ export default function ClassSetupView({
 
                 <div>
                     <label className="mb-2 block text-sm text-zinc-400">Select Students</label>
+                    <div className="relative mb-3">
+                        <input
+                            type="text"
+                            value={studentSearch}
+                            onChange={(e) => setStudentSearch(e.target.value)}
+                            placeholder="Search students..."
+                            className="w-full rounded-none border border-zinc-700 bg-black px-4 py-2 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                        />
+                        {studentSearch && (
+                            <button
+                                type="button"
+                                onClick={() => setStudentSearch("")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                        {availableStudents.map((student) => (
+                        {availableStudents.filter((student) => {
+                            if (!studentSearch.trim()) return true;
+                            const q = studentSearch.toLowerCase();
+                            return student.name.toLowerCase().includes(q);
+                        }).map((student) => (
                             <label
                                 key={student.id}
                                 className="flex items-center gap-3 rounded-none border border-zinc-800 bg-black px-4 py-3"
