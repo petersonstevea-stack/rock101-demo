@@ -448,16 +448,16 @@ export default function ParentDashboardOverview({
                             onClick={() => onNavigate?.(data.progress.rehearsalReadiness.targetTab)}
                         />
                         <ProgressNavCard
-                            label={data.progress.certificate.label}
-                            value={data.progress.certificate.percent}
-                            meta={`${data.progress.certificate.completed}/${data.progress.certificate.total}`}
-                            onClick={() => onNavigate?.(data.progress.certificate.targetTab)}
-                        />
-                        <ProgressNavCard
                             label={data.progress.graduationRequirements.label}
                             value={data.progress.graduationRequirements.percent}
                             meta={`${data.progress.graduationRequirements.completed}/${data.progress.graduationRequirements.total}`}
                             onClick={() => onNavigate?.(data.progress.graduationRequirements.targetTab)}
+                        />
+                        <ProgressNavCard
+                            label={data.progress.certificate.label}
+                            value={data.progress.certificate.percent}
+                            meta={`${data.progress.certificate.completed}/${data.progress.certificate.total}`}
+                            onClick={() => onNavigate?.(data.progress.certificate.targetTab)}
                         />
                         <NotesPanelCard
                             title={`Rock 101 Class: ${data.student.className}`}
