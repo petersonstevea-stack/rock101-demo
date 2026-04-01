@@ -329,6 +329,37 @@ export default function ParentDashboardOverview({
                 </div>
             </section>
 
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <NotesPanelCard
+                    title={
+                        data.notesMeta.lessonAuthorName
+                            ? `${formatNameShort(data.notesMeta.lessonAuthorName)}'s lesson notes for ${data.student.name}`
+                            : `Lesson Notes for ${data.student.name}`
+                    }
+                    value={lessonNotes}
+                    emptyText="No private lesson notes have been added yet."
+                    lastUpdated={lessonLastUpdated}
+                    authorName={data.notesMeta.lessonAuthorName}
+                />
+                <NotesPanelCard
+                    title={
+                        data.notesMeta.rehearsalAuthorName
+                            ? `${formatNameShort(data.notesMeta.rehearsalAuthorName)}'s rehearsal notes for ${data.student.name}`
+                            : `Rehearsal Notes for ${data.student.name}`
+                    }
+                    value={rehearsalNotes}
+                    emptyText="No group rehearsal notes have been added yet."
+                    lastUpdated={rehearsalLastUpdated}
+                    authorName={data.notesMeta.rehearsalAuthorName}
+                />
+                <NotesPanelCard
+                    title={`Rock 101 Class: ${data.student.className}`}
+                    value={data.classFeedback ?? ""}
+                    emptyText="No class update has been added yet."
+                    lastUpdated={null}
+                />
+            </section>
+
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
                     {...data.stats.privateLessons}
@@ -428,53 +459,14 @@ export default function ParentDashboardOverview({
                     </div>
                 </SectionCard>
 
-                <SectionCard title="Notes & Summary">
-                    <div className="space-y-4">
-
-                        {/* ✅ LESSON NOTES */}
-                        <NotesPanelCard
-                            title={
-                                data.notesMeta.lessonAuthorName
-                                    ? `${formatNameShort(data.notesMeta.lessonAuthorName)}'s lesson notes for ${data.student.name}`
-                                    : `Lesson Notes for ${data.student.name}`
-                            }
-                            value={lessonNotes}
-                            emptyText="No private lesson notes have been added yet."
-                            lastUpdated={lessonLastUpdated}
-                            authorName={data.notesMeta.lessonAuthorName}
-                        />
-
-                        {/* ✅ REHEARSAL NOTES */}
-                        <NotesPanelCard
-                            title={
-                                data.notesMeta.rehearsalAuthorName
-                                    ? `${formatNameShort(data.notesMeta.rehearsalAuthorName)}'s rehearsal notes for ${data.student.name}`
-                                    : `Rehearsal Notes for ${data.student.name}`
-                            }
-                            value={rehearsalNotes}
-                            emptyText="No group rehearsal notes have been added yet."
-                            lastUpdated={rehearsalLastUpdated}
-                            authorName={data.notesMeta.rehearsalAuthorName}
-                        />
-
-                        {/* ✅ CLASS FEEDBACK */}
-                        <NotesPanelCard
-                            title={`Rock 101 Class: ${data.student.className}`}
-                            value={data.classFeedback ?? ""}
-                            emptyText="No class update has been added yet."
-                            lastUpdated={null}
-                        />
-
-                        {/* ✅ SUMMARY */}
-                        <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
-                            <div className="text-base font-semibold text-white">
-                                {data.summary.title}
-                            </div>
-                            <div className="mt-3 text-sm leading-7 text-zinc-400">
-                                {data.summary.text}
-                            </div>
+                <SectionCard title="Summary">
+                    <div className="rounded-none border-l-2 border-l-[#cc0000] bg-[#1a1a1a] p-4">
+                        <div className="text-base font-semibold text-white">
+                            {data.summary.title}
                         </div>
-
+                        <div className="mt-3 text-sm leading-7 text-zinc-400">
+                            {data.summary.text}
+                        </div>
                     </div>
                 </SectionCard>
             </section>
