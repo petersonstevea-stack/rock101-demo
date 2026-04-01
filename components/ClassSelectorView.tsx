@@ -50,6 +50,10 @@ export default function ClassSelectorView({
     users.map((user) => [user.email, user.name])
   );
 
+  const staffIdMap = Object.fromEntries(
+    users.filter((user) => user.id).map((user) => [user.id!, user.name])
+  );
+
   const classMap = Object.fromEntries(
     classes.map((rockClass) => [rockClass.id, rockClass])
   );
@@ -69,10 +73,12 @@ export default function ClassSelectorView({
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {weeklySessions.map((session) => {
               const rockClass = classMap[session.rock_classes?.id];
-              const classInstructorName =
-                rockClass?.classInstructorEmail
+              const overrideId = session.instructor_override_user_id;
+              const classInstructorName = overrideId
+                ? (staffIdMap[overrideId] ?? "Unknown")
+                : rockClass?.classInstructorEmail
                   ? instructorMap[rockClass.classInstructorEmail] ||
-                  rockClass.classInstructorEmail
+                    rockClass.classInstructorEmail
                   : "Not assigned";
 
               return (

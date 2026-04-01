@@ -8,6 +8,7 @@ export type UserRole =
 export type UserStatus = "active" | "inactive" | "invited";
 
 export type AppUser = {
+  id?: string;
   email: string;
   name: string;
   role: UserRole;

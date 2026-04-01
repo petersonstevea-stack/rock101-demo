@@ -513,6 +513,7 @@ export default function Rock101App() {
 
             if (data) {
                 const formattedUsers = data.map((u) => ({
+                    id: u.id,
                     name: u.name,
                     email: u.email,
                     role: u.role,
