@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 export type CurriculumArea = "graduation" | "requiredLessons" | "rehearsalReadiness";
 export type CurriculumLocation = "privateLesson" | "groupRehearsal";
-export type AllowedSigner = "instructor" | "director" | "either";
+export type AllowedSigner = "instructor" | "class_instructor" | "either";
 export type CurriculumMonth = 1 | 2 | 3 | 4;
 
 export type CurriculumItem = {
@@ -78,7 +78,7 @@ export async function fetchRehearsalBehaviors(): Promise<CurriculumItem[]> {
         label: row.label,
         area: "rehearsalReadiness" as const,
         location: "groupRehearsal" as const,
-        allowedSigner: "director" as const,
+        allowedSigner: "class_instructor" as const,
         required: row.required,
         month: (row.month ?? undefined) as CurriculumMonth | undefined,
         monthLabel: row.month ? ROCK101_MONTH_LABELS[row.month as CurriculumMonth] : undefined,

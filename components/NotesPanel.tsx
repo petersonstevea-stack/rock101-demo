@@ -1,5 +1,5 @@
 type NotesPanelProps = {
-  role: "instructor" | "director";
+  role: "instructor" | "class_instructor";
   value: string;
   saved: boolean;
   onChange: (value: string) => void;

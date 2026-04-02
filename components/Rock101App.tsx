@@ -215,11 +215,11 @@ export default function Rock101App() {
                     curriculum: s.curriculum ?? {},
                     notes: {
                         instructor: s.notes?.instructor ?? "",
-                        director: s.notes?.director ?? "",
+                        class_instructor: s.notes?.class_instructor ?? "",
                         instructorUpdatedAt: s.notes?.instructorUpdatedAt ?? null,
-                        directorUpdatedAt: s.notes?.directorUpdatedAt ?? null,
+                        classInstructorUpdatedAt: s.notes?.classInstructorUpdatedAt ?? null,
                         instructorUpdatedBy: s.notes?.instructorUpdatedBy ?? null,
-                        directorUpdatedBy: s.notes?.directorUpdatedBy ?? null,
+                        classInstructorUpdatedBy: s.notes?.classInstructorUpdatedBy ?? null,
                     },
                     workflow: {
                         instructorSubmitted: s.workflow?.instructorSubmitted ?? false,
@@ -599,7 +599,7 @@ export default function Rock101App() {
             groupRehearsalItems,
             songProgress: dashboardSongProgress,
             lessonAuthorName: selectedStudent.notes?.instructorUpdatedBy ?? null,
-            rehearsalAuthorName: selectedStudent.notes?.directorUpdatedBy ?? null,
+            rehearsalAuthorName: selectedStudent.notes?.classInstructorUpdatedBy ?? null,
             classFeedback,
             badges: [],
         });
@@ -1080,7 +1080,7 @@ export default function Rock101App() {
     }
 
     function handleNoteChange(
-        roleType: "instructor" | "director",
+        roleType: "instructor" | "class_instructor",
         value: string
     ) {
         updateSelectedStudent((student) => ({
@@ -1096,7 +1096,7 @@ export default function Rock101App() {
                         ? false
                         : student.workflow.instructorSubmitted,
                 classInstructorSubmitted:
-                    roleType === "director"
+                    roleType === "class_instructor"
                         ? false
                         : student.workflow.classInstructorSubmitted,
                 parentSubmitted: false,
@@ -1104,7 +1104,7 @@ export default function Rock101App() {
         }));
     }
 
-    async function handleSaveFeedback(roleType: "instructor" | "director") {
+    async function handleSaveFeedback(roleType: "instructor" | "class_instructor") {
         if (!selectedStudent) return;
 
         const student = selectedStudent;
@@ -1112,12 +1112,12 @@ export default function Rock101App() {
         const timestampKey =
             roleType === "instructor"
                 ? "instructorUpdatedAt"
-                : "directorUpdatedAt";
+                : "classInstructorUpdatedAt";
 
         const updatedByKey =
             roleType === "instructor"
                 ? "instructorUpdatedBy"
-                : "directorUpdatedBy";
+                : "classInstructorUpdatedBy";
 
         const now = new Date().toLocaleString();
         const author = currentUser?.name ?? currentUser?.email ?? "Unknown";
@@ -1135,7 +1135,7 @@ export default function Rock101App() {
                     ? true
                     : student.workflow.instructorSubmitted,
             classInstructorSubmitted:
-                roleType === "director"
+                roleType === "class_instructor"
                     ? true
                     : student.workflow.classInstructorSubmitted,
         };
@@ -1169,7 +1169,7 @@ export default function Rock101App() {
                         ? true
                         : student.workflow.instructorSubmitted,
                 classInstructorSubmitted:
-                    roleType === "director"
+                    roleType === "class_instructor"
                         ? true
                         : student.workflow.classInstructorSubmitted,
             },
@@ -2040,14 +2040,14 @@ export default function Rock101App() {
                                         Class Instructor Weekly Feedback
                                     </div>
                                     <NotesPanel
-                                        role="director"
+                                        role="class_instructor"
                                         authorName={currentUser?.name}
                                         studentName={selectedStudent.name}
                                         context="rehearsal"
-                                        value={selectedStudent.notes.director}
+                                        value={selectedStudent.notes.class_instructor}
                                         saved={selectedStudent.workflow.classInstructorSubmitted}
-                                        onChange={(v) => handleNoteChange("director", v)}
-                                        onSave={() => handleSaveFeedback("director")}
+                                        onChange={(v) => handleNoteChange("class_instructor", v)}
+                                        onSave={() => handleSaveFeedback("class_instructor")}
                                         canEdit={canEditGroupClass}
                                     />
                                 </>
@@ -2064,12 +2064,12 @@ export default function Rock101App() {
                             <ParentDashboardOverview
                                 data={parentDashboardData}
                                 lessonNotes={selectedStudent.notes.instructor}
-                                rehearsalNotes={selectedStudent.notes.director}
+                                rehearsalNotes={selectedStudent.notes.class_instructor}
                                 lessonLastUpdated={
                                     (
                                         selectedStudent.notes as typeof selectedStudent.notes & {
                                             instructorUpdatedAt?: string | null;
-                                            directorUpdatedAt?: string | null;
+                                            classInstructorUpdatedAt?: string | null;
                                         }
                                     ).instructorUpdatedAt ?? null
                                 }
@@ -2077,9 +2077,9 @@ export default function Rock101App() {
                                     (
                                         selectedStudent.notes as typeof selectedStudent.notes & {
                                             instructorUpdatedAt?: string | null;
-                                            directorUpdatedAt?: string | null;
+                                            classInstructorUpdatedAt?: string | null;
                                         }
-                                    ).directorUpdatedAt ?? null
+                                    ).classInstructorUpdatedAt ?? null
                                 }
                                 onNavigate={(nextTab) => handleSetTab(nextTab)}
                             />
