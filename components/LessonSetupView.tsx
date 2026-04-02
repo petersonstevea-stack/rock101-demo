@@ -23,6 +23,16 @@ function generateTimeOptions(): string[] {
 }
 
 const TIME_OPTIONS = generateTimeOptions();
+
+function formatTime(time: string | null): string {
+  if (!time) return "Time not set";
+  const [hours, minutes] = time.split(":");
+  const h = Number(hours);
+  const m = String(minutes).padStart(2, "0");
+  const suffix = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${suffix}`;
+}
 const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -413,7 +423,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                                             </span>
                                         </div>
                                         <div className="mt-1 text-zinc-500 text-xs">
-                                            {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${enrollment.start_time}` : ""}
+                                            {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${formatTime(enrollment.start_time)}` : ""}
                                         </div>
                                     </div>
                                     <button
