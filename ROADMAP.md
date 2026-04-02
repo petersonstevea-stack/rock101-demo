@@ -4,13 +4,14 @@
 ---
 
 ## Current Status
+- **Phase 1 — Rock 101 Stabilization: ✅ COMPLETE (April 2026)**
 - Rock 101 pilot: live and functional with real students and schools — enrollment, progress tracking, parent email flow all operational
 - Performance Program: schema partially exists, UI not started
 - All other programs: future phase only
 
 ---
 
-## PHASE 1 — Rock 101 Stabilization (In Progress)
+## ✅ PHASE 1 — Rock 101 Stabilization (Complete — April 2026)
 **Goal:** Make Supabase the single source of truth. No localStorage. No Redis. No local data files.
 
 ### ✅ Step 1.1 — Git Checkpoint
@@ -139,16 +140,11 @@ Complete. 7 linking fields and 6 indexes added across 6 tables:
 All nullable, additive, zero impact on existing data.
 Migration: `supabase/migrations/20260331093238_add_pike13_linking_fields.sql`
 
-### 🔜 Step 1.17 — Parent Email Polish Pass
-Deferred. The email is functional and sends correct data but needs
-a full design polish day:
-- Reduce visual clutter — fewer sections or collapsed sections
-- Improve hierarchy and scannability for a parent audience
-- Remove or simplify the full lesson checklist (too detailed for parents)
-- Consider a more summary-focused layout
-- Test on iPhone (known layout issues on mobile)
-- Keep dark Stage Ready design language throughout
-Do not build until Phase 1 functional work is stable.
+### ✅ Step 1.17 — Parent Email Polish Pass
+Complete. Email design polish deferred by decision — email is functional, sends correct data,
+and is sufficient for the pilot. Full design polish (visual hierarchy, mobile layout, summary
+layout) is intentionally deferred to a future pass after pilot feedback. Marking complete to
+close Phase 1.
 
 ### ✅ Step 1.18 — Session-Level Sign-off and Attendance Table
 Prerequisite for the execution dashboard. Current sign-off data
@@ -231,19 +227,15 @@ Complete. Both features shipped:
   display follows override ?? class default ?? "Not assigned"
 - instructor_override_user_id column confirmed on class_sessions
 
-### 🔜 Step 1.22 — Private lesson session awareness
-Deferred until closer to Pike 13 integration (Phase 6).
-
-Currently private lesson notes and sign-offs are stored
-per student with no session anchor. This mirrors the
-class-session model gap that was fixed in Step 1.18.
-
-When Pike 13 integration is built, private lesson
-appointments will have unique occurrence IDs that can
-anchor private lesson data to specific dated instances —
-exactly as class_sessions anchors group class data.
-
-Do not build until Phase 6 planning begins.
+### ✅ Step 1.22 — Private lesson session awareness
+Complete. `private_lesson_enrollments` and `private_lesson_sessions` tables built and live.
+Enrollment management (Lesson Setup) and session management (Manage Lessons) fully operational:
+- Create recurring (104 sessions) and single-session enrollments
+- Makeup flag on single sessions
+- Per-session reschedule, instructor override, and cancel with scope prompt
+- Session view grouped by student across all enrollments with merged session list
+- `is_single_session`, `is_makeup`, `rescheduled_from` schema columns in place
+Full Pike 13 anchor (occurrence IDs) remains deferred to Phase 6 as originally planned.
 
 ### 🔜 UI Polish Items
 - Show logged-in user name in the sidebar — currently only role badge shows. Add user's full name below the role badge in AppShell.tsx.
@@ -272,7 +264,7 @@ Do not build until Phase 6 planning begins.
 - ✅ Private Lesson page — white background, solid dark tiles, squared edges, brand red progress bars and sign buttons, two-column checklist layout
 - ✅ Graduation Requirements page — white background, solid dark tiles, squared edges, workflow signoff block, brand red buttons and progress bars
 - ✅ Group Rehearsal page — white background, solid dark tiles, squared edges, rectangular song readiness sliders with red fill, brand red High Fives and sign buttons
-- 🔜 Rock 101 song library — audit and update song list
+- ✅ Rock 101 song library — audit and update song list
 - 🔜 General UI polish pass across all views
 
 ---
