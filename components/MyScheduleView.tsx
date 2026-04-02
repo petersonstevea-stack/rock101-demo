@@ -9,8 +9,7 @@ type ClassSessionRow = {
     id: string;
     session_date: string;
     start_time: string | null;
-    end_time: string | null;
-    notes: string | null;
+    class_instructor_notes: string | null;
     instructor_override_user_id: string | null;
     rock_classes: {
         id: string;
@@ -135,7 +134,7 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
             const [classRes, lessonRes] = await Promise.all([
                 supabase
                     .from("class_sessions")
-                    .select("id, session_date, start_time, end_time, notes, instructor_override_user_id, rock_classes(id, name, school_id, student_ids, class_instructor_id)")
+                    .select("id, session_date, start_time, class_instructor_notes, instructor_override_user_id, rock_classes!class_id(id, name, school_id, student_ids, class_instructor_id)")
                     .gte("session_date", dateStart)
                     .lte("session_date", dateEnd),
 
@@ -210,7 +209,7 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
     function renderClassCard(session: ClassSessionRow) {
         const rc = session.rock_classes;
         const studentCount = rc?.student_ids?.length ?? 0;
-        const hasNotes = !!session.notes?.trim();
+        const hasNotes = !!session.class_instructor_notes?.trim();
 
         return (
             <div
@@ -223,7 +222,6 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
                         <div className="mt-1 text-zinc-400 text-xs">
                             {formatSessionDate(session.session_date)}
                             {session.start_time ? ` · ${formatTime(session.start_time)}` : ""}
-                            {session.end_time ? ` – ${formatTime(session.end_time)}` : ""}
                         </div>
                         <div className="mt-1 text-zinc-500 text-xs">
                             {studentCount} {studentCount === 1 ? "student" : "students"}
