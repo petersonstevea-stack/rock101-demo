@@ -129,6 +129,8 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
         const dateStart = mode === "today" ? today : start;
         const dateEnd = mode === "today" ? today : end;
 
+        console.log("[MyScheduleView] loadData", { staffId, schoolId, dateStart, dateEnd });
+
         try {
             const [classRes, lessonRes] = await Promise.all([
                 supabase
@@ -147,6 +149,7 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
 
             // Filter class sessions to this staff member
             const rawClasses = (classRes.data ?? []) as unknown as ClassSessionRow[];
+            console.log("[MyScheduleView] rawClasses count:", rawClasses.length, "first item rock_classes:", rawClasses[0]?.rock_classes ?? null);
             const myClasses = rawClasses.filter((s) => {
                 if (!s.rock_classes) return false;
                 return (
