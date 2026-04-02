@@ -186,15 +186,14 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
             const batch = sessionDates.slice(i, i + batchSize);
             const { error: batchError } = await supabase
                 .from("private_lesson_sessions")
-                .upsert(
+                .insert(
                     batch.map((date) => ({
                         enrollment_id: enrollmentId,
                         student_id: selectedStudentId,
                         instructor_id: instructorId,
                         session_date: date,
                         status: "scheduled",
-                    })),
-                    { onConflict: "enrollment_id,session_date" }
+                    }))
                 );
             if (batchError) {
                 setSaving(false);
