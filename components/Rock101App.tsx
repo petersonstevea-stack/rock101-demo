@@ -29,6 +29,7 @@ import ClassSelectorView from "@/components/ClassSelectorView";
 import ClassDetailView from "@/components/ClassDetailView";
 import ScheduleView from "@/components/ScheduleView";
 import ExecutionDashboard from "@/components/ExecutionDashboard";
+import LessonSetupView from "@/components/LessonSetupView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -56,6 +57,7 @@ type Tab =
     | "bandsDashboard"
     | "pipeline"
     | "executionDashboard"
+    | "lessonSetup"
     | "admin";
 
 type CurriculumState = {
@@ -2070,6 +2072,13 @@ export default function Rock101App() {
                     <PipelineView students={filteredStudentsBySchool} />
                 )}
 
+
+                {tab === "lessonSetup" && canSeeManagementTabs && (
+                    <LessonSetupView
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        users={filteredUsersBySchool}
+                    />
+                )}
 
                 {tab === "executionDashboard" && canSeeManagementTabs && (
                     <ExecutionDashboard

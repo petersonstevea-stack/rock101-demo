@@ -35,6 +35,7 @@ const SCHOOL_NAV_BASE: NavItem[] = [
 // Visible to management only (owner, general_manager, music_director)
 const SCHOOL_NAV_MANAGEMENT: NavItem[] = [
   { tab: "classSetup", label: "Class Setup" },
+  { tab: "lessonSetup", label: "Lesson Setup" },
   { tab: "bandsDashboard", label: "Bands" },
   { tab: "pipeline", label: "Pipeline" },
   { tab: "executionDashboard", label: "Exceptions" },
