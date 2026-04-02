@@ -83,6 +83,12 @@ type CancelState = {
     scope: "single" | "future" | null;
 };
 
+type RescheduleState = {
+    sessionId: string;
+    sessionDate: string;
+    enrollmentId: string;
+};
+
 type LessonSetupViewProps = {
     schoolId: string;
     users: AppUser[];
@@ -118,6 +124,12 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
     const [changingInstructor, setChangingInstructor] = useState<ChangeInstructorState | null>(null);
     const [selectedOverrideInstructorId, setSelectedOverrideInstructorId] = useState("");
     const [cancelling, setCancelling] = useState<CancelState | null>(null);
+    const [rescheduling, setRescheduling] = useState<RescheduleState | null>(null);
+    const [rescheduleDate, setRescheduleDate] = useState("");
+
+    // Create form — session type
+    const [isSingleSession, setIsSingleSession] = useState(false);
+    const [isMakeup, setIsMakeup] = useState(false);
 
     useEffect(() => {
         if (!schoolId) return;
@@ -221,6 +233,28 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         await loadSessionsForEnrollment(enrollmentId);
     }
 
+    async function handleReschedule() {
+        if (!rescheduling || !rescheduleDate) return;
+        const { sessionId, sessionDate, enrollmentId } = rescheduling;
+
+        const { error } = await supabase
+            .from("private_lesson_sessions")
+            .update({
+                session_date: rescheduleDate,
+                rescheduled_from: sessionDate,
+            })
+            .eq("id", sessionId);
+
+        if (error) {
+            alert(`Error rescheduling session: ${error.message}`);
+            return;
+        }
+
+        setRescheduling(null);
+        setRescheduleDate("");
+        await loadSessionsForEnrollment(enrollmentId);
+    }
+
     const filteredStudents = useMemo(() => {
         if (!studentSearch.trim()) return students;
         const q = studentSearch.toLowerCase();
@@ -244,8 +278,11 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
             year: "numeric",
         });
         const timePart = startTime ? ` at ${startTime}` : "";
+        if (isSingleSession) {
+            return `${dayName}${timePart} — 1 session on ${formatted}`;
+        }
         return `${dayName}s${timePart} — generating 104 sessions from ${formatted}`;
-    }, [firstSessionDate, startTime]);
+    }, [firstSessionDate, startTime, isSingleSession]);
 
     function resetForm() {
         setSelectedStudentId("");
@@ -256,6 +293,8 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         setStartTime("");
         setFirstSessionDate("");
         setSaveMessage("");
+        setIsSingleSession(false);
+        setIsMakeup(false);
     }
 
     async function handleSave() {
@@ -285,6 +324,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                 start_time: startTime,
                 first_session_date: firstSessionDate,
                 active: true,
+                is_single_session: isSingleSession,
             });
 
         if (enrollError) {
@@ -293,38 +333,60 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
             return;
         }
 
-        // Generate 104 weekly sessions in batches of 20
-        const sessionDates: string[] = [];
-        for (let i = 0; i < 104; i++) {
-            const d = new Date(firstSessionDate + "T00:00:00");
-            d.setDate(d.getDate() + i * 7);
-            sessionDates.push(d.toISOString().slice(0, 10));
-        }
-
-        const batchSize = 20;
-        for (let i = 0; i < sessionDates.length; i += batchSize) {
-            const batch = sessionDates.slice(i, i + batchSize);
-            const { error: batchError } = await supabase
+        if (isSingleSession) {
+            // Generate exactly 1 session
+            const { error: sessionError } = await supabase
                 .from("private_lesson_sessions")
-                .insert(
-                    batch.map((date) => ({
-                        enrollment_id: enrollmentId,
-                        student_id: selectedStudentId,
-                        instructor_id: instructorId,
-                        session_date: date,
-                        status: "scheduled",
-                    }))
-                );
-            if (batchError) {
+                .insert({
+                    enrollment_id: enrollmentId,
+                    student_id: selectedStudentId,
+                    instructor_id: instructorId,
+                    session_date: firstSessionDate,
+                    status: "scheduled",
+                    is_makeup: isMakeup,
+                });
+            if (sessionError) {
                 setSaving(false);
-                setSaveMessage("Enrollment saved but session generation failed: " + batchError.message);
+                setSaveMessage("Enrollment saved but session generation failed: " + sessionError.message);
                 await loadEnrollments();
                 return;
             }
+            setSaving(false);
+            setSaveMessage("Enrollment created · 1 session generated");
+        } else {
+            // Generate 104 weekly sessions in batches of 20
+            const sessionDates: string[] = [];
+            for (let i = 0; i < 104; i++) {
+                const d = new Date(firstSessionDate + "T00:00:00");
+                d.setDate(d.getDate() + i * 7);
+                sessionDates.push(d.toISOString().slice(0, 10));
+            }
+
+            const batchSize = 20;
+            for (let i = 0; i < sessionDates.length; i += batchSize) {
+                const batch = sessionDates.slice(i, i + batchSize);
+                const { error: batchError } = await supabase
+                    .from("private_lesson_sessions")
+                    .insert(
+                        batch.map((date) => ({
+                            enrollment_id: enrollmentId,
+                            student_id: selectedStudentId,
+                            instructor_id: instructorId,
+                            session_date: date,
+                            status: "scheduled",
+                        }))
+                    );
+                if (batchError) {
+                    setSaving(false);
+                    setSaveMessage("Enrollment saved but session generation failed: " + batchError.message);
+                    await loadEnrollments();
+                    return;
+                }
+            }
+            setSaving(false);
+            setSaveMessage("Enrollment created · 104 sessions generated");
         }
 
-        setSaving(false);
-        setSaveMessage("Enrollment created · 104 sessions generated");
         resetForm();
         await loadEnrollments();
     }
@@ -366,6 +428,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                             const instructorName = resolveInstructorName(session, enrollment.instructor_id);
                             const isChanging = changingInstructor?.sessionId === session.id;
                             const isCancelling = cancelling?.sessionId === session.id;
+                            const isRescheduling = rescheduling?.sessionId === session.id;
 
                             return (
                                 <div key={session.id} className="bg-[#111111] rounded-none px-3 py-2.5">
@@ -387,12 +450,13 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                 {session.status === "scheduled" ? "Scheduled" : "Cancelled"}
                                             </span>
                                         </div>
-                                        {!isChanging && !isCancelling && (
+                                        {!isChanging && !isCancelling && !isRescheduling && (
                                             <div className="flex gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         setCancelling(null);
+                                                        setRescheduling(null);
                                                         setChangingInstructor({
                                                             sessionId: session.id,
                                                             sessionDate: session.session_date,
@@ -409,6 +473,23 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                     type="button"
                                                     onClick={() => {
                                                         setChangingInstructor(null);
+                                                        setCancelling(null);
+                                                        setRescheduling({
+                                                            sessionId: session.id,
+                                                            sessionDate: session.session_date,
+                                                            enrollmentId: enrollment.id,
+                                                        });
+                                                        setRescheduleDate("");
+                                                    }}
+                                                    className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
+                                                >
+                                                    Reschedule
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setChangingInstructor(null);
+                                                        setRescheduling(null);
                                                         setCancelling({
                                                             sessionId: session.id,
                                                             sessionDate: session.session_date,
@@ -481,6 +562,35 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                     </button>
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+
+                                    {/* Reschedule flow */}
+                                    {isRescheduling && (
+                                        <div className="mt-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <input
+                                                    type="date"
+                                                    value={rescheduleDate}
+                                                    onChange={(e) => setRescheduleDate(e.target.value)}
+                                                    className="rounded-none border border-zinc-700 bg-black px-3 py-1.5 text-white text-xs focus:outline-none"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleReschedule}
+                                                    disabled={!rescheduleDate}
+                                                    className={`${smallBtnClass} bg-[#cc0000] hover:bg-[#b30000] disabled:opacity-50`}
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setRescheduling(null); setRescheduleDate(""); }}
+                                                    className="text-zinc-500 text-xs hover:text-white"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
 
@@ -570,6 +680,27 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                         </select>
                     </div>
 
+                    {/* Session type toggle */}
+                    <div className="md:col-span-2">
+                        <label className={labelClass}>Session Type</label>
+                        <div className="flex">
+                            <button
+                                type="button"
+                                onClick={() => { setIsSingleSession(false); setIsMakeup(false); }}
+                                className={`rounded-none px-4 py-2.5 text-sm font-medium transition ${!isSingleSession ? "bg-[#cc0000] text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"}`}
+                            >
+                                Recurring (weekly)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsSingleSession(true)}
+                                className={`rounded-none px-4 py-2.5 text-sm font-medium transition ${isSingleSession ? "bg-[#cc0000] text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"}`}
+                            >
+                                Single Session
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Instructor */}
                     <div>
                         <label className={labelClass}>Instructor</label>
@@ -600,19 +731,21 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                         </select>
                     </div>
 
-                    {/* Day of week */}
-                    <div>
-                        <label className={labelClass}>Day of Week</label>
-                        <select
-                            value={dayOfWeek}
-                            onChange={(e) => setDayOfWeek(e.target.value)}
-                            className={inputClass}
-                        >
-                            {DAY_OPTIONS.map((d) => (
-                                <option key={d} value={d}>{d}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* Day of week — recurring only */}
+                    {!isSingleSession && (
+                        <div>
+                            <label className={labelClass}>Day of Week</label>
+                            <select
+                                value={dayOfWeek}
+                                onChange={(e) => setDayOfWeek(e.target.value)}
+                                className={inputClass}
+                            >
+                                {DAY_OPTIONS.map((d) => (
+                                    <option key={d} value={d}>{d}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Start time */}
                     <div>
@@ -629,9 +762,9 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                         </select>
                     </div>
 
-                    {/* First session date */}
+                    {/* Session date */}
                     <div className="md:col-span-2">
-                        <label className={labelClass}>First Session Date</label>
+                        <label className={labelClass}>{isSingleSession ? "Session Date" : "First Session Date"}</label>
                         <input
                             type="date"
                             value={firstSessionDate}
@@ -640,6 +773,17 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                         />
                         {firstSessionPreview && (
                             <p className="mt-2 text-sm text-zinc-400">{firstSessionPreview}</p>
+                        )}
+                        {isSingleSession && (
+                            <label className="mt-3 flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isMakeup}
+                                    onChange={(e) => setIsMakeup(e.target.checked)}
+                                    className="rounded-none accent-[#cc0000]"
+                                />
+                                <span className="text-sm text-zinc-400">This is a makeup lesson</span>
+                            </label>
                         )}
                     </div>
                 </div>
