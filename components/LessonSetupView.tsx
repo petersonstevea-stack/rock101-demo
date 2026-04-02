@@ -39,7 +39,7 @@ type StudentRow = {
 type EnrollmentRow = {
     id: string;
     student_id: string;
-    instructor_email: string | null;
+    instructor_id: string | null;
     instrument: string;
     program: string;
     day_of_week: string;
@@ -61,7 +61,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
     const [students, setStudents] = useState<StudentRow[]>([]);
     const [studentSearch, setStudentSearch] = useState("");
     const [selectedStudentId, setSelectedStudentId] = useState("");
-    const [instructorEmail, setInstructorEmail] = useState("");
+    const [instructorId, setInstructorId] = useState("");
     const [instrument, setInstrument] = useState("");
     const [program, setProgram] = useState("rock101");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
@@ -94,7 +94,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
         setLoadingEnrollments(true);
         const { data } = await supabase
             .from("private_lesson_enrollments")
-            .select("id, student_id, instructor_email, instrument, program, day_of_week, start_time, active, students(first_name, last_initial)")
+            .select("id, student_id, instructor_id, instrument, program, day_of_week, start_time, active, students(first_name, last_initial)")
             .eq("school_id", schoolId)
             .eq("active", true)
             .order("day_of_week");
@@ -131,7 +131,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
     function resetForm() {
         setSelectedStudentId("");
         setStudentSearch("");
-        setInstructorEmail("");
+        setInstructorId("");
         setInstrument("");
         setProgram("rock101");
         setDayOfWeek("Monday");
@@ -142,7 +142,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
 
     async function handleSave() {
         if (!selectedStudentId) { alert("Please select a student."); return; }
-        if (!instructorEmail) { alert("Please select an instructor."); return; }
+        if (!instructorId) { alert("Please select an instructor."); return; }
         if (!instrument) { alert("Please select an instrument."); return; }
         if (!firstSessionDate) { alert("Please select a first session date."); return; }
 
@@ -158,7 +158,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                 id: enrollmentId,
                 school_id: schoolId,
                 student_id: selectedStudentId,
-                instructor_email: instructorEmail,
+                instructor_id: instructorId,
                 instrument,
                 program,
                 day_of_week: derivedDay,
@@ -190,7 +190,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                     batch.map((date) => ({
                         enrollment_id: enrollmentId,
                         student_id: selectedStudentId,
-                        instructor_email: instructorEmail,
+                        instructor_id: instructorId,
                         session_date: date,
                         status: "scheduled",
                     })),
@@ -272,13 +272,13 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                     <div>
                         <label className={labelClass}>Instructor</label>
                         <select
-                            value={instructorEmail}
-                            onChange={(e) => setInstructorEmail(e.target.value)}
+                            value={instructorId}
+                            onChange={(e) => setInstructorId(e.target.value)}
                             className={inputClass}
                         >
                             <option value="">Select instructor</option>
-                            {instructorUsers.map((u) => (
-                                <option key={u.email} value={u.email}>{u.name}</option>
+                            {instructorUsers.filter((u) => u.id).map((u) => (
+                                <option key={u.id} value={u.id!}>{u.name}</option>
                             ))}
                         </select>
                     </div>
@@ -386,8 +386,8 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                 ) : (
                     <div className="grid gap-2 mt-4">
                         {enrollments.map((enrollment) => {
-                            const instructorUser = users.find((u) => u.email === enrollment.instructor_email);
-                            const instructorName = instructorUser?.name ?? enrollment.instructor_email ?? "—";
+                            const instructorUser = users.find((u) => u.id === enrollment.instructor_id);
+                            const instructorName = instructorUser?.name ?? enrollment.instructor_id ?? "—";
                             const studentName = enrollment.students
                                 ? `${enrollment.students.first_name} ${enrollment.students.last_initial ?? ""}`.trim()
                                 : enrollment.student_id;
