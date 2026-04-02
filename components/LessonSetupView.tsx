@@ -89,13 +89,15 @@ type CancelState = {
 type LessonSetupViewProps = {
     schoolId: string;
     users: AppUser[];
+    mode?: "create" | "manage";
+    onNavigateToManage?: () => void;
 };
 
 const inputClass = "w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none";
 const labelClass = "mb-2 block text-sm text-zinc-400";
 const smallBtnClass = "rounded-none px-2.5 py-1 text-xs font-medium text-white transition";
 
-export default function LessonSetupView({ schoolId, users }: LessonSetupViewProps) {
+export default function LessonSetupView({ schoolId, users, mode = "create", onNavigateToManage }: LessonSetupViewProps) {
     // Form state
     const [students, setStudents] = useState<StudentRow[]>([]);
     const [studentSearch, setStudentSearch] = useState("");
@@ -529,7 +531,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
         <div className="p-6 space-y-6">
 
             {/* SECTION 1 — CREATE ENROLLMENT */}
-            <div className="bg-[#111111] rounded-none p-5">
+            {mode === "create" && <div className="bg-[#111111] rounded-none p-5">
                 <h2 className="sor-display text-3xl md:text-4xl leading-none">
                     <span style={{ color: "#cc0000" }}>CREATE</span>
                     <span className="ml-2 text-white italic normal-case">Enrollment</span>
@@ -671,11 +673,20 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                     {saveMessage && (
                         <span className="text-sm text-zinc-300">{saveMessage}</span>
                     )}
+                    {onNavigateToManage && (
+                        <button
+                            type="button"
+                            onClick={onNavigateToManage}
+                            className="rounded-none bg-zinc-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 transition"
+                        >
+                            Manage Lessons →
+                        </button>
+                    )}
                 </div>
-            </div>
+            </div>}
 
             {/* SECTION 2 — ACTIVE ENROLLMENTS */}
-            <div className="bg-[#111111] rounded-none p-5">
+            {mode === "manage" && <div className="bg-[#111111] rounded-none p-5">
                 <h2 className="sor-display text-3xl md:text-4xl leading-none">
                     <span style={{ color: "#cc0000" }}>ACTIVE</span>
                     <span className="ml-2 text-white italic normal-case">Enrollments</span>
@@ -748,7 +759,7 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                         })}
                     </div>
                 )}
-            </div>
+            </div>}
         </div>
     );
 }

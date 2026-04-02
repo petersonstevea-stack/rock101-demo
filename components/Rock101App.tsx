@@ -60,6 +60,7 @@ type Tab =
     | "pipeline"
     | "executionDashboard"
     | "lessonSetup"
+    | "manageLessons"
     | "mySchedule"
     | "myProfile"
     | "admin";
@@ -2140,6 +2141,16 @@ export default function Rock101App() {
                     <LessonSetupView
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         users={filteredUsersBySchool}
+                        mode="create"
+                        onNavigateToManage={() => handleSetTab("manageLessons")}
+                    />
+                )}
+
+                {tab === "manageLessons" && canSeeManagementTabs && (
+                    <LessonSetupView
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        users={filteredUsersBySchool}
+                        mode="manage"
                     />
                 )}
 
