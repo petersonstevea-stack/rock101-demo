@@ -71,6 +71,24 @@ type SessionRow = {
     is_makeup: boolean;
 };
 
+type StudentLessonRow = {
+    studentId: string;
+    studentName: string;
+    enrollments: EnrollmentRow[];
+};
+
+type MergedSessionRow = {
+    id: string;
+    session_date: string;
+    status: string;
+    instructor_id: string | null;
+    instructor_override_id: string | null;
+    is_makeup: boolean;
+    instrument: string;
+    enrollment_id: string;
+    is_single_session: boolean;
+};
+
 type ChangeInstructorState = {
     sessionId: string;
     sessionDate: string;
@@ -117,11 +135,12 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
 
     // Enrollments list
     const [enrollments, setEnrollments] = useState<EnrollmentRow[]>([]);
+    const [studentRows, setStudentRows] = useState<StudentLessonRow[]>([]);
     const [loadingEnrollments, setLoadingEnrollments] = useState(true);
 
     // Session management state
-    const [expandedEnrollmentId, setExpandedEnrollmentId] = useState<string | null>(null);
-    const [enrollmentSessions, setEnrollmentSessions] = useState<Record<string, SessionRow[]>>({});
+    const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
+    const [enrollmentSessions, setEnrollmentSessions] = useState<Record<string, MergedSessionRow[]>>({});
     const [loadingSessions, setLoadingSessions] = useState<string | null>(null);
     const [changingInstructor, setChangingInstructor] = useState<ChangeInstructorState | null>(null);
     const [selectedOverrideInstructorId, setSelectedOverrideInstructorId] = useState("");
@@ -157,36 +176,65 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
             .eq("school_id", schoolId)
             .eq("active", true)
             .order("day_of_week");
-        setEnrollments((data ?? []) as unknown as EnrollmentRow[]);
+        const rows = (data ?? []) as unknown as EnrollmentRow[];
+        setEnrollments(rows);
+
+        // Group by student
+        const studentMap: Record<string, StudentLessonRow> = {};
+        for (const e of rows) {
+            if (!studentMap[e.student_id]) {
+                const s = e.students;
+                const name = s ? `${s.first_name} ${s.last_initial ?? ""}`.trim() : e.student_id;
+                studentMap[e.student_id] = { studentId: e.student_id, studentName: name, enrollments: [] };
+            }
+            studentMap[e.student_id].enrollments.push(e);
+        }
+        const sorted = Object.values(studentMap).sort((a, b) =>
+            a.studentName.localeCompare(b.studentName)
+        );
+        setStudentRows(sorted);
         setLoadingEnrollments(false);
     }
 
-    async function loadSessionsForEnrollment(enrollmentId: string) {
-        setLoadingSessions(enrollmentId);
+    async function loadSessionsForStudent(studentId: string, studentEnrollments: EnrollmentRow[]) {
+        setLoadingSessions(studentId);
         const today = new Date().toISOString().slice(0, 10);
-        const { data } = await supabase
-            .from("private_lesson_sessions")
-            .select("id, session_date, status, instructor_id, instructor_override_id, is_makeup")
-            .eq("enrollment_id", enrollmentId)
-            .eq("status", "scheduled")
-            .gte("session_date", today)
-            .order("session_date")
-            .limit(12);
-        setEnrollmentSessions((prev) => ({ ...prev, [enrollmentId]: (data ?? []) as SessionRow[] }));
+        const results = await Promise.all(
+            studentEnrollments.map((e) =>
+                supabase
+                    .from("private_lesson_sessions")
+                    .select("id, session_date, status, instructor_id, instructor_override_id, is_makeup")
+                    .eq("enrollment_id", e.id)
+                    .eq("status", "scheduled")
+                    .gte("session_date", today)
+                    .order("session_date")
+                    .limit(12)
+                    .then(({ data }) =>
+                        (data ?? []).map((s) => ({
+                            ...s,
+                            instrument: e.instrument,
+                            enrollment_id: e.id,
+                            is_single_session: e.is_single_session,
+                        } as MergedSessionRow))
+                    )
+            )
+        );
+        const merged = results.flat().sort((a, b) => a.session_date.localeCompare(b.session_date));
+        setEnrollmentSessions((prev) => ({ ...prev, [studentId]: merged }));
         setLoadingSessions(null);
     }
 
-    function toggleExpand(enrollmentId: string) {
-        if (expandedEnrollmentId === enrollmentId) {
-            setExpandedEnrollmentId(null);
+    function toggleExpand(studentId: string, studentEnrollments: EnrollmentRow[]) {
+        if (expandedStudentId === studentId) {
+            setExpandedStudentId(null);
             setChangingInstructor(null);
             setCancelling(null);
         } else {
-            setExpandedEnrollmentId(enrollmentId);
+            setExpandedStudentId(studentId);
             setChangingInstructor(null);
             setCancelling(null);
-            if (!enrollmentSessions[enrollmentId]) {
-                loadSessionsForEnrollment(enrollmentId);
+            if (!enrollmentSessions[studentId]) {
+                loadSessionsForStudent(studentId, studentEnrollments);
             }
         }
     }
@@ -211,7 +259,10 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
 
         setChangingInstructor(null);
         setSelectedOverrideInstructorId("");
-        await loadSessionsForEnrollment(enrollmentId);
+        if (expandedStudentId) {
+            const sr = studentRows.find((r) => r.studentId === expandedStudentId);
+            if (sr) await loadSessionsForStudent(expandedStudentId, sr.enrollments);
+        }
     }
 
     async function handleCancel(scope: "single" | "future") {
@@ -232,12 +283,15 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         }
 
         setCancelling(null);
-        await loadSessionsForEnrollment(enrollmentId);
+        if (expandedStudentId) {
+            const sr = studentRows.find((r) => r.studentId === expandedStudentId);
+            if (sr) await loadSessionsForStudent(expandedStudentId, sr.enrollments);
+        }
     }
 
     async function handleReschedule() {
         if (!rescheduling || !rescheduleDate) return;
-        const { sessionId, sessionDate, enrollmentId } = rescheduling;
+        const { sessionId, sessionDate } = rescheduling;
 
         const { error } = await supabase
             .from("private_lesson_sessions")
@@ -254,7 +308,10 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
 
         setRescheduling(null);
         setRescheduleDate("");
-        await loadSessionsForEnrollment(enrollmentId);
+        if (expandedStudentId) {
+            const sr = studentRows.find((r) => r.studentId === expandedStudentId);
+            if (sr) await loadSessionsForStudent(expandedStudentId, sr.enrollments);
+        }
     }
 
     const filteredStudents = useMemo(() => {
@@ -405,7 +462,17 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         await loadEnrollments();
     }
 
-    function resolveInstructorName(session: SessionRow, enrollmentInstructorId: string | null): string {
+    async function handleDeactivateAll(studentEnrollments: EnrollmentRow[]) {
+        for (const e of studentEnrollments) {
+            await supabase
+                .from("private_lesson_enrollments")
+                .update({ active: false })
+                .eq("id", e.id);
+        }
+        await loadEnrollments();
+    }
+
+    function resolveInstructorName(session: MergedSessionRow, enrollmentInstructorId: string | null): string {
         const overrideId = session.instructor_override_id;
         const effectiveId = overrideId ?? enrollmentInstructorId;
         if (!effectiveId) return "—";
@@ -414,9 +481,9 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         return overrideId ? `${name} (override)` : name;
     }
 
-    function renderSessionManagement(enrollment: EnrollmentRow) {
-        const sessions = enrollmentSessions[enrollment.id] ?? [];
-        const isLoading = loadingSessions === enrollment.id;
+    function renderSessionManagement(studentId: string, studentEnrollments: EnrollmentRow[]) {
+        const sessions = enrollmentSessions[studentId] ?? [];
+        const isLoading = loadingSessions === studentId;
 
         return (
             <div className="mt-3 border-t border-zinc-800 pt-3">
@@ -427,7 +494,8 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                 ) : (
                     <div className="grid gap-2">
                         {sessions.map((session) => {
-                            const instructorName = resolveInstructorName(session, enrollment.instructor_id);
+                            const sessionEnrollment = studentEnrollments.find((e) => e.id === session.enrollment_id);
+                            const instructorName = resolveInstructorName(session, sessionEnrollment?.instructor_id ?? null);
                             const isChanging = changingInstructor?.sessionId === session.id;
                             const isCancelling = cancelling?.sessionId === session.id;
                             const isRescheduling = rescheduling?.sessionId === session.id;
@@ -439,6 +507,11 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                         <div className="flex items-center gap-3 flex-wrap">
                                             <span className="text-white text-xs font-medium">
                                                 {formatSessionDate(session.session_date)}
+                                            </span>
+                                            <span
+                                                className="rounded-none px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white bg-zinc-700"
+                                            >
+                                                {session.instrument}
                                             </span>
                                             <span className="text-zinc-500 text-xs">{instructorName}</span>
                                             <span
@@ -469,7 +542,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                         setChangingInstructor({
                                                             sessionId: session.id,
                                                             sessionDate: session.session_date,
-                                                            enrollmentId: enrollment.id,
+                                                            enrollmentId: session.enrollment_id,
                                                             scope: null,
                                                         });
                                                         setSelectedOverrideInstructorId(session.instructor_override_id ?? "");
@@ -486,7 +559,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                         setRescheduling({
                                                             sessionId: session.id,
                                                             sessionDate: session.session_date,
-                                                            enrollmentId: enrollment.id,
+                                                            enrollmentId: session.enrollment_id,
                                                         });
                                                         setRescheduleDate("");
                                                     }}
@@ -502,7 +575,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                         setCancelling({
                                                             sessionId: session.id,
                                                             sessionDate: session.session_date,
-                                                            enrollmentId: enrollment.id,
+                                                            enrollmentId: session.enrollment_id,
                                                             scope: null,
                                                         });
                                                     }}
@@ -821,7 +894,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                 </div>
             </div>}
 
-            {/* SECTION 2 — ACTIVE ENROLLMENTS */}
+            {/* SECTION 2 — ACTIVE ENROLLMENTS (per student) */}
             {mode === "manage" && <div className="bg-[#111111] rounded-none p-5">
                 <h2 className="sor-display text-3xl md:text-4xl leading-none">
                     <span style={{ color: "#cc0000" }}>ACTIVE</span>
@@ -831,72 +904,64 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
 
                 {loadingEnrollments ? (
                     <div className="text-zinc-400 text-sm">Loading enrollments…</div>
-                ) : enrollments.length === 0 ? (
+                ) : studentRows.length === 0 ? (
                     <div className="text-zinc-400 text-sm">No active enrollments.</div>
                 ) : (
                     <div className="grid gap-2 mt-4">
-                        {enrollments.map((enrollment) => {
-                            const instructorUser = users.find((u) => u.id === enrollment.instructor_id);
-                            const instructorName = instructorUser?.name ?? enrollment.instructor_id ?? "—";
-                            const studentName = enrollment.students
-                                ? `${enrollment.students.first_name} ${enrollment.students.last_initial ?? ""}`.trim()
-                                : enrollment.student_id;
-                            const isRock101 = enrollment.program === "rock101";
-                            const isExpanded = expandedEnrollmentId === enrollment.id;
+                        {studentRows.map((sr) => {
+                            const firstEnrollment = sr.enrollments[0];
+                            const instruments = [...new Set(sr.enrollments.map((e) => e.instrument))];
+                            const instrumentLabel = instruments.length === 1
+                                ? instruments[0]
+                                : "Multiple Instruments";
+                            const firstInstructorUser = users.find((u) => u.id === firstEnrollment?.instructor_id);
+                            const firstInstructorName = firstInstructorUser?.name ?? firstEnrollment?.instructor_id ?? "—";
+                            const isExpanded = expandedStudentId === sr.studentId;
 
                             return (
                                 <div
-                                    key={enrollment.id}
+                                    key={sr.studentId}
                                     className="bg-[#1a1a1a] rounded-none px-4 py-3"
                                 >
-                                    {/* Enrollment summary row */}
+                                    {/* Student summary row */}
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-white text-sm font-medium">{studentName}</span>
+                                                <span className="text-white text-sm font-medium">{sr.studentName}</span>
                                                 <span className="text-zinc-500 text-xs">·</span>
-                                                <span className="text-zinc-400 text-xs capitalize">{enrollment.instrument}</span>
-                                                <span
-                                                    className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide"
-                                                    style={{
-                                                        backgroundColor: isRock101 ? "#cc0000" : "#1a1a1a",
-                                                        border: isRock101 ? "none" : "1px solid #fff",
-                                                    }}
-                                                >
-                                                    {isRock101 ? "Rock 101" : "Performance"}
-                                                </span>
-                                                {enrollment.is_single_session && (
-                                                    <span
-                                                        className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide bg-zinc-600"
-                                                    >
-                                                        Single Session
+                                                <span className="text-zinc-400 text-xs capitalize">{instrumentLabel}</span>
+                                                {sr.enrollments.length > 1 && (
+                                                    <span className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide bg-zinc-700">
+                                                        {sr.enrollments.length} Enrollments
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="mt-1 text-zinc-500 text-xs">
-                                                {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${formatTime(enrollment.start_time)}` : ""}
+                                                {firstInstructorName}
+                                                {firstEnrollment?.day_of_week ? ` · ${firstEnrollment.day_of_week}` : ""}
+                                                {firstEnrollment?.start_time ? ` · ${formatTime(firstEnrollment.start_time)}` : ""}
                                             </div>
                                         </div>
                                         <div className="shrink-0 flex items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => toggleExpand(enrollment.id)}
+                                                onClick={() => toggleExpand(sr.studentId, sr.enrollments)}
                                                 className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
                                             >
                                                 {isExpanded ? "Hide Sessions" : "Manage Sessions"}
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => handleDeactivate(enrollment.id)}
+                                                onClick={() => handleDeactivateAll(sr.enrollments)}
                                                 className={`${smallBtnClass} bg-zinc-800 hover:bg-zinc-700`}
                                             >
-                                                Deactivate
+                                                Deactivate All
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Expanded session management */}
-                                    {isExpanded && renderSessionManagement(enrollment)}
+                                    {isExpanded && renderSessionManagement(sr.studentId, sr.enrollments)}
                                 </div>
                             );
                         })}
