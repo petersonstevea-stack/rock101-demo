@@ -108,13 +108,13 @@ export default function ChecklistSection({
                                 : "bg-zinc-900"
                                 }`}
                         >
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         if (canEdit) onToggleDone(item.id);
                                     }}
-                                    className={`flex-1 text-left ${canEdit ? "cursor-pointer" : "cursor-default"
+                                    className={`w-full text-left ${canEdit ? "cursor-pointer" : "cursor-default"
                                         }`}
                                 >
                                     <div className="flex items-center justify-between gap-3">
@@ -127,7 +127,7 @@ export default function ChecklistSection({
                                     </div>
                                 </button>
 
-                                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                <div className="flex self-end sm:self-auto sm:shrink-0 flex-wrap items-center gap-2">
                                     {onAddFistBump && canEdit && (
                                         <button
                                             type="button"
