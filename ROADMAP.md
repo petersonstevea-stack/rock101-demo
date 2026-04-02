@@ -229,6 +229,7 @@ Do not build until Phase 6 planning begins.
 - My Schedule: tapping a lesson card should navigate to that student's Private Lesson page.
 - My Schedule: My Classes section needs to be wired up to show group class sessions for the instructor.
 - Exceptions Dashboard: absent students should be exempted from the waiting status when group_class_absent = true on session_student_signoffs.
+- 🔜 Navigation bugs — fix back/forward navigation between My Schedule, Classes, and student views. When navigating from My Schedule to a class or student and back, the app should return to My Schedule not drop to an unexpected state. Audit all handleSetTab and setSelectedClassId calls that originate from MyScheduleView.
 - 🔜 LessonSetupView + ClassSetupView: Remove program selector from both setup forms — program is set once at student enrollment time (via Pike13 or manual entry) and should be read automatically from students.program. It should never be re-selected when setting up a class or a lesson. Update both forms to auto-populate program from the selected student record instead of presenting a dropdown.
 
 ---
