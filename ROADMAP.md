@@ -297,6 +297,16 @@ How it works:
 - Do not build for this yet — keep it in mind for every
   UI decision made today
 
+### Staff Profile — Future Work
+- Staff profile photo upload via Supabase Storage (currently URL input only)
+- Parent-visible instructor profiles (requires privacy audit before going live)
+- Student profile pages (Performance Program phase only — see Phase B above)
+- Privacy & Security deep dive (required before any parent-facing profiles go live):
+  - Minor data protection review
+  - RLS audit on `staff` profile columns
+  - Photo consent tracking
+  - Data retention policy
+
 ---
 
 ## PHASE 2 — Performance Program Build

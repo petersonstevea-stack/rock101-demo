@@ -48,6 +48,34 @@ This is the full long-term product architecture for Stage Ready. Claude Code sho
 
 ---
 
+## Shell Architecture — Instructor vs Student/Parent
+
+### Instructor Shell
+One unified shell for all instructors regardless of program.
+My Schedule and My Lessons show Rock 101 AND Performance Program
+content in the same view. Program type communicated through
+card color only:
+- Rock 101: red accent #cc0000
+- Performance Program: dark #1a1a1a with white border
+
+### Student/Parent Shell
+Dynamic nav based on the selected student's active program
+enrollments. Never a static nav array. Each program adds its
+own tab set:
+- Rock 101: Dashboard, Private Lesson, Grad Requirements,
+  Group Rehearsal, Certificate
+- Performance Program: tabs TBD Phase 2
+
+### Program Color System
+Consistent across all views — Exceptions dashboard, parent
+email, instructor schedule, student shell:
+| Program | Accent | Card Style |
+|---|---|---|
+| Rock 101 | #cc0000 | red border/accent |
+| Performance Program | white | dark tile, white border |
+
+---
+
 ## Recommended Student Pathway
 ```
 Little Wing → Rookies → Rock 101 → Performance Program
@@ -131,6 +159,15 @@ Current pilot uses simplified school fields. Add hierarchy fields post-pilot. No
 
 ### User + Auth Layer
 `staff`, `users`, `profiles`, `roles`, `staff_school_roles`, `user_school_roles`, `user_scope_assignments`, `user_program_permissions`, `user_invites`
+
+### Staff Profile Fields (on `staff` table)
+All staff-facing profile fields use the `profile_` prefix:
+- `profile_bio`, `profile_teaching_philosophy` — free text, editable by the staff member
+- `profile_instruments` — string array
+- `profile_favorite_song_to_teach`, `profile_favorite_artist`, `profile_first_concert`, `profile_currently_obsessed_with`, `profile_fun_fact` — personal cards
+- `profile_photo_url`, `profile_wallpaper_url`, `profile_wallpaper_preset` — media fields; photo upload via Supabase Storage is a future phase (currently URL input only)
+- `profile_visible`, `profile_show_photo`, `profile_show_personal`, `profile_show_wallpaper` — management-controlled visibility booleans (owner/GM only)
+- Wallpaper uses a preset system: a `profile_wallpaper_preset` value (e.g. "band", "stage") maps to a URL; custom upload is future phase
 
 ### Student + Family Layer
 `students`, `parents`, `parent_student_links`, `program_enrollments`

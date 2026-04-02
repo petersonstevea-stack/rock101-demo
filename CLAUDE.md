@@ -501,6 +501,27 @@ After any recovery, Claude Code should:
 
 ---
 
+## Completed Features (April 2026)
+
+### StaffProfileView
+- Hero banner with wallpaper background, dark overlay, circular photo, staff name, role badge, instrument badges
+- About section: teaching philosophy (italic quote style), bio, and personal cards (favorite song, artist, first concert, currently obsessed, fun fact)
+- Edit mode for own profile: bio, philosophy, instruments checkboxes, all personal fields, wallpaper preset selector, photo URL input
+- Management controls (owner/GM only): toggle switches for profile_visible, profile_show_photo, profile_show_personal, profile_show_wallpaper — save on change
+- All profile columns on `staff` table use `profile_` prefix
+
+### ExecutionDashboard — Absence Exemptions
+- Students marked absent from group class are exempt from the "Waiting on Class Instructor" exception
+- Students marked absent from private lesson are exempt from the "Waiting on Instructor" exception
+- Students absent from both disappear from the default (non-completed) view entirely
+- Fixed React state timing bug: absence Sets stored in `useRef` + dummy `useState` counter replaced with clean `useState` — triggers proper re-render with correct data
+
+### ClassSetupView — Student Removal Bug Fix
+- `useEffect` that initializes form fields on edit mode now depends on `classToEdit?.id` instead of the full `classToEdit` object
+- Prevents the effect from re-firing on every parent re-render (which was resetting `selectedStudentIds` back to the original list, making student removal impossible)
+
+---
+
 ## What Must Not Break
 - Parent login flow
 - Staff login + school context selection
