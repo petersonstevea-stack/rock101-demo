@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type SessionRow = {
@@ -117,8 +117,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showCompleted, setShowCompleted] = useState(false);
-    const [groupAbsentStudentIds, setGroupAbsentStudentIds] = useState<Set<string>>(new Set());
-    const [lessonAbsentStudentIds, setLessonAbsentStudentIds] = useState<Set<string>>(new Set());
+    const groupAbsentRef = useRef<Set<string>>(new Set());
+    const lessonAbsentRef = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         if (!schoolId) return;
@@ -153,13 +153,11 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
             ]);
 
             const weekSessionIds = (sessionsResult.data ?? []).map((s: any) => s.id);
-            console.log("[ExecutionDashboard] weekSessionIds:", weekSessionIds);
             const signoffsResult = await supabase
                 .from("session_student_signoffs")
                 .select("student_id, group_class_absent")
                 .eq("group_class_absent", true)
                 .in("session_id", weekSessionIds);
-            console.log("[ExecutionDashboard] signoffsResult:", signoffsResult.data);
 
             if (sessionsResult.error) {
                 setError(sessionsResult.error.message);
@@ -191,7 +189,6 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .map((r) => r.student_id as string)
                     .filter(Boolean)
             );
-            console.log("[ExecutionDashboard] groupAbsent:", Array.from(groupAbsent));
             const lessonAbsent = new Set<string>(
                 ((lessonAbsenceResult.data ?? []) as any[])
                     .map((r) => r.student_id as string)
@@ -202,8 +199,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
             setStudents((studentsResult.data ?? []) as unknown as StudentRow[]);
             setStaffMap(map);
             setClassInstructorMap(ciMap);
-            setGroupAbsentStudentIds(groupAbsent);
-            setLessonAbsentStudentIds(lessonAbsent);
+            groupAbsentRef.current = groupAbsent;
+            lessonAbsentRef.current = lessonAbsent;
             setLoading(false);
         }
 
@@ -295,7 +292,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                         ? students
                         : students.filter((s) => {
                             if (s.workflow?.parentSubmitted) return false;
-                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentStudentIds, lessonAbsentStudentIds);
+                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentRef.current, lessonAbsentRef.current);
                             return lines.length > 0;
                         });
                     const mid = Math.ceil(visibleStudents.length / 2);
@@ -329,7 +326,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                                         {col.map((student) => {
                                             const w = student.workflow ?? {};
-                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentStudentIds, lessonAbsentStudentIds);
+                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentRef.current, lessonAbsentRef.current);
                                             const isReadyToSend = statusLines[0] === "Ready to send";
                                             const isComplete = !!w.parentSubmitted;
 
