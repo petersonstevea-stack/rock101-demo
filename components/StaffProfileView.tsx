@@ -18,14 +18,14 @@ type StaffProfile = {
     name: string;
     email: string;
     role: string | null;
-    bio: string | null;
-    teaching_philosophy: string | null;
-    instruments: string[] | null;
-    fav_song_to_teach: string | null;
-    fav_artist: string | null;
-    first_concert: string | null;
-    currently_obsessed: string | null;
-    fun_fact: string | null;
+    profile_bio: string | null;
+    profile_teaching_philosophy: string | null;
+    profile_instruments: string[] | null;
+    profile_favorite_song_to_teach: string | null;
+    profile_favorite_artist: string | null;
+    profile_first_concert: string | null;
+    profile_currently_obsessed_with: string | null;
+    profile_fun_fact: string | null;
     profile_photo_url: string | null;
     profile_wallpaper_url: string | null;
     profile_wallpaper_preset: string | null;
@@ -87,8 +87,9 @@ export default function StaffProfileView({
             const { data, error } = await supabase
                 .from("staff")
                 .select(
-                    "id, name, email, role, bio, teaching_philosophy, instruments, " +
-                    "fav_song_to_teach, fav_artist, first_concert, currently_obsessed, fun_fact, " +
+                    "id, name, email, role, profile_bio, profile_teaching_philosophy, " +
+                    "profile_instruments, profile_favorite_song_to_teach, profile_favorite_artist, " +
+                    "profile_first_concert, profile_currently_obsessed_with, profile_fun_fact, " +
                     "profile_photo_url, profile_wallpaper_url, profile_wallpaper_preset, " +
                     "profile_show_wallpaper, profile_show_photo, profile_show_personal, profile_visible"
                 )
@@ -104,14 +105,14 @@ export default function StaffProfileView({
             const p = data as StaffProfile | null;
             setProfile(p);
             if (p) {
-                setEditBio(p.bio ?? "");
-                setEditPhilosophy(p.teaching_philosophy ?? "");
-                setEditInstruments(p.instruments ?? []);
-                setEditFavSong(p.fav_song_to_teach ?? "");
-                setEditFavArtist(p.fav_artist ?? "");
-                setEditFirstConcert(p.first_concert ?? "");
-                setEditObsessed(p.currently_obsessed ?? "");
-                setEditFunFact(p.fun_fact ?? "");
+                setEditBio(p.profile_bio ?? "");
+                setEditPhilosophy(p.profile_teaching_philosophy ?? "");
+                setEditInstruments(p.profile_instruments ?? []);
+                setEditFavSong(p.profile_favorite_song_to_teach ?? "");
+                setEditFavArtist(p.profile_favorite_artist ?? "");
+                setEditFirstConcert(p.profile_first_concert ?? "");
+                setEditObsessed(p.profile_currently_obsessed_with ?? "");
+                setEditFunFact(p.profile_fun_fact ?? "");
                 setEditWallpaperPreset(p.profile_wallpaper_preset ?? "band");
                 setEditPhotoUrl(p.profile_photo_url ?? "");
             }
@@ -127,14 +128,14 @@ export default function StaffProfileView({
         const { error } = await supabase
             .from("staff")
             .update({
-                bio: editBio.trim() || null,
-                teaching_philosophy: editPhilosophy.trim() || null,
-                instruments: editInstruments,
-                fav_song_to_teach: editFavSong.trim() || null,
-                fav_artist: editFavArtist.trim() || null,
-                first_concert: editFirstConcert.trim() || null,
-                currently_obsessed: editObsessed.trim() || null,
-                fun_fact: editFunFact.trim() || null,
+                profile_bio: editBio.trim() || null,
+                profile_teaching_philosophy: editPhilosophy.trim() || null,
+                profile_instruments: editInstruments,
+                profile_favorite_song_to_teach: editFavSong.trim() || null,
+                profile_favorite_artist: editFavArtist.trim() || null,
+                profile_first_concert: editFirstConcert.trim() || null,
+                profile_currently_obsessed_with: editObsessed.trim() || null,
+                profile_fun_fact: editFunFact.trim() || null,
                 profile_wallpaper_preset: editWallpaperPreset,
                 profile_wallpaper_url: presetUrl,
                 profile_photo_url: editPhotoUrl.trim() || null,
@@ -150,14 +151,14 @@ export default function StaffProfileView({
             prev
                 ? {
                     ...prev,
-                    bio: editBio.trim() || null,
-                    teaching_philosophy: editPhilosophy.trim() || null,
-                    instruments: editInstruments,
-                    fav_song_to_teach: editFavSong.trim() || null,
-                    fav_artist: editFavArtist.trim() || null,
-                    first_concert: editFirstConcert.trim() || null,
-                    currently_obsessed: editObsessed.trim() || null,
-                    fun_fact: editFunFact.trim() || null,
+                    profile_bio: editBio.trim() || null,
+                    profile_teaching_philosophy: editPhilosophy.trim() || null,
+                    profile_instruments: editInstruments,
+                    profile_favorite_song_to_teach: editFavSong.trim() || null,
+                    profile_favorite_artist: editFavArtist.trim() || null,
+                    profile_first_concert: editFirstConcert.trim() || null,
+                    profile_currently_obsessed_with: editObsessed.trim() || null,
+                    profile_fun_fact: editFunFact.trim() || null,
                     profile_wallpaper_preset: editWallpaperPreset,
                     profile_wallpaper_url: presetUrl,
                     profile_photo_url: editPhotoUrl.trim() || null,
@@ -215,7 +216,7 @@ export default function StaffProfileView({
             ? profile.profile_wallpaper_url
             : DEFAULT_WALLPAPER;
 
-    const instruments = profile.instruments ?? [];
+    const instruments = profile.profile_instruments ?? [];
 
     return (
         <div className="space-y-6 overflow-x-hidden">
@@ -385,21 +386,21 @@ export default function StaffProfileView({
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Left — philosophy + bio */}
                             <div className="space-y-4">
-                                {profile.teaching_philosophy && (
+                                {profile.profile_teaching_philosophy && (
                                     <div>
                                         <div className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Teaching Philosophy</div>
                                         <p className="text-zinc-300 text-sm italic leading-relaxed border-l-2 border-l-[#cc0000] pl-3">
-                                            {profile.teaching_philosophy}
+                                            {profile.profile_teaching_philosophy}
                                         </p>
                                     </div>
                                 )}
-                                {profile.bio && (
+                                {profile.profile_bio && (
                                     <div>
                                         <div className="text-zinc-500 text-xs uppercase tracking-wider mb-1">About</div>
-                                        <p className="text-zinc-300 text-sm leading-relaxed">{profile.bio}</p>
+                                        <p className="text-zinc-300 text-sm leading-relaxed">{profile.profile_bio}</p>
                                     </div>
                                 )}
-                                {!profile.teaching_philosophy && !profile.bio && (
+                                {!profile.profile_teaching_philosophy && !profile.profile_bio && (
                                     <p className="text-zinc-500 text-sm italic">No bio added yet.</p>
                                 )}
                             </div>
@@ -408,11 +409,11 @@ export default function StaffProfileView({
                             {profile.profile_show_personal && (
                                 <div className="space-y-2">
                                     {[
-                                        { emoji: "🎵", label: "Favorite song to teach", value: profile.fav_song_to_teach },
-                                        { emoji: "🎤", label: "Favorite artist", value: profile.fav_artist },
-                                        { emoji: "🎸", label: "First concert", value: profile.first_concert },
-                                        { emoji: "📻", label: "Currently obsessed with", value: profile.currently_obsessed },
-                                        { emoji: "💡", label: "Fun fact", value: profile.fun_fact },
+                                        { emoji: "🎵", label: "Favorite song to teach", value: profile.profile_favorite_song_to_teach },
+                                        { emoji: "🎤", label: "Favorite artist", value: profile.profile_favorite_artist },
+                                        { emoji: "🎸", label: "First concert", value: profile.profile_first_concert },
+                                        { emoji: "📻", label: "Currently obsessed with", value: profile.profile_currently_obsessed_with },
+                                        { emoji: "💡", label: "Fun fact", value: profile.profile_fun_fact },
                                     ]
                                         .filter((item) => item.value)
                                         .map((item) => (
