@@ -58,6 +58,7 @@ type EnrollmentRow = {
     day_of_week: string;
     start_time: string;
     active: boolean;
+    is_single_session: boolean;
     students: { first_name: string; last_initial: string | null } | null;
 };
 
@@ -67,6 +68,7 @@ type SessionRow = {
     status: string;
     instructor_id: string | null;
     instructor_override_id: string | null;
+    is_makeup: boolean;
 };
 
 type ChangeInstructorState = {
@@ -151,7 +153,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         setLoadingEnrollments(true);
         const { data } = await supabase
             .from("private_lesson_enrollments")
-            .select("id, student_id, instructor_id, instrument, program, day_of_week, start_time, active, students(first_name, last_initial)")
+            .select("id, student_id, instructor_id, instrument, program, day_of_week, start_time, active, is_single_session, students(first_name, last_initial)")
             .eq("school_id", schoolId)
             .eq("active", true)
             .order("day_of_week");
@@ -164,7 +166,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         const today = new Date().toISOString().slice(0, 10);
         const { data } = await supabase
             .from("private_lesson_sessions")
-            .select("id, session_date, status, instructor_id, instructor_override_id")
+            .select("id, session_date, status, instructor_id, instructor_override_id, is_makeup")
             .eq("enrollment_id", enrollmentId)
             .eq("status", "scheduled")
             .gte("session_date", today)
@@ -449,6 +451,13 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                             >
                                                 {session.status === "scheduled" ? "Scheduled" : "Cancelled"}
                                             </span>
+                                            {session.is_makeup && (
+                                                <span
+                                                    className="rounded-none px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white bg-zinc-600"
+                                                >
+                                                    Makeup
+                                                </span>
+                                            )}
                                         </div>
                                         {!isChanging && !isCancelling && !isRescheduling && (
                                             <div className="flex gap-2">
@@ -856,6 +865,13 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                                                 >
                                                     {isRock101 ? "Rock 101" : "Performance"}
                                                 </span>
+                                                {enrollment.is_single_session && (
+                                                    <span
+                                                        className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide bg-zinc-600"
+                                                    >
+                                                        Single Session
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="mt-1 text-zinc-500 text-xs">
                                                 {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${formatTime(enrollment.start_time)}` : ""}
