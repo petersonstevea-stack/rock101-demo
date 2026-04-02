@@ -15,6 +15,7 @@ type ClassSessionRow = {
     rock_classes: {
         id: string;
         name: string;
+        school_id: string | null;
         student_ids: string[] | null;
         class_instructor_id: string | null;
     } | null;
@@ -132,10 +133,9 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
             const [classRes, lessonRes] = await Promise.all([
                 supabase
                     .from("class_sessions")
-                    .select("id, session_date, start_time, end_time, notes, instructor_override_user_id, rock_classes(id, name, student_ids, class_instructor_id)")
+                    .select("id, session_date, start_time, end_time, notes, instructor_override_user_id, rock_classes(id, name, school_id, student_ids, class_instructor_id)")
                     .gte("session_date", dateStart)
-                    .lte("session_date", dateEnd)
-                    .eq("rock_classes.school_id", schoolId),
+                    .lte("session_date", dateEnd),
 
                 supabase
                     .from("private_lesson_sessions")
@@ -150,8 +150,9 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
             const myClasses = rawClasses.filter((s) => {
                 if (!s.rock_classes) return false;
                 return (
-                    s.rock_classes.class_instructor_id === staffId ||
-                    s.instructor_override_user_id === staffId
+                    s.rock_classes.school_id === schoolId &&
+                    (s.rock_classes.class_instructor_id === staffId ||
+                    s.instructor_override_user_id === staffId)
                 );
             });
 
