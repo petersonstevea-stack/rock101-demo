@@ -320,9 +320,17 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
         return (
             <div key={day}>
                 <div className="mb-2 text-sm font-semibold text-zinc-400 uppercase tracking-[0.15em]">{day}</div>
-                <div className="grid gap-2">
-                    {daySessions.map(renderClassCard)}
-                    {dayLessons.map(renderLessonCard)}
+                <div className="space-y-3">
+                    {daySessions.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {daySessions.map(renderClassCard)}
+                        </div>
+                    )}
+                    {dayLessons.length > 0 && (
+                        <div className="grid gap-2">
+                            {dayLessons.map(renderLessonCard)}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -386,7 +394,7 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
                                 <span className="ml-2 text-white italic normal-case">Classes</span>
                             </h2>
                             <div className="sor-divider" />
-                            <div className="grid gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {classSessions.map(renderClassCard)}
                             </div>
                         </div>
