@@ -192,7 +192,7 @@ migration. Two dual-write paths now active:
 
 ### 🔜 Step 1.19 — Weekly Execution Dashboard (Management View)
 
-### 🔜 Step 1.21 — Session instructor override + Schedule view
+### ✅ Step 1.21 — Session instructor override + Schedule view
 Depends on: class_sessions.instructor_override_user_id column
 (already added via migration).
 
@@ -220,6 +220,16 @@ Instructor display logic (standard across all views):
   instructor_override_user_id → staff name
   ?? director_user_id → staff name
   ?? "Not assigned"
+
+Complete. Both features shipped:
+- Session instructor override on ClassDetailView — scope prompt
+  (just this session / all remaining), saves to
+  instructor_override_user_id on class_sessions, hero reflects
+  override name, resets to null with "Use class default"
+- ScheduleView — all future sessions grouped by week, 12 weeks
+  at a time, inline Change button with scope prompt, instructor
+  display follows override ?? class default ?? "Not assigned"
+- instructor_override_user_id column confirmed on class_sessions
 
 ### 🔜 Step 1.22 — Private lesson session awareness
 Deferred until closer to Pike 13 integration (Phase 6).
