@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type SessionRow = {
@@ -117,9 +117,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showCompleted, setShowCompleted] = useState(false);
-    const groupAbsentRef = useRef<Set<string>>(new Set());
-    const lessonAbsentRef = useRef<Set<string>>(new Set());
-    const [, setAbsenceVersion] = useState(0);
+    const [groupAbsentIds, setGroupAbsentIds] = useState<Set<string>>(new Set());
+    const [lessonAbsentIds, setLessonAbsentIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (!schoolId) return;
@@ -200,9 +199,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
             setStudents((studentsResult.data ?? []) as unknown as StudentRow[]);
             setStaffMap(map);
             setClassInstructorMap(ciMap);
-            groupAbsentRef.current = groupAbsent;
-            lessonAbsentRef.current = lessonAbsent;
-            setAbsenceVersion(v => v + 1);
+            setGroupAbsentIds(new Set(groupAbsent));
+            setLessonAbsentIds(new Set(lessonAbsent));
             setLoading(false);
         }
 
@@ -294,7 +292,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                         ? students
                         : students.filter((s) => {
                             if (s.workflow?.parentSubmitted) return false;
-                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentRef.current, lessonAbsentRef.current);
+                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentIds, lessonAbsentIds);
                             return lines.length > 0;
                         });
                     const mid = Math.ceil(visibleStudents.length / 2);
@@ -328,7 +326,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                                         {col.map((student) => {
                                             const w = student.workflow ?? {};
-                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentRef.current, lessonAbsentRef.current);
+                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentIds, lessonAbsentIds);
                                             const isReadyToSend = statusLines[0] === "Ready to send";
                                             const isComplete = !!w.parentSubmitted;
 
