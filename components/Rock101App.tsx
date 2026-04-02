@@ -1491,6 +1491,7 @@ export default function Rock101App() {
                                     classes={filteredClassesBySchool}
                                     weeklySessions={weeklySessions}
                                     users={filteredUsersBySchool}
+                                    currentUserStaffId={currentUser?.staffId}
                                     onSelectClass={(classId, sessionId) => {
 
                                         const matchedSession =
@@ -1521,6 +1522,7 @@ export default function Rock101App() {
                                 classes={filteredClassesBySchool}
                                 weeklySessions={weeklySessions}
                                 users={filteredUsersBySchool}
+                                currentUserStaffId={currentUser?.staffId}
                                 onSelectClass={(classId, sessionId) => {
                                     const matchedSession =
                                         weeklySessions.find((session) => session.id === sessionId) ?? null;

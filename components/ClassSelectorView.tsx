@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { RockClass } from "@/types/class";
 import { AppUser } from "@/types/user";
 import PageHero from "@/components/PageHero";
@@ -9,6 +10,7 @@ type ClassSelectorViewProps = {
   users: AppUser[];
   weeklySessions?: any[];
   onSelectClass: (classId: string, sessionId?: string) => void;
+  currentUserStaffId?: string;
 };
 
 function formatSessionTime(time?: string | null) {
@@ -45,6 +47,7 @@ export default function ClassSelectorView({
   users,
   weeklySessions,
   onSelectClass,
+  currentUserStaffId,
 }: ClassSelectorViewProps) {
   const instructorMap = Object.fromEntries(
     users.map((user) => [user.email, user.name])
@@ -58,6 +61,18 @@ export default function ClassSelectorView({
     classes.map((rockClass) => [rockClass.id, rockClass])
   );
 
+  const [classFilter, setClassFilter] = useState<"myClasses" | "allClasses">("myClasses");
+
+  const visibleSessions = !currentUserStaffId || classFilter === "allClasses"
+    ? (weeklySessions ?? [])
+    : (weeklySessions ?? []).filter((session) => {
+        const rockClass = classMap[session.rock_classes?.id];
+        return (
+          session.instructor_override_user_id === currentUserStaffId ||
+          rockClass?.classInstructorId === currentUserStaffId
+        );
+      });
+
   return (
     <div className="mt-8 space-y-6">
       <PageHero
@@ -66,12 +81,33 @@ export default function ClassSelectorView({
         imageSrc="/images/rock101-drums.jpg"
       />
 
-      {weeklySessions && weeklySessions.length > 0 ? (
+      {currentUserStaffId && (
+        <div className="flex rounded-none overflow-hidden border border-zinc-700">
+          <button
+            type="button"
+            onClick={() => setClassFilter("myClasses")}
+            className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors"
+            style={{ backgroundColor: classFilter === "myClasses" ? "#cc0000" : "transparent" }}
+          >
+            My Classes
+          </button>
+          <button
+            type="button"
+            onClick={() => setClassFilter("allClasses")}
+            className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors border-l border-zinc-700"
+            style={{ backgroundColor: classFilter === "allClasses" ? "#cc0000" : "transparent" }}
+          >
+            All Classes
+          </button>
+        </div>
+      )}
+
+      {visibleSessions.length > 0 ? (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-white">This Week’s Sessions</h2>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {weeklySessions.map((session) => {
+            {visibleSessions.map((session) => {
               const rockClass = classMap[session.rock_classes?.id];
               const overrideId = session.instructor_override_user_id;
               const classInstructorName = overrideId
@@ -117,6 +153,10 @@ export default function ClassSelectorView({
               );
             })}
           </div>
+        </div>
+      ) : weeklySessions && weeklySessions.length > 0 ? (
+        <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">
+          No classes assigned to you this week.
         </div>
       ) : (
         <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">
