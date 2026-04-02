@@ -1169,6 +1169,34 @@ export default function Rock101App() {
                         : student.workflow.classInstructorSubmitted,
             },
         }));
+
+        if (roleType === "instructor") {
+            const matchedSession = weeklySessions.find(
+                (s) => s.rock_classes?.id === activeClassForSelectedStudent?.id
+            );
+            if (matchedSession) {
+                const { error: signoffError } = await supabase
+                    .from("session_student_signoffs")
+                    .upsert(
+                        {
+                            session_id: matchedSession.id,
+                            student_id: student.id,
+                            instructor_submitted: true,
+                            instructor_submitted_at: new Date().toISOString(),
+                            instructor_submitted_by: currentUser?.staffId,
+                        },
+                        { onConflict: "session_id,student_id", ignoreDuplicates: false }
+                    );
+                if (signoffError) {
+                    console.warn("session_student_signoffs upsert failed:", signoffError);
+                }
+            } else {
+                console.warn(
+                    "handleSaveFeedback: no matching session found for class",
+                    activeClassForSelectedStudent?.id
+                );
+            }
+        }
     }
 
     async function handleSubmitToParents() {
@@ -1918,6 +1946,16 @@ export default function Rock101App() {
                                 role === "music_director" ||
                                 role === "general_manager" ||
                                 role === "owner"
+                            }
+                            enrolledClassName={activeClassForSelectedStudent?.name ?? undefined}
+                            classInstructorName={
+                                (() => {
+                                    const email = activeClassForSelectedStudent?.classInstructorEmail;
+                                    if (!email) return undefined;
+                                    return filteredUsersBySchool.find(
+                                        (u) => u.email?.toLowerCase() === email.toLowerCase()
+                                    )?.name ?? email;
+                                })()
                             }
                         />
 

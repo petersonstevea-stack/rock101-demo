@@ -150,7 +150,7 @@ a full design polish day:
 - Keep dark Stage Ready design language throughout
 Do not build until Phase 1 functional work is stable.
 
-### 🔜 Step 1.18 — Session-Level Sign-off and Attendance Table
+### ✅ Step 1.18 — Session-Level Sign-off and Attendance Table
 Prerequisite for the execution dashboard. Current sign-off data
 lives in `students.workflow` as a flat boolean blob with no session
 anchor. Cannot support per-session accountability or absence
@@ -178,6 +178,17 @@ Migration approach:
 - `students.workflow` booleans become legacy once execution
   dashboard is live and reading from the new table
 - Do not remove `students.workflow` until full cutover is confirmed
+
+Complete. session_student_signoffs table was already created via
+migration. Two dual-write paths now active:
+- ClassDetailView writes class_instructor_submitted on group
+  class submission (was already done)
+- Rock101App.handleSaveFeedback now writes instructor_submitted
+  when roleType === "instructor", anchored to the current week's
+  class_sessions record for the student's enrolled class
+- PrivateLessonView now displays enrolled class name and class
+  instructor name as context
+- students.workflow writes preserved during transition period
 
 ### 🔜 Step 1.19 — Weekly Execution Dashboard (Management View)
 

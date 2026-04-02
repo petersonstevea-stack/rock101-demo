@@ -42,6 +42,8 @@ type PrivateLessonViewProps = {
     onToggleSigned: (item: string) => void;
     canEdit: boolean;
     canSign: boolean;
+    enrolledClassName?: string;
+    classInstructorName?: string;
 };
 
 type MonthGroup = {
@@ -111,6 +113,8 @@ export default function PrivateLessonView({
     onToggleSigned,
     canEdit,
     canSign,
+    enrolledClassName,
+    classInstructorName,
 }: PrivateLessonViewProps) {
     const [allItems, setAllItems] = useState<CurriculumItem[]>([]);
 
@@ -129,6 +133,15 @@ export default function PrivateLessonView({
                 subtitle={`Focused skill-building for ${student.name} • ${student.instrument}`}
                 imageSrc="/images/rock101-drums.jpg"
             />
+
+            {(enrolledClassName || classInstructorName) && (
+                <div className="bg-[#1a1a1a] rounded-none px-4 py-3 text-sm text-zinc-400">
+                    {[
+                        enrolledClassName,
+                        classInstructorName ? `Class Instructor: ${classInstructorName}` : null,
+                    ].filter(Boolean).join(" · ")}
+                </div>
+            )}
 
             <div className="space-y-10">
                 {monthGroups.map((group) => {
