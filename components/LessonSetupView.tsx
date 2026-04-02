@@ -33,6 +33,12 @@ function formatTime(time: string | null): string {
   const h12 = h % 12 || 12;
   return `${h12}:${m} ${suffix}`;
 }
+
+function formatSessionDate(dateStr: string): string {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
 const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -58,6 +64,28 @@ type EnrollmentRow = {
     students: { first_name: string; last_initial: string | null } | null;
 };
 
+type SessionRow = {
+    id: string;
+    session_date: string;
+    status: string;
+    instructor_id: string | null;
+    instructor_override_id: string | null;
+};
+
+type ChangeInstructorState = {
+    sessionId: string;
+    sessionDate: string;
+    enrollmentId: string;
+    scope: "single" | "future" | null;
+};
+
+type CancelState = {
+    sessionId: string;
+    sessionDate: string;
+    enrollmentId: string;
+    scope: "single" | "future" | null;
+};
+
 type LessonSetupViewProps = {
     schoolId: string;
     users: AppUser[];
@@ -65,6 +93,7 @@ type LessonSetupViewProps = {
 
 const inputClass = "w-full rounded-none border border-zinc-700 bg-black px-4 py-3 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none";
 const labelClass = "mb-2 block text-sm text-zinc-400";
+const smallBtnClass = "rounded-none px-2.5 py-1 text-xs font-medium text-white transition";
 
 export default function LessonSetupView({ schoolId, users }: LessonSetupViewProps) {
     // Form state
@@ -83,6 +112,14 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
     // Enrollments list
     const [enrollments, setEnrollments] = useState<EnrollmentRow[]>([]);
     const [loadingEnrollments, setLoadingEnrollments] = useState(true);
+
+    // Session management state
+    const [expandedEnrollmentId, setExpandedEnrollmentId] = useState<string | null>(null);
+    const [enrollmentSessions, setEnrollmentSessions] = useState<Record<string, SessionRow[]>>({});
+    const [loadingSessions, setLoadingSessions] = useState<string | null>(null);
+    const [changingInstructor, setChangingInstructor] = useState<ChangeInstructorState | null>(null);
+    const [selectedOverrideInstructorId, setSelectedOverrideInstructorId] = useState("");
+    const [cancelling, setCancelling] = useState<CancelState | null>(null);
 
     useEffect(() => {
         if (!schoolId) return;
@@ -110,6 +147,80 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
             .order("day_of_week");
         setEnrollments((data ?? []) as unknown as EnrollmentRow[]);
         setLoadingEnrollments(false);
+    }
+
+    async function loadSessionsForEnrollment(enrollmentId: string) {
+        setLoadingSessions(enrollmentId);
+        const today = new Date().toISOString().slice(0, 10);
+        const { data } = await supabase
+            .from("private_lesson_sessions")
+            .select("id, session_date, status, instructor_id, instructor_override_id")
+            .eq("enrollment_id", enrollmentId)
+            .eq("status", "scheduled")
+            .gte("session_date", today)
+            .order("session_date")
+            .limit(12);
+        setEnrollmentSessions((prev) => ({ ...prev, [enrollmentId]: (data ?? []) as SessionRow[] }));
+        setLoadingSessions(null);
+    }
+
+    function toggleExpand(enrollmentId: string) {
+        if (expandedEnrollmentId === enrollmentId) {
+            setExpandedEnrollmentId(null);
+            setChangingInstructor(null);
+            setCancelling(null);
+        } else {
+            setExpandedEnrollmentId(enrollmentId);
+            setChangingInstructor(null);
+            setCancelling(null);
+            if (!enrollmentSessions[enrollmentId]) {
+                loadSessionsForEnrollment(enrollmentId);
+            }
+        }
+    }
+
+    async function handleChangeInstructor(scope: "single" | "future") {
+        if (!changingInstructor) return;
+        const { sessionId, sessionDate, enrollmentId } = changingInstructor;
+        const overrideId = selectedOverrideInstructorId || null;
+
+        if (scope === "single") {
+            await supabase
+                .from("private_lesson_sessions")
+                .update({ instructor_override_id: overrideId })
+                .eq("id", sessionId);
+        } else {
+            await supabase
+                .from("private_lesson_sessions")
+                .update({ instructor_override_id: overrideId })
+                .eq("enrollment_id", enrollmentId)
+                .gte("session_date", sessionDate);
+        }
+
+        setChangingInstructor(null);
+        setSelectedOverrideInstructorId("");
+        await loadSessionsForEnrollment(enrollmentId);
+    }
+
+    async function handleCancel(scope: "single" | "future") {
+        if (!cancelling) return;
+        const { sessionId, sessionDate, enrollmentId } = cancelling;
+
+        if (scope === "single") {
+            await supabase
+                .from("private_lesson_sessions")
+                .update({ status: "cancelled" })
+                .eq("id", sessionId);
+        } else {
+            await supabase
+                .from("private_lesson_sessions")
+                .update({ status: "cancelled" })
+                .eq("enrollment_id", enrollmentId)
+                .gte("session_date", sessionDate);
+        }
+
+        setCancelling(null);
+        await loadSessionsForEnrollment(enrollmentId);
     }
 
     const filteredStudents = useMemo(() => {
@@ -229,6 +340,189 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
             return;
         }
         await loadEnrollments();
+    }
+
+    function resolveInstructorName(session: SessionRow, enrollmentInstructorId: string | null): string {
+        const overrideId = session.instructor_override_id;
+        const effectiveId = overrideId ?? enrollmentInstructorId;
+        if (!effectiveId) return "—";
+        const user = users.find((u) => u.id === effectiveId);
+        const name = user?.name ?? effectiveId;
+        return overrideId ? `${name} (override)` : name;
+    }
+
+    function renderSessionManagement(enrollment: EnrollmentRow) {
+        const sessions = enrollmentSessions[enrollment.id] ?? [];
+        const isLoading = loadingSessions === enrollment.id;
+
+        return (
+            <div className="mt-3 border-t border-zinc-800 pt-3">
+                {isLoading ? (
+                    <div className="text-zinc-500 text-xs">Loading sessions…</div>
+                ) : sessions.length === 0 ? (
+                    <div className="text-zinc-500 text-xs">No upcoming scheduled sessions.</div>
+                ) : (
+                    <div className="grid gap-2">
+                        {sessions.map((session) => {
+                            const instructorName = resolveInstructorName(session, enrollment.instructor_id);
+                            const isChanging = changingInstructor?.sessionId === session.id;
+                            const isCancelling = cancelling?.sessionId === session.id;
+
+                            return (
+                                <div key={session.id} className="bg-[#111111] rounded-none px-3 py-2.5">
+                                    {/* Session header row */}
+                                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <span className="text-white text-xs font-medium">
+                                                {formatSessionDate(session.session_date)}
+                                            </span>
+                                            <span className="text-zinc-500 text-xs">{instructorName}</span>
+                                            <span
+                                                className="rounded-none px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                                style={{
+                                                    backgroundColor: session.status === "scheduled" ? "#1a1a1a" : "#3f3f3f",
+                                                    color: session.status === "scheduled" ? "#a1a1aa" : "#ef4444",
+                                                    border: "1px solid #3f3f3f",
+                                                }}
+                                            >
+                                                {session.status === "scheduled" ? "Scheduled" : "Cancelled"}
+                                            </span>
+                                        </div>
+                                        {!isChanging && !isCancelling && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCancelling(null);
+                                                        setChangingInstructor({
+                                                            sessionId: session.id,
+                                                            sessionDate: session.session_date,
+                                                            enrollmentId: enrollment.id,
+                                                            scope: null,
+                                                        });
+                                                        setSelectedOverrideInstructorId(session.instructor_override_id ?? "");
+                                                    }}
+                                                    className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
+                                                >
+                                                    Change Instructor
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setChangingInstructor(null);
+                                                        setCancelling({
+                                                            sessionId: session.id,
+                                                            sessionDate: session.session_date,
+                                                            enrollmentId: enrollment.id,
+                                                            scope: null,
+                                                        });
+                                                    }}
+                                                    className={`${smallBtnClass} bg-zinc-800 hover:bg-zinc-700`}
+                                                    style={{ color: "#ef4444" }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Change instructor flow */}
+                                    {isChanging && (
+                                        <div className="mt-2 space-y-2">
+                                            {changingInstructor!.scope === null ? (
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-zinc-400 text-xs">Change for:</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChangingInstructor((prev) => prev ? { ...prev, scope: "single" } : null)}
+                                                        className={`${smallBtnClass} bg-[#cc0000] hover:bg-[#b30000]`}
+                                                    >
+                                                        Just this session
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChangingInstructor((prev) => prev ? { ...prev, scope: "future" } : null)}
+                                                        className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
+                                                    >
+                                                        This and all future sessions
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChangingInstructor(null)}
+                                                        className="text-zinc-500 text-xs hover:text-white"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <select
+                                                        value={selectedOverrideInstructorId}
+                                                        onChange={(e) => setSelectedOverrideInstructorId(e.target.value)}
+                                                        className="rounded-none border border-zinc-700 bg-black px-3 py-1.5 text-white text-xs focus:outline-none"
+                                                    >
+                                                        <option value="">Use enrollment default</option>
+                                                        {instructorUsers.filter((u) => u.id).map((u) => (
+                                                            <option key={u.id} value={u.id!}>{u.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleChangeInstructor(changingInstructor!.scope!)}
+                                                        className={`${smallBtnClass} bg-[#cc0000] hover:bg-[#b30000]`}
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChangingInstructor(null)}
+                                                        className="text-zinc-500 text-xs hover:text-white"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Cancel flow */}
+                                    {isCancelling && (
+                                        <div className="mt-2">
+                                            {cancelling!.scope === null ? (
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-zinc-400 text-xs">Cancel:</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancel("single")}
+                                                        className={`${smallBtnClass} bg-[#cc0000] hover:bg-[#b30000]`}
+                                                    >
+                                                        Just this session
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancel("future")}
+                                                        className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
+                                                    >
+                                                        This and all future sessions
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCancelling(null)}
+                                                        className="text-zinc-500 text-xs hover:text-white"
+                                                    >
+                                                        Back
+                                                    </button>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
     }
 
     return (
@@ -401,38 +695,54 @@ export default function LessonSetupView({ schoolId, users }: LessonSetupViewProp
                                 ? `${enrollment.students.first_name} ${enrollment.students.last_initial ?? ""}`.trim()
                                 : enrollment.student_id;
                             const isRock101 = enrollment.program === "rock101";
+                            const isExpanded = expandedEnrollmentId === enrollment.id;
 
                             return (
                                 <div
                                     key={enrollment.id}
-                                    className="bg-[#1a1a1a] rounded-none px-4 py-3 flex items-center justify-between gap-4"
+                                    className="bg-[#1a1a1a] rounded-none px-4 py-3"
                                 >
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-white text-sm font-medium">{studentName}</span>
-                                            <span className="text-zinc-500 text-xs">·</span>
-                                            <span className="text-zinc-400 text-xs capitalize">{enrollment.instrument}</span>
-                                            <span
-                                                className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide"
-                                                style={{
-                                                    backgroundColor: isRock101 ? "#cc0000" : "#1a1a1a",
-                                                    border: isRock101 ? "none" : "1px solid #fff",
-                                                }}
-                                            >
-                                                {isRock101 ? "Rock 101" : "Performance"}
-                                            </span>
+                                    {/* Enrollment summary row */}
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-white text-sm font-medium">{studentName}</span>
+                                                <span className="text-zinc-500 text-xs">·</span>
+                                                <span className="text-zinc-400 text-xs capitalize">{enrollment.instrument}</span>
+                                                <span
+                                                    className="rounded-none px-2 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wide"
+                                                    style={{
+                                                        backgroundColor: isRock101 ? "#cc0000" : "#1a1a1a",
+                                                        border: isRock101 ? "none" : "1px solid #fff",
+                                                    }}
+                                                >
+                                                    {isRock101 ? "Rock 101" : "Performance"}
+                                                </span>
+                                            </div>
+                                            <div className="mt-1 text-zinc-500 text-xs">
+                                                {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${formatTime(enrollment.start_time)}` : ""}
+                                            </div>
                                         </div>
-                                        <div className="mt-1 text-zinc-500 text-xs">
-                                            {instructorName} · {enrollment.day_of_week}{enrollment.start_time ? ` · ${formatTime(enrollment.start_time)}` : ""}
+                                        <div className="shrink-0 flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleExpand(enrollment.id)}
+                                                className={`${smallBtnClass} bg-zinc-700 hover:bg-zinc-600`}
+                                            >
+                                                {isExpanded ? "Hide Sessions" : "Manage Sessions"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeactivate(enrollment.id)}
+                                                className={`${smallBtnClass} bg-zinc-800 hover:bg-zinc-700`}
+                                            >
+                                                Deactivate
+                                            </button>
                                         </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeactivate(enrollment.id)}
-                                        className="shrink-0 rounded-none bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 transition"
-                                    >
-                                        Deactivate
-                                    </button>
+
+                                    {/* Expanded session management */}
+                                    {isExpanded && renderSessionManagement(enrollment)}
                                 </div>
                             );
                         })}
