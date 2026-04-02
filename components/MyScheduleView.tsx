@@ -112,7 +112,8 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
     const [absentUpdating, setAbsentUpdating] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!staffId || !schoolId) return;
+        if (!staffId) { setLoading(false); return; }
+        if (!schoolId) return;
         loadData();
     }, [staffId, schoolId, mode]);
 
@@ -124,43 +125,46 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
         const dateStart = mode === "today" ? today : start;
         const dateEnd = mode === "today" ? today : end;
 
-        const [classRes, lessonRes] = await Promise.all([
-            supabase
-                .from("class_sessions")
-                .select("id, session_date, start_time, end_time, notes, instructor_override_user_id, rock_classes(id, name, student_ids, class_instructor_id)")
-                .gte("session_date", dateStart)
-                .lte("session_date", dateEnd)
-                .eq("rock_classes.school_id", schoolId),
+        try {
+            const [classRes, lessonRes] = await Promise.all([
+                supabase
+                    .from("class_sessions")
+                    .select("id, session_date, start_time, end_time, notes, instructor_override_user_id, rock_classes(id, name, student_ids, class_instructor_id)")
+                    .gte("session_date", dateStart)
+                    .lte("session_date", dateEnd)
+                    .eq("rock_classes.school_id", schoolId),
 
-            supabase
-                .from("private_lesson_sessions")
-                .select("id, session_date, status, absent, instructor_submitted, instructor_override_id, private_lesson_enrollments(id, instrument, program, start_time, students(first_name, last_initial))")
-                .gte("session_date", dateStart)
-                .lte("session_date", dateEnd)
-                .neq("status", "cancelled"),
-        ]);
+                supabase
+                    .from("private_lesson_sessions")
+                    .select("id, session_date, status, absent, instructor_submitted, instructor_override_id, private_lesson_enrollments(id, instrument, program, start_time, students(first_name, last_initial))")
+                    .gte("session_date", dateStart)
+                    .lte("session_date", dateEnd)
+                    .neq("status", "cancelled"),
+            ]);
 
-        // Filter class sessions to this staff member
-        const rawClasses = (classRes.data ?? []) as unknown as ClassSessionRow[];
-        const myClasses = rawClasses.filter((s) => {
-            if (!s.rock_classes) return false;
-            return (
-                s.rock_classes.class_instructor_id === staffId ||
-                s.instructor_override_user_id === staffId
-            );
-        });
+            // Filter class sessions to this staff member
+            const rawClasses = (classRes.data ?? []) as unknown as ClassSessionRow[];
+            const myClasses = rawClasses.filter((s) => {
+                if (!s.rock_classes) return false;
+                return (
+                    s.rock_classes.class_instructor_id === staffId ||
+                    s.instructor_override_user_id === staffId
+                );
+            });
 
-        // Filter lesson sessions to this staff member
-        const rawLessons = (lessonRes.data ?? []) as unknown as LessonSessionRow[];
-        const myLessons = rawLessons.filter((s) => {
-            if (!s.private_lesson_enrollments) return false;
-            // instructor_id is on the enrollment; check via join
-            return s.instructor_override_id === staffId;
-        });
+            // Filter lesson sessions to this staff member
+            const rawLessons = (lessonRes.data ?? []) as unknown as LessonSessionRow[];
+            const myLessons = rawLessons.filter((s) => {
+                if (!s.private_lesson_enrollments) return false;
+                // instructor_id is on the enrollment; check via join
+                return s.instructor_override_id === staffId;
+            });
 
-        setClassSessions(myClasses);
-        setLessonSessions(myLessons);
-        setLoading(false);
+            setClassSessions(myClasses);
+            setLessonSessions(myLessons);
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function toggleAbsent(sessionId: string, current: boolean | null) {
