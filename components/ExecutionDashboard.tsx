@@ -71,23 +71,29 @@ function getStatusSummary(
     primaryInstructorEmail: string | null | undefined,
     classInstructorMap: Record<string, string>,
     studentId: string,
+    groupAbsentIds: Set<string>,
+    lessonAbsentIds: Set<string>,
 ): string[] {
     const w = workflow ?? {};
     const classEmail = classInstructorMap[studentId];
     const classFirstName = getFirstName(classEmail, staffMap);
+    const skipClass = groupAbsentIds.has(studentId);
+    const skipLesson = lessonAbsentIds.has(studentId);
     if (w.parentSubmitted) return ["Sent"];
     if (w.instructorSubmitted && w.classInstructorSubmitted) return ["Ready to send"];
     if (!w.instructorSubmitted && !w.classInstructorSubmitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
-        return [
-            firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor",
-            classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor",
-        ];
+        const lines: string[] = [];
+        if (!skipLesson) lines.push(firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor");
+        if (!skipClass) lines.push(classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor");
+        return lines;
     }
     if (!w.instructorSubmitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
+        if (skipLesson) return [];
         return [firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor"];
     }
+    if (skipClass) return [];
     return [classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor"];
 }
 
@@ -111,6 +117,8 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showCompleted, setShowCompleted] = useState(false);
+    const [groupAbsentStudentIds, setGroupAbsentStudentIds] = useState<Set<string>>(new Set());
+    const [lessonAbsentStudentIds, setLessonAbsentStudentIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (!schoolId) return;
@@ -121,7 +129,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
             const { start, end } = getWeekBounds();
 
-            const [sessionsResult, studentsResult, staffResult] = await Promise.all([
+            const [sessionsResult, studentsResult, staffResult, signoffsResult, lessonAbsenceResult] = await Promise.all([
                 supabase
                     .from("class_sessions")
                     .select("id, session_date, class_instructor_notes, rock_classes(id, name, class_instructor_email, student_ids)")
@@ -136,6 +144,16 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                 supabase
                     .from("staff")
                     .select("email, name"),
+                supabase
+                    .from("session_student_signoffs")
+                    .select("student_id, group_class_absent, class_sessions!session_id(session_date)")
+                    .eq("group_class_absent", true),
+                supabase
+                    .from("private_lesson_sessions")
+                    .select("student_id")
+                    .gte("session_date", start)
+                    .lte("session_date", end)
+                    .eq("absent", true),
             ]);
 
             if (sessionsResult.error) {
@@ -163,10 +181,27 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                 }
             }
 
+            const groupAbsent = new Set<string>(
+                ((signoffsResult.data ?? []) as any[])
+                    .filter((r) => {
+                        const sd = r.class_sessions?.session_date;
+                        return sd && sd >= start && sd <= end;
+                    })
+                    .map((r) => r.student_id as string)
+                    .filter(Boolean)
+            );
+            const lessonAbsent = new Set<string>(
+                ((lessonAbsenceResult.data ?? []) as any[])
+                    .map((r) => r.student_id as string)
+                    .filter(Boolean)
+            );
+
             setSessions((sessionsResult.data ?? []) as unknown as SessionRow[]);
             setStudents((studentsResult.data ?? []) as unknown as StudentRow[]);
             setStaffMap(map);
             setClassInstructorMap(ciMap);
+            setGroupAbsentStudentIds(groupAbsent);
+            setLessonAbsentStudentIds(lessonAbsent);
             setLoading(false);
         }
 
@@ -254,7 +289,13 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     <div className="text-zinc-400 text-sm">No active students found for this school.</div>
                 ) : (() => {
                     const completedCount = students.filter((s) => s.workflow?.parentSubmitted).length;
-                    const visibleStudents = showCompleted ? students : students.filter((s) => !s.workflow?.parentSubmitted);
+                    const visibleStudents = showCompleted
+                        ? students
+                        : students.filter((s) => {
+                            if (s.workflow?.parentSubmitted) return false;
+                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentStudentIds, lessonAbsentStudentIds);
+                            return lines.length > 0;
+                        });
                     const mid = Math.ceil(visibleStudents.length / 2);
                     const columns = [visibleStudents.slice(0, mid), visibleStudents.slice(mid)];
 
@@ -286,7 +327,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                                         {col.map((student) => {
                                             const w = student.workflow ?? {};
-                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id);
+                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentStudentIds, lessonAbsentStudentIds);
                                             const isReadyToSend = statusLines[0] === "Ready to send";
                                             const isComplete = !!w.parentSubmitted;
 
