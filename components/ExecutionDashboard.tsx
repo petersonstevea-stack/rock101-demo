@@ -20,11 +20,14 @@ type StudentRow = {
     first_name: string;
     last_initial: string | null;
     primary_instructor_email: string | null;
-    workflow: {
-        instructorSubmitted?: boolean;
-        classInstructorSubmitted?: boolean;
-        parentSubmitted?: boolean;
-    } | null;
+};
+
+type SignoffEntry = {
+    instructor_submitted: boolean;
+    class_instructor_submitted: boolean;
+    group_class_absent: boolean;
+    private_lesson_absent: boolean;
+    parent_email_sent: boolean;
 };
 
 type StaffRow = {
@@ -66,7 +69,7 @@ function getFirstName(email: string | null | undefined, staffMap: Record<string,
 }
 
 function getStatusSummary(
-    workflow: StudentRow["workflow"],
+    signoff: SignoffEntry | undefined,
     staffMap: Record<string, string>,
     primaryInstructorEmail: string | null | undefined,
     classInstructorMap: Record<string, string>,
@@ -74,21 +77,21 @@ function getStatusSummary(
     groupAbsentIds: Set<string>,
     lessonAbsentIds: Set<string>,
 ): string[] {
-    const w = workflow ?? {};
+    const s = signoff ?? { instructor_submitted: false, class_instructor_submitted: false, group_class_absent: false, private_lesson_absent: false, parent_email_sent: false };
     const classEmail = classInstructorMap[studentId];
     const classFirstName = getFirstName(classEmail, staffMap);
     const skipClass = groupAbsentIds.has(studentId);
     const skipLesson = lessonAbsentIds.has(studentId);
-    if (w.parentSubmitted) return ["Sent"];
-    if (w.instructorSubmitted && w.classInstructorSubmitted) return ["Ready to send"];
-    if (!w.instructorSubmitted && !w.classInstructorSubmitted) {
+    if (s.parent_email_sent) return ["Sent"];
+    if (s.instructor_submitted && s.class_instructor_submitted) return ["Ready to send"];
+    if (!s.instructor_submitted && !s.class_instructor_submitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
         const lines: string[] = [];
         if (!skipLesson) lines.push(firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor");
         if (!skipClass) lines.push(classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor");
         return lines;
     }
-    if (!w.instructorSubmitted) {
+    if (!s.instructor_submitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
         if (skipLesson) return [];
         return [firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor"];
@@ -119,6 +122,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [showCompleted, setShowCompleted] = useState(false);
     const [groupAbsentIds, setGroupAbsentIds] = useState<Set<string>>(new Set());
     const [lessonAbsentIds, setLessonAbsentIds] = useState<Set<string>>(new Set());
+    const [signoffMap, setSignoffMap] = useState<Record<string, SignoffEntry>>({});
 
     useEffect(() => {
         if (!schoolId) return;
@@ -129,18 +133,14 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
             const { start, end } = getWeekBounds();
 
-            const [sessionsResult, studentsResult, staffResult, lessonAbsenceResult] = await Promise.all([
+            // Step 1: load sessions, staff, and private lesson absences in parallel
+            const [sessionsResult, staffResult, lessonAbsenceResult] = await Promise.all([
                 supabase
                     .from("class_sessions")
                     .select("id, session_date, class_instructor_notes, rock_classes(id, name, class_instructor_email, student_ids)")
                     .eq("rock_classes.school_id", schoolId)
                     .gte("session_date", start)
                     .lte("session_date", end),
-                supabase
-                    .from("students")
-                    .select("id, first_name, last_initial, primary_instructor_email, workflow")
-                    .eq("school_id", schoolId)
-                    .eq("active", true),
                 supabase
                     .from("staff")
                     .select("email, name"),
@@ -152,31 +152,69 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .eq("absent", true),
             ]);
 
-            const weekSessionIds = (sessionsResult.data ?? []).map((s: any) => s.id);
-            const signoffsResult = await supabase
-                .from("session_student_signoffs")
-                .select("student_id, group_class_absent")
-                .eq("group_class_absent", true)
-                .in("session_id", weekSessionIds);
-
             if (sessionsResult.error) {
                 setError(sessionsResult.error.message);
                 setLoading(false);
                 return;
             }
-            if (studentsResult.error) {
-                setError(studentsResult.error.message);
-                setLoading(false);
-                return;
+
+            const sessionRows = (sessionsResult.data ?? []) as unknown as SessionRow[];
+
+            // Step 2: collect all student_ids enrolled in this week's sessions
+            const sessionStudentIdSet = new Set<string>();
+            for (const session of sessionRows) {
+                for (const sid of session.rock_classes?.student_ids ?? []) {
+                    sessionStudentIdSet.add(sid);
+                }
+            }
+            const sessionStudentIds = Array.from(sessionStudentIdSet);
+
+            // Step 3: collect session IDs
+            const sessionIds = sessionRows.map((s) => s.id);
+
+            // Steps 4+5: query all signoff columns for this week's sessions, build map
+            const newSignoffMap: Record<string, SignoffEntry> = {};
+            if (sessionIds.length > 0) {
+                const { data: signoffData } = await supabase
+                    .from("session_student_signoffs")
+                    .select("student_id, instructor_submitted, class_instructor_submitted, group_class_absent, private_lesson_absent, parent_email_sent")
+                    .in("session_id", sessionIds);
+                for (const row of (signoffData ?? []) as any[]) {
+                    if (!row.student_id) continue;
+                    newSignoffMap[row.student_id] = {
+                        instructor_submitted: !!row.instructor_submitted,
+                        class_instructor_submitted: !!row.class_instructor_submitted,
+                        group_class_absent: !!row.group_class_absent,
+                        private_lesson_absent: !!row.private_lesson_absent,
+                        parent_email_sent: !!row.parent_email_sent,
+                    };
+                }
             }
 
+            // Step 6: narrow students query — only students in this week's sessions
+            let studentRows: StudentRow[] = [];
+            if (sessionStudentIds.length > 0) {
+                const { data: studentsData, error: studentsError } = await supabase
+                    .from("students")
+                    .select("id, first_name, last_initial, primary_instructor_email")
+                    .in("id", sessionStudentIds);
+                if (studentsError) {
+                    setError(studentsError.message);
+                    setLoading(false);
+                    return;
+                }
+                studentRows = (studentsData ?? []) as unknown as StudentRow[];
+            }
+
+            // Build staffMap (unchanged)
             const map: Record<string, string> = {};
             for (const s of (staffResult.data ?? []) as StaffRow[]) {
                 if (s.email) map[s.email] = s.name;
             }
 
+            // Build classInstructorMap (unchanged)
             const ciMap: Record<string, string> = {};
-            for (const session of (sessionsResult.data ?? []) as unknown as SessionRow[]) {
+            for (const session of sessionRows) {
                 const rc = session.rock_classes;
                 if (!rc?.class_instructor_email || !rc.student_ids) continue;
                 for (const studentId of rc.student_ids) {
@@ -184,10 +222,9 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                 }
             }
 
+            // Build absence sets from signoff map and private lesson query
             const groupAbsent = new Set<string>(
-                ((signoffsResult.data ?? []) as any[])
-                    .map((r) => r.student_id as string)
-                    .filter(Boolean)
+                sessionStudentIds.filter((id) => newSignoffMap[id]?.group_class_absent)
             );
             const lessonAbsent = new Set<string>(
                 ((lessonAbsenceResult.data ?? []) as any[])
@@ -195,8 +232,9 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .filter(Boolean)
             );
 
-            setSessions((sessionsResult.data ?? []) as unknown as SessionRow[]);
-            setStudents((studentsResult.data ?? []) as unknown as StudentRow[]);
+            setSessions(sessionRows);
+            setStudents(studentRows);
+            setSignoffMap(newSignoffMap);
             setStaffMap(map);
             setClassInstructorMap(ciMap);
             setGroupAbsentIds(new Set(groupAbsent));
@@ -287,12 +325,12 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                 {students.length === 0 ? (
                     <div className="text-zinc-400 text-sm">No active students found for this school.</div>
                 ) : (() => {
-                    const completedCount = students.filter((s) => s.workflow?.parentSubmitted).length;
+                    const completedCount = students.filter((s) => signoffMap[s.id]?.parent_email_sent).length;
                     const visibleStudents = showCompleted
                         ? students
                         : students.filter((s) => {
-                            if (s.workflow?.parentSubmitted) return false;
-                            const lines = getStatusSummary(s.workflow, staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentIds, lessonAbsentIds);
+                            if (signoffMap[s.id]?.parent_email_sent) return false;
+                            const lines = getStatusSummary(signoffMap[s.id], staffMap, s.primary_instructor_email, classInstructorMap, s.id, groupAbsentIds, lessonAbsentIds);
                             return lines.length > 0;
                         });
                     const mid = Math.ceil(visibleStudents.length / 2);
@@ -325,10 +363,10 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                         </div>
 
                                         {col.map((student) => {
-                                            const w = student.workflow ?? {};
-                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentIds, lessonAbsentIds);
+                                            const sig = signoffMap[student.id];
+                                            const statusLines = getStatusSummary(sig, staffMap, student.primary_instructor_email, classInstructorMap, student.id, groupAbsentIds, lessonAbsentIds);
                                             const isReadyToSend = statusLines[0] === "Ready to send";
-                                            const isComplete = !!w.parentSubmitted;
+                                            const isComplete = !!sig?.parent_email_sent;
 
                                             return (
                                                 <div
@@ -344,13 +382,13 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                                             </div>
                                                         </div>
                                                         <div className="hidden md:block text-center w-20 text-sm">
-                                                            {w.instructorSubmitted ? <Check /> : <Warn />}
+                                                            {sig?.instructor_submitted ? <Check /> : <Warn />}
                                                         </div>
                                                         <div className="hidden md:block text-center w-14 text-sm">
-                                                            {w.classInstructorSubmitted ? <Check /> : <Warn />}
+                                                            {sig?.class_instructor_submitted ? <Check /> : <Warn />}
                                                         </div>
                                                         <div className="hidden md:block text-center w-14 text-sm">
-                                                            {w.parentSubmitted ? <Check /> : <Dash />}
+                                                            {sig?.parent_email_sent ? <Check /> : <Dash />}
                                                         </div>
                                                         <div className="text-right w-36">
                                                             {statusLines.map((line, i) => (
