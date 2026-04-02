@@ -1298,6 +1298,7 @@ export default function Rock101App() {
         return (
             <AppShell
                 schoolName={currentSchoolName}
+                userName={currentUser?.name ?? ""}
                 currentTab={tab}
                 onTabChange={(newTab) => handleSetTab(newTab as Tab)}
                 onSignOut={handleLogout}
@@ -1336,6 +1337,7 @@ export default function Rock101App() {
     return (
         <AppShell
             schoolName={currentSchoolName}
+            userName={currentUser?.name ?? ""}
             studentName={selectedStudentName || undefined}
             instrument={selectedStudentName ? selectedStudent?.instrument ?? undefined : undefined}
             programName="Rock 101"
@@ -2079,6 +2081,8 @@ export default function Rock101App() {
                     <MyScheduleView
                         staffId={currentUser?.staffId ?? ""}
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        onSelectStudent={(name) => { handleSelectStudent(name); }}
+                        onNavigateToLesson={() => handleSetTab("privateLesson")}
                     />
                 )}
 

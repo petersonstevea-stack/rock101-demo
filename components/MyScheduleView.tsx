@@ -43,6 +43,8 @@ type LessonSessionRow = {
 type MyScheduleViewProps = {
     staffId: string;
     schoolId: string;
+    onSelectStudent: (studentName: string) => void;
+    onNavigateToLesson: () => void;
 };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -105,7 +107,7 @@ function getDayName(dateStr: string): string {
 const labelClass = "text-xs uppercase tracking-[0.2em] text-zinc-500";
 const sectionHeaderClass = "sor-display text-3xl md:text-4xl leading-none";
 
-export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProps) {
+export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onNavigateToLesson }: MyScheduleViewProps) {
     const [mode, setMode] = useState<ViewMode>("today");
     const [classSessions, setClassSessions] = useState<ClassSessionRow[]>([]);
     const [lessonSessions, setLessonSessions] = useState<LessonSessionRow[]>([]);
@@ -224,7 +226,7 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
                         </div>
                     </div>
                     <div className="shrink-0 text-xs font-medium" style={{ color: hasNotes ? "#4ade80" : "#cc0000" }}>
-                        {hasNotes ? "Notes saved" : "No notes"}
+                        {hasNotes ? "✓ Notes saved" : "⚠ No notes"}
                     </div>
                 </div>
             </div>
@@ -244,7 +246,9 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
             <div
                 key={session.id}
                 className="bg-[#1a1a1a] rounded-none px-4 py-3"
-                style={{ borderLeft: `2px solid ${borderColor}` }}
+                style={{ borderLeft: `2px solid ${borderColor}`, cursor: "pointer" }}
+                role="button"
+                onClick={() => { onSelectStudent(studentName); onNavigateToLesson(); }}
             >
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

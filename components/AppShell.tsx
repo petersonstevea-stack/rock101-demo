@@ -55,6 +55,7 @@ type AppShellProps = {
   canSeeStudentTabs: boolean;
   canSeeManagementTabs: boolean;
   role: string;
+  userName?: string;
   isOwner?: boolean;
   schoolList?: { id: string; name: string }[];
   onSchoolChange?: (schoolId: string) => void;
@@ -189,6 +190,7 @@ function SidebarContent({
   onSchoolChange,
   studentNavItems,
   exceptionsCount,
+  userName,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -198,6 +200,11 @@ function SidebarContent({
       {/* Role badge */}
       <div className="border-b border-zinc-300 bg-white px-4 py-2">
         <div className="text-black" style={{ fontSize: "14px", fontWeight: 400 }}>{getRoleLabel(role)}</div>
+        {userName && (
+          <div className="text-zinc-500" style={{ fontSize: "12px" }}>
+            {userName}
+          </div>
+        )}
       </div>
 
       {/* School */}
@@ -297,6 +304,7 @@ export default function AppShell({
   onSchoolChange,
   studentNavItems,
   exceptionsCount,
+  userName,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -328,6 +336,7 @@ export default function AppShell({
           onSchoolChange={onSchoolChange}
           studentNavItems={studentNavItems}
           exceptionsCount={exceptionsCount}
+          userName={userName}
         />
       </aside>
 
@@ -408,6 +417,7 @@ export default function AppShell({
               onSchoolChange={onSchoolChange}
               studentNavItems={studentNavItems}
               exceptionsCount={exceptionsCount}
+              userName={userName}
             />
           </div>
         </div>
