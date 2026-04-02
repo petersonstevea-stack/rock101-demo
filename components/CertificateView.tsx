@@ -137,7 +137,7 @@ export default function CertificateView({ student }: CertificateViewProps) {
       <div className="space-y-5">
         <div className="bg-[#111111] rounded-none p-5">
           <div>
-            <h2 className="sor-display text-4xl md:text-5xl leading-none">
+            <h2 className="sor-display text-2xl md:text-4xl lg:text-5xl leading-none">
               <span style={{ color: "#cc0000" }}>{firstPart.toUpperCase()}</span>
               {secondPart && (
                 <span className="ml-2 text-white italic normal-case">

@@ -19,7 +19,7 @@ export default function PageHero({
   imageSrc,
 }: PageHeroProps) {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-2xl border border-zinc-800">
+    <div className="relative mb-8 overflow-hidden rounded-none border border-zinc-800">
       <img
         src={imageSrc}
         alt=""
