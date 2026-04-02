@@ -186,7 +186,8 @@ migration. Two dual-write paths now active:
   instructor name as context
 - students.workflow writes preserved during transition period
 
-### 🔜 Step 1.19 — Weekly Execution Dashboard (Management View)
+### ✅ Step 1.19 — Weekly Execution Dashboard (Management View)
+Complete. Execution Dashboard reads from session_student_signoffs, filtered to students with sessions this week.
 
 ### ✅ Step 1.21 — Session instructor override + Schedule view
 Depends on: class_sessions.instructor_override_user_id column
