@@ -68,6 +68,78 @@ Owner (= Franchise Owner)
 **Franchise:** International Franchise Rollup → Regional Franchise Leader → Franchise Group / Owner
 **Corporate:** Corporate System Leader → Regional Manager → District Manager → Territory Manager
 
+### Session-Level Permission Rules
+
+#### Instructor Permissions
+Instructors have full access to update student progress and
+submit weekly feedback. They CANNOT modify scheduling.
+
+**Instructors CAN:**
+- Mark students absent (private lesson and group class)
+- Update private lesson progress (sign off lessons, awards)
+- Update group class progress (song readiness, rockstar habits, notes)
+- Submit weekly feedback for their assigned students and classes
+- Track attendance for their group classes
+
+**Instructors CANNOT:**
+- Change session date, time, or instructor assignment
+- Cancel or reschedule sessions
+- Create or deactivate enrollments
+
+#### Management Permissions (owner, general_manager, music_director)
+All instructor permissions plus:
+- Change instructor for a session (single or all future sessions)
+- Cancel sessions (single or all future sessions)
+- Create and deactivate private lesson enrollments
+- Create and delete group classes
+
+#### The Scope Prompt Pattern
+When management changes instructor or cancels a session, always
+present a scope choice before executing:
+- "Just this session"
+- "This and all future sessions"
+
+This pattern is used consistently across:
+- ClassDetailView (group class instructor override)
+- ScheduleView (school-wide schedule instructor override)
+- LessonSetupView (private lesson session management)
+
+Never skip the scope prompt — always give management the choice.
+Never show change/cancel controls to instructors.
+
+---
+
+## Shell Architecture
+
+### Instructor Shell — One Unified View
+Instructors see a single unified shell regardless of which
+programs they teach. My Schedule and My Lessons show Rock 101
+AND Performance Program content together in the same view.
+- Rock 101 content: red card style (bg-[#cc0000] accent)
+- Performance Program content: dark card style (bg-[#1a1a1a] accent, white border)
+The instructor never switches modes or shells. Program type is
+communicated through card color only.
+
+### Student/Parent Shell — Dynamic Based on Program
+The student nav tabs are NOT static. They render based on the
+selected student's active program enrollments:
+- Rock 101 student → Dashboard, Private Lesson, Grad Requirements,
+  Group Rehearsal, Certificate
+- Performance Program student → (tabs TBD in Phase 2)
+- Dual-enrolled student → sees tabs for both programs
+
+NEVER hardcode STUDENT_NAV as a static array for all students.
+When building Performance Program nav, add tabs conditionally
+based on student.program, not alongside existing Rock 101 tabs.
+
+### Program Color System
+This color language is consistent across all views including
+the parent email, Exceptions dashboard, and all future views:
+| Program | Accent Color | Card Style |
+|---|---|---|
+| Rock 101 | #cc0000 red | bg-[#cc0000] border or left accent |
+| Performance Program | white border | bg-[#1a1a1a] white border |
+
 ---
 
 ## Current Database (33 tables in Supabase)
