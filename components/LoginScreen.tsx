@@ -135,6 +135,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 name: resolvedName,
                 role: resolvedRole,
                 schoolId: resolvedSchoolChoices[0],
+                staffId: staffRow?.id,
             });
             setSchoolChoices(resolvedSchoolChoices);
             return;
@@ -145,6 +146,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             name: resolvedName,
             role: resolvedRole,
             schoolId: resolvedSchoolId,
+            staffId: staffRow?.id,
         };
 
         onLogin(sessionUser);
