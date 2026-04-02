@@ -129,7 +129,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
             const { start, end } = getWeekBounds();
 
-            const [sessionsResult, studentsResult, staffResult, signoffsResult, lessonAbsenceResult] = await Promise.all([
+            const [sessionsResult, studentsResult, staffResult, lessonAbsenceResult] = await Promise.all([
                 supabase
                     .from("class_sessions")
                     .select("id, session_date, class_instructor_notes, rock_classes(id, name, class_instructor_email, student_ids)")
@@ -145,16 +145,19 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .from("staff")
                     .select("email, name"),
                 supabase
-                    .from("session_student_signoffs")
-                    .select("student_id, group_class_absent, class_sessions!session_id(session_date)")
-                    .eq("group_class_absent", true),
-                supabase
                     .from("private_lesson_sessions")
                     .select("student_id")
                     .gte("session_date", start)
                     .lte("session_date", end)
                     .eq("absent", true),
             ]);
+
+            const weekSessionIds = (sessionsResult.data ?? []).map((s: any) => s.id);
+            const signoffsResult = await supabase
+                .from("session_student_signoffs")
+                .select("student_id, group_class_absent")
+                .eq("group_class_absent", true)
+                .in("session_id", weekSessionIds);
 
             if (sessionsResult.error) {
                 setError(sessionsResult.error.message);
@@ -183,10 +186,6 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
             const groupAbsent = new Set<string>(
                 ((signoffsResult.data ?? []) as any[])
-                    .filter((r) => {
-                        const sd = r.class_sessions?.session_date;
-                        return sd && sd >= start && sd <= end;
-                    })
                     .map((r) => r.student_id as string)
                     .filter(Boolean)
             );
