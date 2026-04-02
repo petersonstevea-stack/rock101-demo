@@ -47,6 +47,7 @@ type MyScheduleViewProps = {
     schoolId: string;
     onSelectStudent: (studentName: string) => void;
     onNavigateToLesson: () => void;
+    onSelectClass?: (classId: string, sessionId: string) => void;
 };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -109,7 +110,7 @@ function getDayName(dateStr: string): string {
 const labelClass = "text-xs uppercase tracking-[0.2em] text-zinc-500";
 const sectionHeaderClass = "sor-display text-3xl md:text-4xl leading-none";
 
-export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onNavigateToLesson }: MyScheduleViewProps) {
+export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onNavigateToLesson, onSelectClass }: MyScheduleViewProps) {
     const [mode, setMode] = useState<ViewMode>("today");
     const [classSessions, setClassSessions] = useState<ClassSessionRow[]>([]);
     const [lessonSessions, setLessonSessions] = useState<LessonSessionRow[]>([]);
@@ -233,7 +234,8 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
         return (
             <div
                 key={session.id}
-                className="rounded-none border border-zinc-800 bg-zinc-900 p-4 transition hover:border-[#cc0000] hover:bg-zinc-800"
+                className="rounded-none border border-zinc-800 bg-zinc-900 p-4 transition hover:border-[#cc0000] hover:bg-zinc-800 cursor-pointer"
+                onClick={() => rc && onSelectClass?.(rc.id, session.id)}
             >
                 <div className="text-xl font-semibold text-white">{rc?.name ?? "Unnamed Class"}</div>
                 <div className="mt-2 text-sm text-zinc-300">Class Instructor: {instructorName}</div>

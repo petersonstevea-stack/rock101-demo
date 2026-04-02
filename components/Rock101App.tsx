@@ -2085,6 +2085,14 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         onSelectStudent={(name) => { handleSelectStudent(name); }}
                         onNavigateToLesson={() => handleSetTab("privateLesson")}
+                        onSelectClass={(classId, sessionId) => {
+                            const matchedSession = weeklySessions.find((s) => s.id === sessionId) ?? null;
+                            setSelectedClassId(classId);
+                            setSelectedSessionId(sessionId);
+                            setSelectedSession(matchedSession);
+                            setSelectedStudentName("");
+                            handleSetTab("classes");
+                        }}
                     />
                 )}
 
