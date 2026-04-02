@@ -17,6 +17,8 @@ type ClassSessionRow = {
         school_id: string | null;
         student_ids: string[] | null;
         class_instructor_id: string | null;
+        performance_date: string | null;
+        class_instructor_email: string | null;
     } | null;
 };
 
@@ -113,6 +115,7 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
     const [lessonSessions, setLessonSessions] = useState<LessonSessionRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [absentUpdating, setAbsentUpdating] = useState<string | null>(null);
+    const [staffNameMap, setStaffNameMap] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (!staffId) { setLoading(false); return; }
@@ -131,10 +134,10 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
         console.log("[MyScheduleView] loadData", { staffId, schoolId, dateStart, dateEnd });
 
         try {
-            const [classRes, lessonRes] = await Promise.all([
+            const [classRes, lessonRes, staffRes] = await Promise.all([
                 supabase
                     .from("class_sessions")
-                    .select("id, session_date, start_time, class_instructor_notes, instructor_override_user_id, rock_classes!class_id(id, name, school_id, student_ids, class_instructor_id)")
+                    .select("id, session_date, start_time, class_instructor_notes, instructor_override_user_id, rock_classes!class_id(id, name, school_id, student_ids, class_instructor_id, performance_date, class_instructor_email)")
                     .gte("session_date", dateStart)
                     .lte("session_date", dateEnd),
 
@@ -144,7 +147,16 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
                     .gte("session_date", dateStart)
                     .lte("session_date", dateEnd)
                     .neq("status", "cancelled"),
+
+                supabase
+                    .from("staff")
+                    .select("id, name"),
             ]);
+
+            const staffById = Object.fromEntries(
+                (staffRes.data ?? []).map((s: { id: string; name: string }) => [s.id, s.name])
+            );
+            setStaffNameMap(staffById);
 
             // Filter class sessions to this staff member
             const rawClasses = (classRes.data ?? []) as unknown as ClassSessionRow[];
@@ -211,25 +223,32 @@ export default function MyScheduleView({ staffId, schoolId, onSelectStudent, onN
         const studentCount = rc?.student_ids?.length ?? 0;
         const hasNotes = !!session.class_instructor_notes?.trim();
 
+        const overrideId = session.instructor_override_user_id;
+        const instructorName = overrideId
+            ? (staffNameMap[overrideId] ?? "Unknown")
+            : rc?.class_instructor_id
+                ? (staffNameMap[rc.class_instructor_id] ?? rc.class_instructor_email ?? "Not assigned")
+                : "Not assigned";
+
         return (
             <div
                 key={session.id}
-                className="bg-[#1a1a1a] rounded-none border-l-2 border-l-[#cc0000] px-4 py-3"
+                className="rounded-none border border-zinc-800 bg-zinc-900 p-4 transition hover:border-[#cc0000] hover:bg-zinc-800"
             >
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                        <div className="text-white text-sm font-semibold">{rc?.name ?? "—"}</div>
-                        <div className="mt-1 text-zinc-400 text-xs">
-                            {formatSessionDate(session.session_date)}
-                            {session.start_time ? ` · ${formatTime(session.start_time)}` : ""}
-                        </div>
-                        <div className="mt-1 text-zinc-500 text-xs">
-                            {studentCount} {studentCount === 1 ? "student" : "students"}
-                        </div>
+                <div className="text-xl font-semibold text-white">{rc?.name ?? "Unnamed Class"}</div>
+                <div className="mt-2 text-sm text-zinc-300">Class Instructor: {instructorName}</div>
+                <div className="mt-2 space-y-1 text-sm text-zinc-400">
+                    <div>
+                        {formatSessionDate(session.session_date)}
+                        {session.start_time ? ` · ${formatTime(session.start_time)}` : ""}
                     </div>
-                    <div className="shrink-0 text-xs font-medium" style={{ color: hasNotes ? "#4ade80" : "#cc0000" }}>
-                        {hasNotes ? "✓ Notes saved" : "⚠ No notes"}
+                    <div>
+                        Show Date: {rc?.performance_date ? formatSessionDate(rc.performance_date) : "Not set"}
                     </div>
+                    <div>Students: {studentCount}</div>
+                </div>
+                <div className="mt-2 text-xs font-medium" style={{ color: hasNotes ? "#4ade80" : "#cc0000" }}>
+                    {hasNotes ? "✓ Notes saved" : "⚠ No notes"}
                 </div>
             </div>
         );
