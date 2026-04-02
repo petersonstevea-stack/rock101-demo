@@ -65,22 +65,30 @@ function getFirstName(email: string | null | undefined, staffMap: Record<string,
     return fullName.split(" ")[0];
 }
 
-function getStatusSummary(workflow: StudentRow["workflow"], staffMap: Record<string, string>, primaryInstructorEmail: string | null | undefined): string[] {
+function getStatusSummary(
+    workflow: StudentRow["workflow"],
+    staffMap: Record<string, string>,
+    primaryInstructorEmail: string | null | undefined,
+    classInstructorMap: Record<string, string>,
+    studentId: string,
+): string[] {
     const w = workflow ?? {};
+    const classEmail = classInstructorMap[studentId];
+    const classFirstName = getFirstName(classEmail, staffMap);
     if (w.parentSubmitted) return ["Sent"];
     if (w.instructorSubmitted && w.classInstructorSubmitted) return ["Ready to send"];
     if (!w.instructorSubmitted && !w.classInstructorSubmitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
         return [
             firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor",
-            "Waiting on Class Instructor",
+            classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor",
         ];
     }
     if (!w.instructorSubmitted) {
         const firstName = getFirstName(primaryInstructorEmail, staffMap);
         return [firstName ? `Waiting on Instructor (${firstName})` : "Waiting on Instructor"];
     }
-    return ["Waiting on Class Instructor"];
+    return [classFirstName ? `Waiting on Class Instructor (${classFirstName})` : "Waiting on Class Instructor"];
 }
 
 function Check() {
@@ -99,6 +107,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [sessions, setSessions] = useState<SessionRow[]>([]);
     const [students, setStudents] = useState<StudentRow[]>([]);
     const [staffMap, setStaffMap] = useState<Record<string, string>>({});
+    const [classInstructorMap, setClassInstructorMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showCompleted, setShowCompleted] = useState(false);
@@ -145,9 +154,19 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                 if (s.email) map[s.email] = s.name;
             }
 
+            const ciMap: Record<string, string> = {};
+            for (const session of (sessionsResult.data ?? []) as unknown as SessionRow[]) {
+                const rc = session.rock_classes;
+                if (!rc?.class_instructor_email || !rc.student_ids) continue;
+                for (const studentId of rc.student_ids) {
+                    ciMap[studentId] = rc.class_instructor_email;
+                }
+            }
+
             setSessions((sessionsResult.data ?? []) as unknown as SessionRow[]);
             setStudents((studentsResult.data ?? []) as unknown as StudentRow[]);
             setStaffMap(map);
+            setClassInstructorMap(ciMap);
             setLoading(false);
         }
 
@@ -267,7 +286,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
 
                                         {col.map((student) => {
                                             const w = student.workflow ?? {};
-                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email);
+                                            const statusLines = getStatusSummary(w, staffMap, student.primary_instructor_email, classInstructorMap, student.id);
                                             const isReadyToSend = statusLines[0] === "Ready to send";
                                             const isComplete = !!w.parentSubmitted;
 
