@@ -30,6 +30,7 @@ import ClassDetailView from "@/components/ClassDetailView";
 import ScheduleView from "@/components/ScheduleView";
 import ExecutionDashboard from "@/components/ExecutionDashboard";
 import LessonSetupView from "@/components/LessonSetupView";
+import MyScheduleView from "@/components/MyScheduleView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -58,6 +59,7 @@ type Tab =
     | "pipeline"
     | "executionDashboard"
     | "lessonSetup"
+    | "mySchedule"
     | "admin";
 
 type CurriculumState = {
@@ -168,7 +170,7 @@ export default function Rock101App() {
         if (role === "music_director") {
             setTab("groupRehearsal");  // Music Directors always land on Group Rehearsal
         } else if (role === "instructor" && !savedTab) {
-            setTab("classes");  // Instructors default to the class list
+            setTab("mySchedule");  // Instructors default to My Schedule
         } else if (savedTab) {
             setTab(savedTab as Tab);  // For others, restore saved tab
         }
@@ -2072,6 +2074,13 @@ export default function Rock101App() {
                     <PipelineView students={filteredStudentsBySchool} />
                 )}
 
+
+                {tab === "mySchedule" && (role === "instructor" || canSeeManagementTabs) && (
+                    <MyScheduleView
+                        staffId={currentUser?.staffId ?? ""}
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                    />
+                )}
 
                 {tab === "lessonSetup" && canSeeManagementTabs && (
                     <LessonSetupView

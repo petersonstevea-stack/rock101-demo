@@ -28,6 +28,7 @@ const ROCK101_STUDENT_NAV: NavItem[] = [
 
 // Visible to all staff (owner, general_manager, music_director, instructor)
 const SCHOOL_NAV_BASE: NavItem[] = [
+  { tab: "mySchedule", label: "My Schedule" },
   { tab: "classes", label: "Classes" },
   { tab: "schedule", label: "Schedule" },
 ];
