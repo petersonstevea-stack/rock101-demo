@@ -31,6 +31,7 @@ import ScheduleView from "@/components/ScheduleView";
 import ExecutionDashboard from "@/components/ExecutionDashboard";
 import LessonSetupView from "@/components/LessonSetupView";
 import MyScheduleView from "@/components/MyScheduleView";
+import StaffProfileView from "@/components/StaffProfileView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -60,6 +61,7 @@ type Tab =
     | "executionDashboard"
     | "lessonSetup"
     | "mySchedule"
+    | "myProfile"
     | "admin";
 
 type CurriculumState = {
@@ -2107,6 +2109,17 @@ export default function Rock101App() {
                     <ExecutionDashboard
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         currentUserEmail={currentUser?.email ?? ""}
+                    />
+                )}
+
+                {tab === "myProfile" && currentUser?.staffId && (
+                    <StaffProfileView
+                        staffId={currentUser.staffId}
+                        currentUserStaffId={currentUser.staffId ?? ""}
+                        currentUserRole={role ?? ""}
+                        schoolId={effectiveSchoolFilter === "all"
+                            ? (schoolList[0]?.id ?? "")
+                            : effectiveSchoolFilter}
                     />
                 )}
 

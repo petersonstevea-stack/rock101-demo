@@ -31,6 +31,7 @@ const SCHOOL_NAV_BASE: NavItem[] = [
   { tab: "mySchedule", label: "My Schedule" },
   { tab: "classes", label: "Classes" },
   { tab: "schedule", label: "Schedule" },
+  { tab: "myProfile", label: "My Profile" },
 ];
 
 // Visible to management only (owner, general_manager, music_director)
