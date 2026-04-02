@@ -224,6 +224,12 @@ exactly as class_sessions anchors group class data.
 
 Do not build until Phase 6 planning begins.
 
+### 🔜 UI Polish Items
+- Show logged-in user name in the sidebar — currently only role badge shows. Add user's full name below the role badge in AppShell.tsx.
+- My Schedule: tapping a lesson card should navigate to that student's Private Lesson page.
+- My Schedule: My Classes section needs to be wired up to show group class sessions for the instructor.
+- Exceptions Dashboard: absent students should be exempted from the waiting status when group_class_absent = true on session_student_signoffs.
+
 ---
 
 ### Known Bugs — Fix Before Pilot Launch
