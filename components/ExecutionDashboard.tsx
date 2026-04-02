@@ -190,7 +190,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-x-hidden">
 
             {/* SECTION 1 — THIS WEEK'S SESSIONS */}
             <div className="bg-[#111111] rounded-none p-5">
@@ -272,15 +272,15 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {columns.map((col, colIdx) => (
                                     <div key={colIdx} className="grid gap-2">
                                         {/* Header row */}
-                                        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2">
+                                        <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2">
                                             <div className="text-zinc-500 text-xs uppercase tracking-wider">Student</div>
-                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-20">Instructor</div>
-                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Class</div>
-                                            <div className="text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Parent</div>
+                                            <div className="hidden md:block text-zinc-500 text-xs uppercase tracking-wider text-center w-20">Instructor</div>
+                                            <div className="hidden md:block text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Class</div>
+                                            <div className="hidden md:block text-zinc-500 text-xs uppercase tracking-wider text-center w-14">Parent</div>
                                             <div className="text-zinc-500 text-xs uppercase tracking-wider text-right w-36">Status</div>
                                         </div>
 
@@ -296,20 +296,20 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                                                     className={`bg-[#1a1a1a] rounded-none px-4 py-3 ${isComplete ? "opacity-50" : ""}`}
                                                     style={isReadyToSend ? { borderLeft: "3px solid #cc0000" } : undefined}
                                                 >
-                                                    <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
+                                                    <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_auto_auto_auto] items-center gap-3">
                                                         <div>
                                                             <div className="text-white text-sm font-medium">{`${student.first_name} ${student.last_initial ?? ""}`.trim()}</div>
                                                             <div className="text-zinc-500 text-xs mt-0.5">
                                                                 {staffMap[student.primary_instructor_email ?? ""] ?? student.primary_instructor_email ?? "Unassigned"}
                                                             </div>
                                                         </div>
-                                                        <div className="text-center w-20 text-sm">
+                                                        <div className="hidden md:block text-center w-20 text-sm">
                                                             {w.instructorSubmitted ? <Check /> : <Warn />}
                                                         </div>
-                                                        <div className="text-center w-14 text-sm">
+                                                        <div className="hidden md:block text-center w-14 text-sm">
                                                             {w.classInstructorSubmitted ? <Check /> : <Warn />}
                                                         </div>
-                                                        <div className="text-center w-14 text-sm">
+                                                        <div className="hidden md:block text-center w-14 text-sm">
                                                             {w.parentSubmitted ? <Check /> : <Dash />}
                                                         </div>
                                                         <div className="text-right w-36">
