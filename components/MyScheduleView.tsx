@@ -29,6 +29,7 @@ type LessonSessionRow = {
     instructor_override_id: string | null;
     private_lesson_enrollments: {
         id: string;
+        instructor_id: string | null;
         instrument: string;
         program: string;
         start_time: string | null;
@@ -136,7 +137,7 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
 
                 supabase
                     .from("private_lesson_sessions")
-                    .select("id, session_date, status, absent, instructor_submitted, instructor_override_id, private_lesson_enrollments(id, instrument, program, start_time, students(first_name, last_initial))")
+                    .select("id, session_date, status, absent, instructor_submitted, instructor_override_id, private_lesson_enrollments(id, instructor_id, instrument, program, start_time, students(first_name, last_initial))")
                     .gte("session_date", dateStart)
                     .lte("session_date", dateEnd)
                     .neq("status", "cancelled"),
@@ -156,8 +157,9 @@ export default function MyScheduleView({ staffId, schoolId }: MyScheduleViewProp
             const rawLessons = (lessonRes.data ?? []) as unknown as LessonSessionRow[];
             const myLessons = rawLessons.filter((s) => {
                 if (!s.private_lesson_enrollments) return false;
-                // instructor_id is on the enrollment; check via join
-                return s.instructor_override_id === staffId;
+                // instructor_id is on the enrollment; check both override and primary
+                return s.instructor_override_id === staffId ||
+                    s.private_lesson_enrollments?.instructor_id === staffId;
             });
 
             setClassSessions(myClasses);
