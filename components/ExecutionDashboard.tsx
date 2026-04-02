@@ -119,6 +119,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
     const [showCompleted, setShowCompleted] = useState(false);
     const groupAbsentRef = useRef<Set<string>>(new Set());
     const lessonAbsentRef = useRef<Set<string>>(new Set());
+    const [, setAbsenceVersion] = useState(0);
 
     useEffect(() => {
         if (!schoolId) return;
@@ -201,6 +202,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
             setClassInstructorMap(ciMap);
             groupAbsentRef.current = groupAbsent;
             lessonAbsentRef.current = lessonAbsent;
+            setAbsenceVersion(v => v + 1);
             setLoading(false);
         }
 
