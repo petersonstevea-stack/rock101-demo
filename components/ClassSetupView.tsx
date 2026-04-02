@@ -83,7 +83,7 @@ export default function ClassSetupView({
         setPerformanceTitle(classToEdit.performanceTitle ?? "");
         setPerformanceDate(classToEdit.performanceDate ?? "");
         setSaveMessage("");
-    }, [mode, classToEdit]);
+    }, [mode, classToEdit?.id]);
 
     useEffect(() => {
         supabase
