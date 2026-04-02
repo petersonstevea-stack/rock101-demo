@@ -153,11 +153,13 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
             ]);
 
             const weekSessionIds = (sessionsResult.data ?? []).map((s: any) => s.id);
+            console.log("[ExecutionDashboard] weekSessionIds:", weekSessionIds);
             const signoffsResult = await supabase
                 .from("session_student_signoffs")
                 .select("student_id, group_class_absent")
                 .eq("group_class_absent", true)
                 .in("session_id", weekSessionIds);
+            console.log("[ExecutionDashboard] signoffsResult:", signoffsResult.data);
 
             if (sessionsResult.error) {
                 setError(sessionsResult.error.message);
@@ -189,6 +191,7 @@ export default function ExecutionDashboard({ schoolId, currentUserEmail: _curren
                     .map((r) => r.student_id as string)
                     .filter(Boolean)
             );
+            console.log("[ExecutionDashboard] groupAbsent:", Array.from(groupAbsent));
             const lessonAbsent = new Set<string>(
                 ((lessonAbsenceResult.data ?? []) as any[])
                     .map((r) => r.student_id as string)
