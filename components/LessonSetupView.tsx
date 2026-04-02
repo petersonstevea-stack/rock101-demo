@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { AppUser } from "@/types/user";
 import {
     INSTRUMENT_OPTIONS,
-    PROGRAM_OPTIONS,
 } from "@/data/reference/enrollmentOptions";
 
 function generateTimeOptions(): string[] {
@@ -42,14 +41,12 @@ function formatSessionDate(dateStr: string): string {
 const DAY_OPTIONS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const LESSON_PROGRAM_OPTIONS = PROGRAM_OPTIONS.filter(
-    (p) => p.value === "rock101" || p.value === "performance_program"
-);
 
 type StudentRow = {
     id: string;
     first_name: string;
     last_initial: string | null;
+    program: string | null;
 };
 
 type EnrollmentRow = {
@@ -104,7 +101,6 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
     const [selectedStudentId, setSelectedStudentId] = useState("");
     const [instructorId, setInstructorId] = useState("");
     const [instrument, setInstrument] = useState("");
-    const [program, setProgram] = useState("rock101");
     const [dayOfWeek, setDayOfWeek] = useState("Monday");
     const [startTime, setStartTime] = useState("");
     const [firstSessionDate, setFirstSessionDate] = useState("");
@@ -132,7 +128,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
     async function loadStudents() {
         const { data } = await supabase
             .from("students")
-            .select("id, first_name, last_initial")
+            .select("id, first_name, last_initial, program")
             .eq("school_id", schoolId)
             .eq("active", true)
             .order("first_name");
@@ -256,7 +252,6 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
         setStudentSearch("");
         setInstructorId("");
         setInstrument("");
-        setProgram("rock101");
         setDayOfWeek("Monday");
         setStartTime("");
         setFirstSessionDate("");
@@ -274,6 +269,8 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
 
         const enrollmentId = crypto.randomUUID();
         const derivedDay = DAY_NAMES[new Date(firstSessionDate + "T00:00:00").getDay()];
+        const selectedStudent = students.find((s) => s.id === selectedStudentId);
+        const derivedProgram = selectedStudent?.program ?? "rock101";
 
         const { error: enrollError } = await supabase
             .from("private_lesson_enrollments")
@@ -283,7 +280,7 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                 student_id: selectedStudentId,
                 instructor_id: instructorId,
                 instrument,
-                program,
+                program: derivedProgram,
                 day_of_week: derivedDay,
                 start_time: startTime,
                 first_session_date: firstSessionDate,
@@ -598,20 +595,6 @@ export default function LessonSetupView({ schoolId, users, mode = "create", onNa
                         >
                             <option value="">Select instrument</option>
                             {INSTRUMENT_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Program */}
-                    <div>
-                        <label className={labelClass}>Program</label>
-                        <select
-                            value={program}
-                            onChange={(e) => setProgram(e.target.value)}
-                            className={inputClass}
-                        >
-                            {LESSON_PROGRAM_OPTIONS.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                         </select>
