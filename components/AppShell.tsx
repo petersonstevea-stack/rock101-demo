@@ -18,7 +18,7 @@ type NavItem = {
   label: string;
 };
 
-const STUDENT_NAV: NavItem[] = [
+const ROCK101_STUDENT_NAV: NavItem[] = [
   { tab: "parent", label: "Dashboard" },
   { tab: "privateLesson", label: "Private Lesson" },
   { tab: "graduationRequirements", label: "Grad Requirements" },
@@ -56,16 +56,20 @@ type AppShellProps = {
   isOwner?: boolean;
   schoolList?: { id: string; name: string }[];
   onSchoolChange?: (schoolId: string) => void;
+  studentNavItems?: NavItem[];
+  exceptionsCount?: number;
 };
 
 function NavButton({
   item,
   currentTab,
   onTabChange,
+  badge,
 }: {
   item: NavItem;
   currentTab: string;
   onTabChange: (tab: string) => void;
+  badge?: number;
 }) {
   const isActive = currentTab === item.tab;
   return (
@@ -73,7 +77,7 @@ function NavButton({
       key={item.tab}
       type="button"
       onClick={() => onTabChange(item.tab)}
-      className="w-full px-4 py-2.5 text-left transition-colors"
+      className="w-full px-4 py-2.5 text-left transition-colors flex items-center"
       style={{
         backgroundColor: isActive ? "#cc0000" : "transparent",
         color: "#ffffff",
@@ -92,7 +96,14 @@ function NavButton({
         }
       }}
     >
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {badge != null && badge > 0 && (
+        <span className="ml-auto bg-[#cc0000] text-white rounded-none px-1.5 py-0.5 text-[10px] min-w-[18px] text-center font-bold"
+          style={isActive ? { backgroundColor: "rgba(255,255,255,0.25)" } : undefined}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
@@ -103,18 +114,24 @@ function NavItems({
   canSeeStudentTabs,
   canSeeManagementTabs,
   role,
+  studentNavItems,
+  exceptionsCount,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
   canSeeStudentTabs: boolean;
   canSeeManagementTabs: boolean;
   role: string;
+  studentNavItems?: NavItem[];
+  exceptionsCount?: number;
 }) {
   const isStaff =
     role === "owner" ||
     role === "general_manager" ||
     role === "music_director" ||
     role === "instructor";
+
+  const resolvedStudentNav = studentNavItems ?? ROCK101_STUDENT_NAV;
 
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
@@ -128,7 +145,7 @@ function NavItems({
           <div className="px-4 pt-4 pb-1" style={{ color: "#666666", fontSize: "11px", fontWeight: 400 }}>
             Student
           </div>
-          {STUDENT_NAV.map((item) => (
+          {resolvedStudentNav.map((item) => (
             <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
           ))}
         </div>
@@ -140,7 +157,13 @@ function NavItems({
             School
           </div>
           {schoolNavItems.map((item) => (
-            <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
+            <NavButton
+              key={item.tab}
+              item={item}
+              currentTab={currentTab}
+              onTabChange={onTabChange}
+              badge={item.tab === "executionDashboard" ? exceptionsCount : undefined}
+            />
           ))}
         </div>
       )}
@@ -162,6 +185,8 @@ function SidebarContent({
   isOwner,
   schoolList,
   onSchoolChange,
+  studentNavItems,
+  exceptionsCount,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -234,6 +259,8 @@ function SidebarContent({
           canSeeStudentTabs={canSeeStudentTabs}
           canSeeManagementTabs={canSeeManagementTabs}
           role={role}
+          studentNavItems={studentNavItems}
+          exceptionsCount={exceptionsCount}
         />
       </nav>
 
@@ -266,6 +293,8 @@ export default function AppShell({
   isOwner,
   schoolList,
   onSchoolChange,
+  studentNavItems,
+  exceptionsCount,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -295,6 +324,8 @@ export default function AppShell({
           isOwner={isOwner}
           schoolList={schoolList}
           onSchoolChange={onSchoolChange}
+          studentNavItems={studentNavItems}
+          exceptionsCount={exceptionsCount}
         />
       </aside>
 
@@ -373,6 +404,8 @@ export default function AppShell({
               isOwner={isOwner}
               schoolList={schoolList}
               onSchoolChange={onSchoolChange}
+              studentNavItems={studentNavItems}
+              exceptionsCount={exceptionsCount}
             />
           </div>
         </div>

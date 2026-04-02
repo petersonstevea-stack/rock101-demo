@@ -594,6 +594,28 @@ export default function Rock101App() {
         });
     }, [selectedStudent, selectedClass, activeClassForSelectedStudent, curriculumItems]);
 
+    const studentNavItems = useMemo(() => {
+        // Dynamic nav per Shell Architecture — Rock 101 is the only program currently
+        return [
+            { tab: "parent", label: "Dashboard" },
+            { tab: "privateLesson", label: "Private Lesson" },
+            { tab: "graduationRequirements", label: "Grad Requirements" },
+            { tab: "groupRehearsal", label: "Group Rehearsal" },
+            { tab: "certificate", label: "Certificate" },
+        ];
+    }, []);
+
+    const exceptionsCount = useMemo(() => {
+        const base = filteredStudentsBySchool.filter((s) => {
+            if (s.workflow.parentSubmitted) return false;
+            return !s.workflow.instructorSubmitted || !s.workflow.classInstructorSubmitted;
+        });
+        if (role === "instructor") {
+            return base.filter((s) => s.primaryInstructorEmail === currentUser?.email).length;
+        }
+        return base.length;
+    }, [filteredStudentsBySchool, role, currentUser?.email]);
+
     const workflowReady = selectedStudent
         ? selectedStudent.workflow.instructorSubmitted &&
         selectedStudent.workflow.classInstructorSubmitted &&
@@ -1281,6 +1303,8 @@ export default function Rock101App() {
                 isOwner={isOwner}
                 schoolList={schoolList}
                 onSchoolChange={(id) => setSelectedSchoolId(id)}
+                studentNavItems={studentNavItems}
+                exceptionsCount={exceptionsCount}
             >
                 <div className="p-6">
                     <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
@@ -1320,6 +1344,8 @@ export default function Rock101App() {
             isOwner={isOwner}
             schoolList={schoolList}
             onSchoolChange={(id) => setSelectedSchoolId(id)}
+            studentNavItems={studentNavItems}
+            exceptionsCount={exceptionsCount}
         >
             <div className="p-6">
                 {role === "instructor" && (
