@@ -132,16 +132,13 @@ export default function PrivateLessonView({
                 title="Private Lesson"
                 subtitle={`Focused skill-building for ${student.name} • ${student.instrument}`}
                 imageSrc="/images/rock101-drums.jpg"
-            />
-
-            {(enrolledClassName || classInstructorName) && (
-                <div className="bg-[#1a1a1a] rounded-none px-4 py-3 text-sm text-zinc-400">
-                    {[
+                meta={
+                    [
                         enrolledClassName,
                         classInstructorName ? `Class Instructor: ${classInstructorName}` : null,
-                    ].filter(Boolean).join(" · ")}
-                </div>
-            )}
+                    ].filter(Boolean).join(" · ") || undefined
+                }
+            />
 
             <div className="space-y-10">
                 {monthGroups.map((group) => {
