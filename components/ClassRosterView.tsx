@@ -25,6 +25,9 @@ type SessionRow = {
     session_date: string;
     status: string;
     instructor_override_user_id: string | null;
+    added_student_ids: string[];
+    removed_student_ids: string[];
+    session_instructor_override_id: string | null;
 };
 
 type ClassRosterViewProps = {
@@ -55,7 +58,14 @@ export default function ClassRosterView({
     const [addStudentMode, setAddStudentMode] = useState<Record<string, boolean>>({});
     const [allSchoolStudents, setAllSchoolStudents] = useState<StudentRow[]>([]);
     const [allowMakeup, setAllowMakeup] = useState<Record<string, boolean>>({});
+
+    // Session management state
+    const [managedSessionId, setManagedSessionId] = useState<string | null>(null);
+    const [sessionStudentAddOpen, setSessionStudentAddOpen] = useState<string | null>(null);
     const [cancelConfirm, setCancelConfirm] = useState<string | null>(null);
+    const [instructorChangeSessionId, setInstructorChangeSessionId] = useState<string | null>(null);
+    const [pendingInstructorId, setPendingInstructorId] = useState<string>("");
+    const [instructorScopeSessionId, setInstructorScopeSessionId] = useState<string | null>(null);
 
     const isInstructor = currentUserRole === "instructor";
 
@@ -104,7 +114,9 @@ export default function ClassRosterView({
 
         let query = supabase
             .from("class_sessions")
-            .select("id, session_date, status, instructor_override_user_id")
+            .select(
+                "id, session_date, status, instructor_override_user_id, added_student_ids, removed_student_ids, session_instructor_override_id"
+            )
             .eq("class_id", classId);
 
         const lowerBound = includePast
@@ -120,7 +132,14 @@ export default function ClassRosterView({
         query = query.order("session_date", { ascending: true });
 
         const { data } = await query;
-        setSessions((prev) => ({ ...prev, [classId]: data ?? [] }));
+        setSessions((prev) => ({
+            ...prev,
+            [classId]: (data ?? []).map((s: any) => ({
+                ...s,
+                added_student_ids: s.added_student_ids ?? [],
+                removed_student_ids: s.removed_student_ids ?? [],
+            })),
+        }));
     }
 
     async function loadAllSchoolStudents() {
@@ -140,6 +159,16 @@ export default function ClassRosterView({
         const id = instructorOverrideId ?? fallbackInstructorId;
         if (!id) return "Not assigned";
         return users.find((u) => u.id === id)?.name ?? "Unknown";
+    }
+
+    function resolveStudentName(studentId: string): string {
+        const fromAll = allSchoolStudents.find((s) => s.id === studentId);
+        if (fromAll) return `${fromAll.first_name} ${fromAll.last_initial ?? ""}`.trim();
+        const fromRoster = expandedClassId
+            ? (rosterStudents[expandedClassId] ?? []).find((s) => s.id === studentId)
+            : null;
+        if (fromRoster) return `${fromRoster.first_name} ${fromRoster.last_initial ?? ""}`.trim();
+        return "Unknown";
     }
 
     function getStudentCurrentClass(studentId: string): string | null {
@@ -176,15 +205,80 @@ export default function ClassRosterView({
             .update({ status: "cancelled" })
             .eq("id", sessionId);
         setCancelConfirm(null);
+        setManagedSessionId(null);
         await loadSessions(classId, !!showPastSessions[classId], !!showAllSessions[classId]);
+    }
+
+    async function handleSessionRemoveStudent(
+        session: SessionRow,
+        studentId: string,
+        cls: ClassRow
+    ) {
+        let update: Record<string, string[]>;
+        if (session.added_student_ids.includes(studentId)) {
+            update = {
+                added_student_ids: session.added_student_ids.filter((id) => id !== studentId),
+            };
+        } else {
+            update = {
+                removed_student_ids: [...session.removed_student_ids, studentId],
+            };
+        }
+        await supabase.from("class_sessions").update(update).eq("id", session.id);
+        await loadSessions(cls.id, !!showPastSessions[cls.id], !!showAllSessions[cls.id]);
+    }
+
+    async function handleSessionAddStudent(
+        session: SessionRow,
+        studentId: string,
+        cls: ClassRow
+    ) {
+        const nextAdded = [...session.added_student_ids, studentId];
+        await supabase
+            .from("class_sessions")
+            .update({ added_student_ids: nextAdded })
+            .eq("id", session.id);
+        setSessionStudentAddOpen(null);
+        await loadSessions(cls.id, !!showPastSessions[cls.id], !!showAllSessions[cls.id]);
+    }
+
+    async function handleSetSessionInstructor(
+        session: SessionRow,
+        instructorId: string,
+        scope: "single" | "future",
+        cls: ClassRow
+    ) {
+        if (scope === "single") {
+            await supabase
+                .from("class_sessions")
+                .update({ session_instructor_override_id: instructorId })
+                .eq("id", session.id);
+        } else {
+            await supabase
+                .from("class_sessions")
+                .update({ instructor_override_user_id: instructorId })
+                .eq("class_id", cls.id)
+                .gte("session_date", session.session_date)
+                .neq("status", "cancelled");
+        }
+        setInstructorChangeSessionId(null);
+        setInstructorScopeSessionId(null);
+        setPendingInstructorId("");
+        await loadSessions(cls.id, !!showPastSessions[cls.id], !!showAllSessions[cls.id]);
     }
 
     async function handleToggleExpand(cls: ClassRow) {
         if (expandedClassId === cls.id) {
             setExpandedClassId(null);
+            setManagedSessionId(null);
+            setCancelConfirm(null);
+            setInstructorChangeSessionId(null);
+            setInstructorScopeSessionId(null);
+            setSessionStudentAddOpen(null);
             return;
         }
         setExpandedClassId(cls.id);
+        setManagedSessionId(null);
         const tab = activeTab[cls.id] ?? "roster";
         if (!activeTab[cls.id]) {
             setActiveTab((prev) => ({ ...prev, [cls.id]: "roster" }));
@@ -198,12 +292,19 @@ export default function ClassRosterView({
 
     async function handleTabChange(cls: ClassRow, tab: "roster" | "sessions") {
         setActiveTab((prev) => ({ ...prev, [cls.id]: tab }));
+        setManagedSessionId(null);
+        setCancelConfirm(null);
+        setInstructorChangeSessionId(null);
+        setInstructorScopeSessionId(null);
+        setSessionStudentAddOpen(null);
         if (tab === "roster") {
             await loadRoster(cls.id, cls.student_ids);
         } else {
             await loadSessions(cls.id, !!showPastSessions[cls.id], !!showAllSessions[cls.id]);
         }
     }
+
+    const instructorUsers = users.filter((u) => u.role === "instructor");
 
     return (
         <div className="min-h-screen bg-white">
@@ -490,85 +591,436 @@ export default function ClassRosterView({
                                                                     session.instructor_override_user_id,
                                                                     cls.class_instructor_id
                                                                 );
-                                                                const isConfirming =
-                                                                    cancelConfirm === session.id;
+                                                                const isManaged = managedSessionId === session.id;
+                                                                const isCancelled = session.status === "cancelled";
+
+                                                                // Effective roster for this session
+                                                                const effectiveStudentIds = [
+                                                                    ...cls.student_ids,
+                                                                    ...session.added_student_ids,
+                                                                ].filter(
+                                                                    (id) =>
+                                                                        !session.removed_student_ids.includes(id)
+                                                                );
+
+                                                                // Effective instructor for manage panel
+                                                                const sessionInstrOverrideName =
+                                                                    session.session_instructor_override_id
+                                                                        ? (users.find(
+                                                                              (u) =>
+                                                                                  u.id ===
+                                                                                  session.session_instructor_override_id
+                                                                          )?.name ?? "Unknown")
+                                                                        : null;
+                                                                const classInstrName = cls.class_instructor_id
+                                                                    ? (users.find(
+                                                                          (u) => u.id === cls.class_instructor_id
+                                                                      )?.name ?? "Unknown")
+                                                                    : null;
 
                                                                 return (
-                                                                    <div
-                                                                        key={session.id}
-                                                                        className="bg-zinc-900 px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
-                                                                    >
-                                                                        <div className="flex items-center gap-3 flex-wrap">
-                                                                            <span className="text-white text-sm font-medium">
-                                                                                {formatSessionDate(
-                                                                                    session.session_date
-                                                                                )}
-                                                                            </span>
-                                                                            <span
-                                                                                className="rounded-none px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                                                                style={
-                                                                                    session.status === "cancelled"
-                                                                                        ? {
-                                                                                              backgroundColor:
-                                                                                                  "#450a0a",
-                                                                                              color: "#fca5a5",
-                                                                                          }
-                                                                                        : {
-                                                                                              backgroundColor:
-                                                                                                  "#14532d",
-                                                                                              color: "#86efac",
-                                                                                          }
-                                                                                }
-                                                                            >
-                                                                                {session.status}
-                                                                            </span>
-                                                                            <span className="text-zinc-400 text-xs">
-                                                                                {instrName}
-                                                                            </span>
+                                                                    <div key={session.id} className="space-y-0">
+                                                                        {/* Session row */}
+                                                                        <div className="bg-zinc-900 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+                                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                                <span className="text-white text-sm font-medium">
+                                                                                    {formatSessionDate(
+                                                                                        session.session_date
+                                                                                    )}
+                                                                                </span>
+                                                                                <span
+                                                                                    className="rounded-none px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                                                                    style={
+                                                                                        isCancelled
+                                                                                            ? {
+                                                                                                  backgroundColor:
+                                                                                                      "#450a0a",
+                                                                                                  color: "#fca5a5",
+                                                                                              }
+                                                                                            : {
+                                                                                                  backgroundColor:
+                                                                                                      "#14532d",
+                                                                                                  color: "#86efac",
+                                                                                              }
+                                                                                    }
+                                                                                >
+                                                                                    {session.status}
+                                                                                </span>
+                                                                                <span className="text-zinc-400 text-xs">
+                                                                                    {instrName}
+                                                                                </span>
+                                                                            </div>
+
+                                                                            {!isCancelled && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        if (isManaged) {
+                                                                                            setManagedSessionId(null);
+                                                                                            setCancelConfirm(null);
+                                                                                            setInstructorChangeSessionId(null);
+                                                                                            setInstructorScopeSessionId(null);
+                                                                                            setSessionStudentAddOpen(null);
+                                                                                        } else {
+                                                                                            setManagedSessionId(session.id);
+                                                                                            setCancelConfirm(null);
+                                                                                            setInstructorChangeSessionId(null);
+                                                                                            setInstructorScopeSessionId(null);
+                                                                                            setSessionStudentAddOpen(null);
+                                                                                            loadAllSchoolStudents();
+                                                                                        }
+                                                                                    }}
+                                                                                    className="rounded-none border border-zinc-600 px-3 py-1 text-xs text-white hover:border-white shrink-0"
+                                                                                    style={
+                                                                                        isManaged
+                                                                                            ? { borderColor: "#cc0000", color: "#cc0000" }
+                                                                                            : undefined
+                                                                                    }
+                                                                                >
+                                                                                    {isManaged ? "Close" : "Manage"}
+                                                                                </button>
+                                                                            )}
                                                                         </div>
 
-                                                                        {session.status === "scheduled" && (
-                                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                                {isConfirming ? (
-                                                                                    <>
-                                                                                        <span className="text-xs text-zinc-300">
-                                                                                            Cancel this session?
-                                                                                        </span>
+                                                                        {/* Manage panel */}
+                                                                        {isManaged && (
+                                                                            <div
+                                                                                className="border-l-2 bg-[#111111] p-4 space-y-5"
+                                                                                style={{ borderLeftColor: "#cc0000" }}
+                                                                            >
+                                                                                {/* SECTION A: Students in this session */}
+                                                                                <div className="space-y-2">
+                                                                                    <div
+                                                                                        className="sor-display text-xs uppercase tracking-[0.15em]"
+                                                                                        style={{ color: "#cc0000" }}
+                                                                                    >
+                                                                                        Students in This Session
+                                                                                    </div>
+
+                                                                                    {effectiveStudentIds.length === 0 ? (
+                                                                                        <div className="text-zinc-500 text-sm">
+                                                                                            No students in this session.
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <div className="space-y-1">
+                                                                                            {effectiveStudentIds.map(
+                                                                                                (sid) => {
+                                                                                                    const isAdded =
+                                                                                                        session.added_student_ids.includes(
+                                                                                                            sid
+                                                                                                        );
+                                                                                                    return (
+                                                                                                        <div
+                                                                                                            key={sid}
+                                                                                                            className="flex items-center justify-between bg-zinc-900 px-3 py-2"
+                                                                                                        >
+                                                                                                            <div className="flex items-center gap-2">
+                                                                                                                <span className="text-white text-sm">
+                                                                                                                    {resolveStudentName(
+                                                                                                                        sid
+                                                                                                                    )}
+                                                                                                                </span>
+                                                                                                                {isAdded && (
+                                                                                                                    <span
+                                                                                                                        className="rounded-none px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                                                                                                                        style={{
+                                                                                                                            backgroundColor:
+                                                                                                                                "#14532d",
+                                                                                                                            color: "#86efac",
+                                                                                                                        }}
+                                                                                                                    >
+                                                                                                                        Added
+                                                                                                                    </span>
+                                                                                                                )}
+                                                                                                            </div>
+                                                                                                            <button
+                                                                                                                type="button"
+                                                                                                                onClick={() =>
+                                                                                                                    handleSessionRemoveStudent(
+                                                                                                                        session,
+                                                                                                                        sid,
+                                                                                                                        cls
+                                                                                                                    )
+                                                                                                                }
+                                                                                                                className="rounded-none border border-zinc-600 px-2 py-0.5 text-xs text-white hover:border-white"
+                                                                                                            >
+                                                                                                                Remove
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                    );
+                                                                                                }
+                                                                                            )}
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                    {sessionStudentAddOpen === session.id ? (
+                                                                                        <div className="space-y-2 border border-zinc-800 p-3">
+                                                                                            <div className="flex items-center justify-between">
+                                                                                                <span className="text-xs font-semibold text-white uppercase tracking-wide">
+                                                                                                    Add Student to Session
+                                                                                                </span>
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() =>
+                                                                                                        setSessionStudentAddOpen(
+                                                                                                            null
+                                                                                                        )
+                                                                                                    }
+                                                                                                    className="text-zinc-400 text-xs hover:text-white"
+                                                                                                >
+                                                                                                    Cancel
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <div className="space-y-1 max-h-48 overflow-y-auto">
+                                                                                                {allSchoolStudents
+                                                                                                    .filter(
+                                                                                                        (s) =>
+                                                                                                            !effectiveStudentIds.includes(
+                                                                                                                s.id
+                                                                                                            )
+                                                                                                    )
+                                                                                                    .map((s) => (
+                                                                                                        <button
+                                                                                                            key={s.id}
+                                                                                                            type="button"
+                                                                                                            onClick={() =>
+                                                                                                                handleSessionAddStudent(
+                                                                                                                    session,
+                                                                                                                    s.id,
+                                                                                                                    cls
+                                                                                                                )
+                                                                                                            }
+                                                                                                            className="w-full text-left bg-zinc-900 px-3 py-2 text-sm text-white hover:bg-zinc-800"
+                                                                                                        >
+                                                                                                            {s.first_name}{" "}
+                                                                                                            {s.last_initial ?? ""}
+                                                                                                        </button>
+                                                                                                    ))}
+                                                                                                {allSchoolStudents.filter(
+                                                                                                    (s) =>
+                                                                                                        !effectiveStudentIds.includes(
+                                                                                                            s.id
+                                                                                                        )
+                                                                                                ).length === 0 && (
+                                                                                                    <div className="text-zinc-500 text-sm px-3 py-2">
+                                                                                                        All school students are
+                                                                                                        already in this session.
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ) : (
                                                                                         <button
                                                                                             type="button"
                                                                                             onClick={() =>
-                                                                                                handleCancelSession(
-                                                                                                    session.id,
-                                                                                                    cls.id
+                                                                                                setSessionStudentAddOpen(
+                                                                                                    session.id
                                                                                                 )
                                                                                             }
-                                                                                            className="rounded-none border border-[#cc0000] px-3 py-1 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
+                                                                                            className="rounded-none bg-[#cc0000] px-3 py-1.5 text-xs text-white hover:bg-[#b30000]"
                                                                                         >
-                                                                                            Confirm
+                                                                                            + Add Student to This Session
                                                                                         </button>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {/* SECTION B: Instructor */}
+                                                                                <div className="space-y-2 border-t border-zinc-800 pt-4">
+                                                                                    <div
+                                                                                        className="sor-display text-xs uppercase tracking-[0.15em]"
+                                                                                        style={{ color: "#cc0000" }}
+                                                                                    >
+                                                                                        Instructor for This Session
+                                                                                    </div>
+
+                                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                                        <span className="text-white text-sm">
+                                                                                            {sessionInstrOverrideName ??
+                                                                                                classInstrName ??
+                                                                                                "No instructor assigned"}
+                                                                                        </span>
+                                                                                        {sessionInstrOverrideName && (
+                                                                                            <span
+                                                                                                className="rounded-none px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                                                                                                style={{
+                                                                                                    backgroundColor: "#1a1a1a",
+                                                                                                    color: "#cc0000",
+                                                                                                    border: "1px solid #cc0000",
+                                                                                                }}
+                                                                                            >
+                                                                                                Session Override
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+
+                                                                                    {instructorChangeSessionId ===
+                                                                                    session.id ? (
+                                                                                        <div className="space-y-2">
+                                                                                            <select
+                                                                                                value={pendingInstructorId}
+                                                                                                onChange={(e) => {
+                                                                                                    setPendingInstructorId(
+                                                                                                        e.target.value
+                                                                                                    );
+                                                                                                    setInstructorScopeSessionId(
+                                                                                                        e.target.value
+                                                                                                            ? session.id
+                                                                                                            : null
+                                                                                                    );
+                                                                                                }}
+                                                                                                className="bg-zinc-900 text-white text-sm px-3 py-1.5 border border-zinc-700 rounded-none outline-none w-full"
+                                                                                            >
+                                                                                                <option value="">
+                                                                                                    Select instructor...
+                                                                                                </option>
+                                                                                                {instructorUsers.map(
+                                                                                                    (u) => (
+                                                                                                        <option
+                                                                                                            key={u.id}
+                                                                                                            value={u.id}
+                                                                                                        >
+                                                                                                            {u.name}
+                                                                                                        </option>
+                                                                                                    )
+                                                                                                )}
+                                                                                            </select>
+
+                                                                                            {instructorScopeSessionId ===
+                                                                                                session.id &&
+                                                                                                pendingInstructorId && (
+                                                                                                    <div className="flex gap-2">
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            onClick={() =>
+                                                                                                                handleSetSessionInstructor(
+                                                                                                                    session,
+                                                                                                                    pendingInstructorId,
+                                                                                                                    "single",
+                                                                                                                    cls
+                                                                                                                )
+                                                                                                            }
+                                                                                                            className="rounded-none bg-[#cc0000] px-3 py-1.5 text-xs text-white hover:bg-[#b30000]"
+                                                                                                        >
+                                                                                                            This session only
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            onClick={() =>
+                                                                                                                handleSetSessionInstructor(
+                                                                                                                    session,
+                                                                                                                    pendingInstructorId,
+                                                                                                                    "future",
+                                                                                                                    cls
+                                                                                                                )
+                                                                                                            }
+                                                                                                            className="rounded-none border border-[#cc0000] px-3 py-1.5 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
+                                                                                                        >
+                                                                                                            This and all future
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            onClick={() => {
+                                                                                                                setInstructorChangeSessionId(
+                                                                                                                    null
+                                                                                                                );
+                                                                                                                setInstructorScopeSessionId(
+                                                                                                                    null
+                                                                                                                );
+                                                                                                                setPendingInstructorId(
+                                                                                                                    ""
+                                                                                                                );
+                                                                                                            }}
+                                                                                                            className="rounded-none border border-zinc-600 px-3 py-1.5 text-xs text-white hover:border-white"
+                                                                                                        >
+                                                                                                            Cancel
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                )}
+
+                                                                                            {!pendingInstructorId && (
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() => {
+                                                                                                        setInstructorChangeSessionId(
+                                                                                                            null
+                                                                                                        );
+                                                                                                        setPendingInstructorId(
+                                                                                                            ""
+                                                                                                        );
+                                                                                                    }}
+                                                                                                    className="text-zinc-400 text-xs hover:text-white"
+                                                                                                >
+                                                                                                    Cancel
+                                                                                                </button>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => {
+                                                                                                setInstructorChangeSessionId(
+                                                                                                    session.id
+                                                                                                );
+                                                                                                setPendingInstructorId("");
+                                                                                                setInstructorScopeSessionId(
+                                                                                                    null
+                                                                                                );
+                                                                                            }}
+                                                                                            className="rounded-none border border-zinc-600 px-3 py-1.5 text-xs text-white hover:border-white"
+                                                                                        >
+                                                                                            Change Instructor
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {/* SECTION C: Cancel session */}
+                                                                                <div className="border-t border-zinc-800 pt-4">
+                                                                                    <div
+                                                                                        className="sor-display text-xs uppercase tracking-[0.15em] mb-2"
+                                                                                        style={{ color: "#cc0000" }}
+                                                                                    >
+                                                                                        Cancel Session
+                                                                                    </div>
+
+                                                                                    {cancelConfirm === session.id ? (
+                                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                                            <span className="text-xs text-zinc-300">
+                                                                                                Cancel this session?
+                                                                                            </span>
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    handleCancelSession(
+                                                                                                        session.id,
+                                                                                                        cls.id
+                                                                                                    )
+                                                                                                }
+                                                                                                className="rounded-none border border-[#cc0000] px-3 py-1 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
+                                                                                            >
+                                                                                                Confirm
+                                                                                            </button>
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    setCancelConfirm(null)
+                                                                                                }
+                                                                                                className="rounded-none border border-zinc-600 px-3 py-1 text-xs text-white hover:border-white"
+                                                                                            >
+                                                                                                Back
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    ) : (
                                                                                         <button
                                                                                             type="button"
                                                                                             onClick={() =>
-                                                                                                setCancelConfirm(null)
+                                                                                                setCancelConfirm(session.id)
                                                                                             }
-                                                                                            className="rounded-none border border-zinc-600 px-3 py-1 text-xs text-white hover:border-white"
+                                                                                            className="rounded-none border border-[#cc0000] px-3 py-1.5 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
                                                                                         >
-                                                                                            Back
+                                                                                            Cancel Session
                                                                                         </button>
-                                                                                    </>
-                                                                                ) : (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() =>
-                                                                                            setCancelConfirm(
-                                                                                                session.id
-                                                                                            )
-                                                                                        }
-                                                                                        className="rounded-none border border-[#cc0000] px-3 py-1 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
-                                                                                    >
-                                                                                        Cancel Session
-                                                                                    </button>
-                                                                                )}
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                         )}
                                                                     </div>
