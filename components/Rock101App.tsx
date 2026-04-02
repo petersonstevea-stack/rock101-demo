@@ -694,6 +694,7 @@ export default function Rock101App() {
     }
 
     async function handleRemoveStudentFromClass(studentId: string) {
+        console.log("[removeStudent] called with studentId:", studentId, "selectedClass:", selectedClass?.id ?? "NULL");
         if (!selectedClass) return;
 
         const nextStudentIds = selectedClass.studentIds.filter(
@@ -715,6 +716,7 @@ export default function Rock101App() {
             })
             .eq("id", selectedClass.id);
 
+        console.log("[removeStudent] supabase result — error:", error);
         if (error) {
             console.error("SUPABASE REMOVE STUDENT ERROR:", error);
             alert(`Error removing student: ${error.message}`);
