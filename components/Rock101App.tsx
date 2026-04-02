@@ -32,6 +32,7 @@ import ExecutionDashboard from "@/components/ExecutionDashboard";
 import LessonSetupView from "@/components/LessonSetupView";
 import MyScheduleView from "@/components/MyScheduleView";
 import StaffProfileView from "@/components/StaffProfileView";
+import ClassRosterView from "@/components/ClassRosterView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -63,7 +64,8 @@ type Tab =
     | "manageLessons"
     | "mySchedule"
     | "myProfile"
-    | "admin";
+    | "admin"
+    | "classRoster";
 
 type CurriculumState = {
     done: boolean;
@@ -311,6 +313,8 @@ export default function Rock101App() {
         role === "music_director" || role === "general_manager" || role === "owner";
     const isGeneralManager = role === "general_manager";
     const canSeeManagementTabs = canManageRock101;
+    const canSeeClassRoster =
+        role === "owner" || role === "general_manager" || role === "instructor";
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
@@ -1341,6 +1345,7 @@ export default function Rock101App() {
                 onSchoolChange={(id) => setSelectedSchoolId(id)}
                 studentNavItems={studentNavItems}
                 exceptionsCount={exceptionsCount}
+                canSeeClassRoster={canSeeClassRoster}
             >
                 <div className="p-6">
                     <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
@@ -1383,6 +1388,7 @@ export default function Rock101App() {
             onSchoolChange={(id) => setSelectedSchoolId(id)}
             studentNavItems={studentNavItems}
             exceptionsCount={exceptionsCount}
+            canSeeClassRoster={canSeeClassRoster}
         >
             <div className="p-6">
                 {role === "instructor" && (
@@ -2169,6 +2175,15 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all"
                             ? (schoolList[0]?.id ?? "")
                             : effectiveSchoolFilter}
+                    />
+                )}
+
+                {tab === "classRoster" && canSeeClassRoster && (
+                    <ClassRosterView
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        currentUserStaffId={currentUser?.staffId ?? ""}
+                        currentUserRole={role ?? ""}
+                        users={filteredUsersBySchool}
                     />
                 )}
 

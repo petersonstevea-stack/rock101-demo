@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Users } from "lucide-react";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -16,6 +17,7 @@ function getRoleLabel(role: string): string {
 type NavItem = {
   tab: string;
   label: string;
+  icon?: ReactNode;
 };
 
 const ROCK101_STUDENT_NAV: NavItem[] = [
@@ -63,6 +65,7 @@ type AppShellProps = {
   onSchoolChange?: (schoolId: string) => void;
   studentNavItems?: NavItem[];
   exceptionsCount?: number;
+  canSeeClassRoster?: boolean;
 };
 
 function NavButton({
@@ -101,7 +104,10 @@ function NavButton({
         }
       }}
     >
-      <span className="flex-1">{item.label}</span>
+      <span className="flex-1 flex items-center gap-2">
+        {item.icon && <span className="shrink-0">{item.icon}</span>}
+        {item.label}
+      </span>
       {badge != null && badge > 0 && (
         <span className="ml-auto bg-[#cc0000] text-white rounded-none px-1.5 py-0.5 text-[10px] min-w-[18px] text-center font-bold"
           style={isActive ? { backgroundColor: "rgba(255,255,255,0.25)" } : undefined}
@@ -121,6 +127,7 @@ function NavItems({
   role,
   studentNavItems,
   exceptionsCount,
+  canSeeClassRoster,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
@@ -129,6 +136,7 @@ function NavItems({
   role: string;
   studentNavItems?: NavItem[];
   exceptionsCount?: number;
+  canSeeClassRoster?: boolean;
 }) {
   const isStaff =
     role === "owner" ||
@@ -138,8 +146,15 @@ function NavItems({
 
   const resolvedStudentNav = studentNavItems ?? ROCK101_STUDENT_NAV;
 
+  const classRosterNavItem: NavItem = {
+    tab: "classRoster",
+    label: "Class Roster",
+    icon: <Users size={14} />,
+  };
+
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
+    ...(canSeeClassRoster ? [classRosterNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
   ];
 
@@ -193,6 +208,7 @@ function SidebarContent({
   studentNavItems,
   exceptionsCount,
   userName,
+  canSeeClassRoster,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -272,6 +288,7 @@ function SidebarContent({
           role={role}
           studentNavItems={studentNavItems}
           exceptionsCount={exceptionsCount}
+          canSeeClassRoster={canSeeClassRoster}
         />
       </nav>
 
@@ -307,6 +324,7 @@ export default function AppShell({
   studentNavItems,
   exceptionsCount,
   userName,
+  canSeeClassRoster,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -339,6 +357,7 @@ export default function AppShell({
           studentNavItems={studentNavItems}
           exceptionsCount={exceptionsCount}
           userName={userName}
+          canSeeClassRoster={canSeeClassRoster}
         />
       </aside>
 
@@ -420,6 +439,7 @@ export default function AppShell({
               studentNavItems={studentNavItems}
               exceptionsCount={exceptionsCount}
               userName={userName}
+              canSeeClassRoster={canSeeClassRoster}
             />
           </div>
         </div>
