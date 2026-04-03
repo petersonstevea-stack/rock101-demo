@@ -35,6 +35,7 @@ import StaffProfileView from "@/components/StaffProfileView";
 import ClassRosterView from "@/components/ClassRosterView";
 import ShowGroupSetupView from "@/components/ShowGroupSetupView";
 import CastingView from "@/components/CastingView";
+import MyCastingView from "@/components/MyCastingView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -69,7 +70,8 @@ type Tab =
     | "admin"
     | "classRoster"
     | "showGroups"
-    | "casting";
+    | "casting"
+    | "myCasting";
 
 type CurriculumState = {
     done: boolean;
@@ -333,6 +335,7 @@ export default function Rock101App() {
         role === "owner" || role === "general_manager" || role === "music_director";
     const canSeeCasting =
         role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
+    const canSeeMyCasting = !!role;
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
@@ -1382,6 +1385,7 @@ export default function Rock101App() {
                 canSeeClassRoster={canSeeClassRoster}
                 canSeeShowGroups={canSeeShowGroups}
                 canSeeCasting={canSeeCasting}
+                canSeeMyCasting={canSeeMyCasting}
                 selectedSchoolId={selectedSchoolId}
             >
                 <div className="p-6">
@@ -1428,6 +1432,7 @@ export default function Rock101App() {
             canSeeClassRoster={canSeeClassRoster}
             canSeeShowGroups={canSeeShowGroups}
             canSeeCasting={canSeeCasting}
+            canSeeMyCasting={canSeeMyCasting}
             selectedSchoolId={selectedSchoolId}
         >
             <div className="p-6">
@@ -2242,6 +2247,14 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         schoolName={currentSchoolName}
                         students={filteredPerfStudentsBySchool}
+                    />
+                )}
+
+                {tab === "myCasting" && (
+                    <MyCastingView
+                        currentUser={currentUser}
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        schoolName={currentSchoolName}
                     />
                 )}
 
