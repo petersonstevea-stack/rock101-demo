@@ -13,6 +13,8 @@ type ShowGroup = {
     day_of_week: string | null;
     start_time: string | null;
     end_time: string | null;
+    start_date: string | null;
+    end_date: string | null;
     class_instructor_id: string | null;
     status: string;
     season_name?: string | null;
@@ -216,6 +218,8 @@ export default function PerformanceRehearsalView({
                             end_time: row.end_time,
                             class_instructor_id: row.class_instructor_id,
                             status: row.status,
+                            start_date: row.start_date ?? null,
+                            end_date: row.end_date ?? null,
                             season_name: row.seasons
                                 ? row.seasons.season_key.charAt(0).toUpperCase() +
                                   row.seasons.season_key.slice(1) + " " + row.seasons.year
@@ -757,7 +761,11 @@ export default function PerformanceRehearsalView({
                                     setAttendance([]);
                                     setRehearsalSongs([]);
                                     setAwards([]);
-                                    setSelectedDate(todayStr());
+                                    const today = todayStr();
+                                    const inWindow =
+                                        (!group.start_date || today >= group.start_date) &&
+                                        (!group.end_date || today <= group.end_date);
+                                    setSelectedDate(inWindow ? today : (group.start_date ?? today));
                                 }}
                                 className={`text-left p-4 min-w-[200px] max-w-[280px] transition-colors ${
                                     isSelected
@@ -796,8 +804,21 @@ export default function PerformanceRehearsalView({
                                 type="date"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
+                                min={selectedGroup.start_date ?? undefined}
+                                max={selectedGroup.end_date ?? undefined}
                                 className="bg-[#1a1a1a] border border-zinc-700 text-white px-3 py-1.5 text-sm outline-none focus:border-[#cc0000]"
                             />
+                            {selectedGroup.start_date && selectedGroup.end_date ? (
+                                <div className="text-xs text-zinc-500 mt-1">
+                                    Season: {new Date(selectedGroup.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} – {new Date(selectedGroup.end_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                </div>
+                            ) : selectedGroup.start_date ? (
+                                <div className="text-xs text-zinc-500 mt-1">
+                                    Season starts: {new Date(selectedGroup.start_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                </div>
+                            ) : (
+                                <div className="text-xs text-zinc-500 mt-1">No season dates set — edit in Show Groups</div>
+                            )}
                         </div>
                         {rehearsal && (
                             <div className="flex-1 min-w-[200px]">
