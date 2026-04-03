@@ -334,20 +334,17 @@ How it works:
 Owner/GM/MD can create and manage show groups.
 Includes season, theme type, theme selection, scheduling, rehearsal rooms, and instructor assignment.
 
-### 🔄 Step 2.3 — Student Enrollment (in progress)
-Roster tab inside ShowGroupSetupView.
-Add/remove Performance Program students from a show group.
-Writes to show_group_student_memberships.
+### ✅ Step 2.3 — Student Enrollment
+Roster tab inside ShowGroupSetupView. Add/remove Performance Program students from a show group via show_group_student_memberships.
 
-### 🔜 Step 2.4 — Casting Tool
-THE centerpiece of Phase 2.
-- Song selection per round with drag-to-reorder
-- Student assignment to cast slots via dropdown
-- Paired song conflict detection (same pair_group = blocked)
-- Casting equity warnings per student
-- Submit for Music Director approval
-- MD approves or returns with notes
-- casting_status per song: draft→submitted→approved→returned
+### ✅ Step 2.4 — Casting Tool
+CastingView built in two parts:
+2.4a — Song management: theme song import, slot editor, room assignment, paired display model (Black Flag → Abbey Road alternating pattern), pair color coding.
+2.4b — Student assignment, paired conflict detection, casting equity panel, submission workflow, MD approval.
+allStudents query updated to load across all programs — Rock 101 and Performance Program instructors are the same staff.
+
+### ✅ Owner school selection fix
+Auto-selects school on login, sidebar selector aligned, view reset fixed.
 
 ### 🔜 Step 2.5 — Casting Approval View
 Music Director sees submitted casting for review.
