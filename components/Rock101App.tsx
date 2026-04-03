@@ -198,8 +198,7 @@ export default function Rock101App() {
             if (!currentUser) return; 
             const { data, error } = await supabase
                 .from("students")
-                .select("*")
-                .eq("program", "rock101");
+                .select("*");
 
             if (error) {
                 console.error("SUPABASE LOAD STUDENTS ERROR:", error);
@@ -222,6 +221,7 @@ export default function Rock101App() {
                     schoolId,
                     className: s.class_name ?? "Rock 101",
                     band: s.class_name ?? "Rock 101",
+                    program: s.program ?? "",
                     primaryInstructorEmail: s.primary_instructor_email ?? "",
                     primaryInstructorUserId: s.primary_instructor_user_id ?? null,
                     curriculum: s.curriculum ?? {},
@@ -335,7 +335,6 @@ export default function Rock101App() {
         role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
-    const [performanceStudents, setPerformanceStudents] = useState<any[]>([]);
 
     const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
         if (isOwner) return selectedSchoolId;
@@ -347,14 +346,20 @@ export default function Rock101App() {
         return "del-mar";
     }, [isOwner, selectedSchoolId, currentUser]);
 
-    const filteredStudentsBySchool = useMemo(() => {
-        if (effectiveSchoolFilter === "all") return students;
+    const rock101Students = useMemo(
+        () => students.filter((s) => s.program === "rock101"),
+        [students]
+    );
 
-        const result = students.filter((student) => {
-            return student.schoolId === effectiveSchoolFilter;
-        });
-        return result;
-    }, [students, effectiveSchoolFilter]);
+    const performanceStudents = useMemo(
+        () => students.filter((s) => s.program === "performance_program"),
+        [students]
+    );
+
+    const filteredStudentsBySchool = useMemo(() => {
+        if (effectiveSchoolFilter === "all") return rock101Students;
+        return rock101Students.filter((student) => student.schoolId === effectiveSchoolFilter);
+    }, [rock101Students, effectiveSchoolFilter]);
 
     const filteredUsersBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return allUsers;
@@ -367,7 +372,7 @@ export default function Rock101App() {
 
     const filteredPerfStudentsBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return performanceStudents;
-        return performanceStudents.filter((s) => s.schoolId === effectiveSchoolFilter);
+        return performanceStudents.filter((s: any) => s.schoolId === effectiveSchoolFilter);
     }, [performanceStudents, effectiveSchoolFilter]);
 
     const filteredClassesBySchool = useMemo(() => {
@@ -559,28 +564,6 @@ export default function Rock101App() {
         loadUsers();
     }, []);
 
-    useEffect(() => {
-        async function loadPerfStudents() {
-            const { data, error } = await supabase
-                .from("students")
-                .select("id, first_name, last_initial, instrument, school_id, program, active")
-                .eq("program", "performance_program");
-            if (!error && data) {
-                setPerformanceStudents(
-                    data.map((s) => ({
-                        id: s.id,
-                        firstName: s.first_name,
-                        lastInitial: s.last_initial ?? "",
-                        instrument: s.instrument ?? "guitar",
-                        schoolId: s.school_id ?? "",
-                        program: s.program,
-                        active: s.active ?? true,
-                    }))
-                );
-            }
-        }
-        loadPerfStudents();
-    }, []);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -2257,6 +2240,7 @@ export default function Rock101App() {
                         currentUser={currentUser}
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         schoolName={currentSchoolName}
+                        students={filteredPerfStudentsBySchool}
                     />
                 )}
 
