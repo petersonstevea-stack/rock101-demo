@@ -37,6 +37,7 @@ import ClassRosterView from "@/components/ClassRosterView";
 import ShowGroupSetupView from "@/components/ShowGroupSetupView";
 import CastingView from "@/components/CastingView";
 import MyCastingView from "@/components/MyCastingView";
+import PerformanceRehearsalView from "@/components/PerformanceRehearsalView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -72,7 +73,8 @@ type Tab =
     | "classRoster"
     | "showGroups"
     | "casting"
-    | "myCasting";
+    | "myCasting"
+    | "performanceRehearsal";
 
 type CurriculumState = {
     done: boolean;
@@ -335,6 +337,8 @@ export default function Rock101App() {
     const canSeeShowGroups =
         role === "owner" || role === "general_manager" || role === "music_director";
     const canSeeCasting =
+        role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
+    const canSeePerformanceRehearsal =
         role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
@@ -1385,6 +1389,7 @@ export default function Rock101App() {
                 canSeeClassRoster={canSeeClassRoster}
                 canSeeShowGroups={canSeeShowGroups}
                 canSeeCasting={canSeeCasting}
+                canSeePerformanceRehearsal={canSeePerformanceRehearsal}
                 selectedSchoolId={selectedSchoolId}
             >
                 <div className="p-6">
@@ -1431,6 +1436,7 @@ export default function Rock101App() {
             canSeeClassRoster={canSeeClassRoster}
             canSeeShowGroups={canSeeShowGroups}
             canSeeCasting={canSeeCasting}
+            canSeePerformanceRehearsal={canSeePerformanceRehearsal}
             selectedSchoolId={selectedSchoolId}
         >
             <div className="p-6">
@@ -2253,6 +2259,15 @@ export default function Rock101App() {
                         currentUser={currentUser}
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         schoolName={currentSchoolName}
+                    />
+                )}
+
+                {tab === "performanceRehearsal" && canSeePerformanceRehearsal && (
+                    <PerformanceRehearsalView
+                        currentUser={currentUser}
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        schoolName={currentSchoolName}
+                        students={filteredPerfStudentsBySchool}
                     />
                 )}
 

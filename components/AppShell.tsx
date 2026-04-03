@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Music, Sliders, Users } from "lucide-react";
+import { Music, Music2, Sliders, Users } from "lucide-react";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -69,6 +69,7 @@ type AppShellProps = {
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
   canSeeCasting?: boolean;
+  canSeePerformanceRehearsal?: boolean;
 };
 
 function NavButton({
@@ -133,6 +134,7 @@ function NavItems({
   canSeeClassRoster,
   canSeeShowGroups,
   canSeeCasting,
+  canSeePerformanceRehearsal,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
@@ -144,6 +146,7 @@ function NavItems({
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
   canSeeCasting?: boolean;
+  canSeePerformanceRehearsal?: boolean;
 }) {
   const isStaff =
     role === "owner" ||
@@ -171,11 +174,18 @@ function NavItems({
     icon: <Sliders size={14} />,
   };
 
+  const performanceRehearsalNavItem: NavItem = {
+    tab: "performanceRehearsal",
+    label: "Rehearsal",
+    icon: <Music2 size={14} />,
+  };
+
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeClassRoster ? [classRosterNavItem] : []),
     ...(canSeeShowGroups ? [showGroupsNavItem] : []),
     ...(canSeeCasting ? [castingNavItem] : []),
+    ...(canSeePerformanceRehearsal ? [performanceRehearsalNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
   ];
 
@@ -232,6 +242,7 @@ function SidebarContent({
   canSeeClassRoster,
   canSeeShowGroups,
   canSeeCasting,
+  canSeePerformanceRehearsal,
   selectedSchoolId,
 }: Omit<AppShellProps, "children">) {
   return (
@@ -317,6 +328,7 @@ function SidebarContent({
           canSeeClassRoster={canSeeClassRoster}
           canSeeShowGroups={canSeeShowGroups}
           canSeeCasting={canSeeCasting}
+          canSeePerformanceRehearsal={canSeePerformanceRehearsal}
         />
       </nav>
 
