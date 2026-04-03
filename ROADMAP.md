@@ -428,42 +428,86 @@ Students currently see the same nav as staff. Build a dedicated student-facing e
 
 ---
 
-## PHASE 7 — Pike 13 Integration
-**Goal:** Connect Stage Ready to Pike 13 (School of Rock's school management system) for staff sync, schedule display, and attendance.
+## PHASE 7 — Pike13 Integration
 
-### Step 7.1 — Integration Spec (Design Before Building)
+Pike13 is the enrollment and lesson/group management
+engine for all School of Rock locations. Stage Ready
+treats Pike13 as the source of truth for student
+enrollment, staff rosters, and scheduling. Stage Ready
+owns curriculum progress, casting, and parent
+communications.
 
-#### Staff Integration
-- Staff enrollment should flow from Pike 13 — when a staff member is added in Pike 13, Stage Ready should auto-create their profile
-- Pike 13 has 3 staff roles: Staff Member, Limited Staff Member, Manager — these do NOT map cleanly to Stage Ready roles (`owner`, `gm`, `director`, `instructor`)
-- Stage Ready must be able to OVERRIDE Pike 13 role designations for its own permission purposes
-  - Design: Pike 13 role stored as a reference field on the staff record; Stage Ready role is the authoritative value for all permission checks in this system
-- Different schools may have the same staff member at different access levels — Stage Ready already supports this via the `staff_school_roles` table
+### Architecture Principles
+- Pike13 = source of truth for who is enrolled and in what program
+- Stage Ready = source of truth for curriculum progress, casting, and parent comms
+- Email is the linking key between both systems
+- Program detection uses case-insensitive keyword matching on Pike13 service names — designed to work across all 437 schools even if service names vary slightly
 
-#### Single Login Credential
-- **Goal:** one login that works for both Pike 13 and Stage Ready
-- Investigate whether Pike 13 OAuth2 can be used as the identity provider for Stage Ready login
-- If the same email is used in both systems, Stage Ready can use Pike 13 email as the linking key
-- This requires confirming Pike 13 email matches staff email in the Stage Ready `staff` table
-- **Do not build yet** — investigate feasibility first
+### Program Detection Rules (service name keywords)
+- performance_program: "seasonal", "show rehearsal", "house band"
+- rock_101: "rock 101", "r101"
+- rookies: "rookies"
+- little_wing: "little wing"
+- adult_band: "adult"
+- lessons_only: lessons with no program rehearsal
+- exclude: "camp", "workshop", "trial", "make up", "admin", "birthday", "repair"
 
-#### Schedule Display
-- Stage Ready should be able to display a staff member's schedule pulled from Pike 13
-- Show: upcoming classes, session times, assigned students per session
-- Read-only from Pike 13 — Stage Ready does not write schedule data back to Pike 13
+### ✅ Step 7.1 — OAuth2 Token (Complete)
+Pike13 OAuth2 app registered. Permanent access token obtained via authorization code flow and stored in:
+- .env.local (local dev)
+- Vercel environment variables (production)
+- Supabase Edge Function secrets (edge functions)
 
-#### Attendance
-- Stage Ready should be able to mark attendance for a class session
-- Write attendance back to Pike 13 via Core API
-- Also display a student's attendance history pulled from Pike 13 Reporting API
-- Attendance data stays in Pike 13 as source of truth — Stage Ready displays and writes but does not store independently
+Token is owner-scoped, does not expire.
+Callback route: /api/auth/pike13/callback
 
-#### Prerequisites to Confirm Before Building
-1. Confirm `students` table primary key type in Supabase
-2. Confirm how sessions currently identify the logged-in user
-3. Confirm whether Pike 13 stores the same email your staff uses in Stage Ready
-4. Investigate Pike 13 OAuth2 as identity provider
-5. Confirm Pike 13 API supports attendance writes via Core API
+### ✅ Step 7.2 — Staff Sync (Complete)
+Dry-run and commit endpoints built.
+- /api/pike13/sync-staff (dry run)
+- /api/pike13/sync-staff/commit (write)
+
+Matches on email (case-insensitive). Updates pike13_person_id and pike13_role on existing staff records. Does not create new staff records — Stage Ready controls who gets access. System accounts excluded by email pattern. pike13_role column added to staff table.
+
+### ✅ Step 7.3 — Student Sync (Complete)
+Two-pass architecture:
+- Pass 1: Enrollments Reporting API → active person IDs with program detection via service name keywords
+- Pass 2: Core API batch lookup → client details (guardian_email, instrument, name)
+
+Endpoints:
+- /api/pike13/sync-students (dry run)
+- /api/pike13/sync-students/commit (write, upsert-safe)
+
+183 Del Mar students imported across 6 program buckets. Unique constraint on students.pike13_person_id ensures idempotent re-runs.
+
+### 🔜 Step 7.4 — Nightly Sync Job
+Build a Supabase Edge Function on a cron schedule that runs the student and staff sync automatically every night.
+- New students added automatically
+- Departed students flagged inactive
+- Staff changes reflected
+- Sync log written to a new pike13_sync_log table
+- No manual data entry required at any school
+
+### 🔜 Step 7.5 — Pike13 OAuth Login (SSO)
+Allow parents and staff to log into Stage Ready using their existing Pike13 credentials. Pike13 is the identity provider — if you have an active Pike13 account at a school, you automatically have access to Stage Ready. This mirrors how Pike13 and the Method App already share SSO today.
+
+Flow:
+1. User selects their school on the Stage Ready login page
+2. Redirected to that school's Pike13 OAuth authorize URL
+3. Pike13 authenticates and redirects back with auth code
+4. Stage Ready exchanges code for token, reads email
+5. Email matched to staff or parents table
+6. Supabase session created — user is in
+
+Build order:
+- Step 7.5a: Staff SSO (small group, emails verified)
+- Step 7.5b: Parent SSO (requires clean parent email data)
+- Step 7.5c: Multi-school OAuth (school selector on login, dynamic subdomain per school)
+
+### 🔜 Step 7.6 — Service and Session Sync
+Match rock_classes to Pike13 services via pike13_service_id. Match class_sessions to Pike13 event occurrences via pike13_event_occurrence_id. Both columns already exist from Step 1.16.
+
+### 🔜 Step 7.7 — Attendance Write-back
+When Stage Ready marks a student absent, write attendance back to Pike13 via Core API. Pike13 remains attendance source of truth. Stage Ready is the input UI.
 
 ---
 
