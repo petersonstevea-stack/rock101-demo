@@ -85,24 +85,17 @@ export async function GET() {
         const allRows: any[][] = [];
         let instrumentColIndex: number | null = null;
         let startingAfter: string | undefined = undefined;
-        let debugFields: any[] = [];
-        let debugFirstRow: any = null;
 
         while (true) {
             const json = await fetchPage(token, startingAfter);
             const attrs = json?.data?.attributes ?? {};
             const rows: any[][] = attrs.rows ?? [];
 
-            // On first page, capture debug metadata and find instrument column
+            // On first page, find instrument column by display_name
             if (instrumentColIndex === null) {
                 const fieldMeta: any[] = attrs.fields ?? [];
-                debugFields = fieldMeta;
-                debugFirstRow = rows[0] ?? null;
-
                 const idx = fieldMeta.findIndex(
-                    (f: any) =>
-                        (typeof f === "string" && f.toLowerCase().includes("instrument")) ||
-                        (typeof f?.name === "string" && f.name.toLowerCase().includes("instrument"))
+                    (f: any) => (f.display_name ?? f.name) === "Instrument"
                 );
                 instrumentColIndex = idx >= 0 ? idx : null;
             }
@@ -134,8 +127,6 @@ export async function GET() {
 
         return NextResponse.json({
             total_active_students: willImport.length,
-            debug_fields: debugFields,
-            debug_first_row: debugFirstRow,
             will_import: willImport,
         });
 
