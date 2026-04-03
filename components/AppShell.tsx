@@ -198,10 +198,11 @@ function NavItems({
           {resolvedStudentNav.map((item) => (
             <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
           ))}
-          {canSeeMyCasting && (
-            <NavButton item={myCastingNavItem} currentTab={currentTab} onTabChange={onTabChange} />
-          )}
         </div>
+      )}
+
+      {canSeeMyCasting && (
+        <NavButton item={myCastingNavItem} currentTab={currentTab} onTabChange={onTabChange} />
       )}
 
       {schoolNavItems.length > 0 && (
