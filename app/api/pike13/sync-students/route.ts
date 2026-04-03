@@ -7,24 +7,31 @@ const supabase = createClient(
 );
 
 const PIKE13_REPORT_URL =
-    "https://delmar-sor.pike13.com/desk/api/v3/reports/clients/queries";
+    "https://delmar-sor.pike13.com/desk/api/v3/reports/enrollments/queries";
 
-const BASE_FIELDS = [
+const FIELDS = [
     "person_id",
     "first_name",
     "last_name",
     "email",
     "guardian_email",
-    "guardian_name",
-    "also_staff",
-    "future_visits",
-    "custom_fields",
+    "service_category",
+    "state",
 ];
 
+// Field indices (match FIELDS array order)
+const F_PERSON_ID = 0;
+const F_FIRST_NAME = 1;
+const F_LAST_NAME = 2;
+const F_EMAIL = 3;
+const F_GUARDIAN_EMAIL = 4;
+
 const FILTER = ["and", [
-    ["gt", "future_visits", 0],
-    ["eq", "also_staff", "f"],
-    ["eq", "person_state", "active"],
+    ["eq", "state", "registered"],
+    ["or", [
+        ["eq", "service_category", "Lessons"],
+        ["eq", "service_category", "Classes and Rehearsals"],
+    ]],
 ]];
 
 async function fetchPage(token: string, startingAfter?: string): Promise<any> {
@@ -32,9 +39,12 @@ async function fetchPage(token: string, startingAfter?: string): Promise<any> {
         data: {
             type: "queries",
             attributes: {
-                fields: BASE_FIELDS,
+                fields: FIELDS,
                 filter: FILTER,
-                page: { limit: 500, ...(startingAfter ? { starting_after: startingAfter } : {}) },
+                page: {
+                    limit: 500,
+                    ...(startingAfter ? { starting_after: startingAfter } : {}),
+                },
             },
         },
     };
@@ -50,7 +60,7 @@ async function fetchPage(token: string, startingAfter?: string): Promise<any> {
 
     if (!res.ok) {
         const text = await res.text();
-        throw new Error(`Pike13 report fetch failed (${res.status}): ${text}`);
+        throw new Error(`Pike13 enrollments fetch failed (${res.status}): ${text}`);
     }
 
     return res.json();
@@ -66,39 +76,14 @@ export async function GET() {
             });
         }
 
-        // ── Fetch school_id from Supabase ────────────────────────────────────
-        const { data: schoolRows, error: schoolError } = await supabase
-            .from("schools")
-            .select("id")
-            .ilike("name", "%del mar%")
-            .limit(1);
-
-        if (schoolError) {
-            return new NextResponse(`Supabase school lookup failed: ${schoolError.message}`, {
-                status: 500,
-                headers: { "Content-Type": "text/plain" },
-            });
-        }
-        const schoolId: string | null = schoolRows?.[0]?.id ?? null;
-
-        // ── Paginate through Reporting API ───────────────────────────────────
+        // ── Paginate through enrollment rows ─────────────────────────────────
         const allRows: any[][] = [];
-        let instrumentColIndex: number | null = null;
         let startingAfter: string | undefined = undefined;
 
         while (true) {
             const json = await fetchPage(token, startingAfter);
             const attrs = json?.data?.attributes ?? {};
             const rows: any[][] = attrs.rows ?? [];
-
-            // On first page, find instrument column by display_name
-            if (instrumentColIndex === null) {
-                const fieldMeta: any[] = attrs.fields ?? [];
-                const idx = fieldMeta.findIndex(
-                    (f: any) => (f.display_name ?? f.name) === "Instrument"
-                );
-                instrumentColIndex = idx >= 0 ? idx : null;
-            }
 
             allRows.push(...rows);
 
@@ -107,26 +92,31 @@ export async function GET() {
             if (!startingAfter) break;
         }
 
-        // ── Build preview records ────────────────────────────────────────────
-        const willImport = allRows.map((row) => {
-            const instrument =
-                instrumentColIndex !== null ? (row[instrumentColIndex] ?? "") : "";
+        // ── De-duplicate by person_id ────────────────────────────────────────
+        const seenIds = new Map<string, any[]>();
+        for (const row of allRows) {
+            const personId = String(row[F_PERSON_ID]);
+            if (!seenIds.has(personId)) {
+                seenIds.set(personId, row);
+            }
+        }
 
-            return {
-                first_name: row[1] ?? "",
-                last_initial: (row[2] as string)?.charAt(0).toUpperCase() ?? "",
-                parent_email: row[3] || row[4] || "",
-                pike13_person_id: String(row[0]),
-                school: "del-mar",
-                school_id: schoolId,
-                program: "rock_101",
-                active: true,
-                instrument,
-            };
-        });
+        // ── Build preview records ────────────────────────────────────────────
+        const willImport = Array.from(seenIds.values()).map((row) => ({
+            first_name: row[F_FIRST_NAME] ?? "",
+            last_initial: (row[F_LAST_NAME] as string)?.charAt(0).toUpperCase() ?? "",
+            parent_email: row[F_EMAIL] || row[F_GUARDIAN_EMAIL] || "",
+            pike13_person_id: String(row[F_PERSON_ID]),
+            school: "del-mar",
+            school_id: "del-mar",
+            program: "rock_101",
+            active: true,
+            instrument: "",
+        }));
 
         return NextResponse.json({
-            total_active_students: willImport.length,
+            total_enrolled_rows: allRows.length,
+            total_unique_students: willImport.length,
             will_import: willImport,
         });
 
