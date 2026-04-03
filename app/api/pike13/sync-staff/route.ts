@@ -8,6 +8,7 @@ const isSystemAccount = (email: string) =>
     SYSTEM_EMAIL_PATTERNS.some((p) => email.startsWith(p));
 
 export async function GET() {
+  try {
     const token = process.env.PIKE13_ACCESS_TOKEN;
     if (!token) {
         return NextResponse.json({ error: "PIKE13_ACCESS_TOKEN is not set" }, { status: 500 });
@@ -116,4 +117,10 @@ export async function GET() {
         },
         { status: 200 }
     );
+  } catch (err) {
+    return new NextResponse(
+      `ERROR: ${err instanceof Error ? err.message : String(err)}`,
+      { status: 500, headers: { "Content-Type": "text/plain" } }
+    );
+  }
 }
