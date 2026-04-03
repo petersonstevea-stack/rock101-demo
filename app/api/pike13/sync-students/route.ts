@@ -22,21 +22,23 @@ const F_PERSON_ID = 0;
 const F_FULL_NAME = 1;
 const F_EMAIL = 2;
 
-const FILTER = ["and", [
-    ["eq", "state", "registered"],
-    ["or", [
-        ["eq", "service_category", "Lessons"],
-        ["eq", "service_category", "Classes and Rehearsals"],
-    ]],
-]];
-
 async function fetchPage(token: string, startingAfter?: string): Promise<any> {
+    const today = new Date().toISOString().split("T")[0];
+    const filter = ["and", [
+        ["eq", "state", "registered"],
+        ["gte", "start_at", today],
+        ["or", [
+            ["eq", "service_category", "Lessons"],
+            ["eq", "service_category", "Classes and Rehearsals"],
+        ]],
+    ]];
+
     const body: any = {
         data: {
             type: "queries",
             attributes: {
                 fields: FIELDS,
-                filter: FILTER,
+                filter,
                 page: {
                     limit: 500,
                     ...(startingAfter ? { starting_after: startingAfter } : {}),
