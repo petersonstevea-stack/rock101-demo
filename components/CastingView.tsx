@@ -231,18 +231,14 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
 
     useEffect(() => {
         if (!schoolId) return;
-        console.log("CastingView: loading show groups for schoolId:", schoolId);
         setLoadingGroups(true);
         supabase
             .from("show_group_instances")
-            .select("*, seasons(name)")
+            .select("*, seasons(season_key, year)")
             .eq("school_id", schoolId)
             .eq("status", "active")
             .order("name")
-            .then(({ data, error }) => {
-                if (error) {
-                    console.error("CastingView: show groups query error", error, "schoolId:", schoolId);
-                }
+            .then(({ data }) => {
                 if (data) {
                     setShowGroups(
                         data.map((row: any) => ({
@@ -257,7 +253,10 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                             start_time: row.start_time,
                             end_time: row.end_time,
                             class_instructor_id: row.class_instructor_id,
-                            season_name: row.seasons?.name ?? null,
+                            season_name: row.seasons
+                                ? row.seasons.season_key.charAt(0).toUpperCase() +
+                                  row.seasons.season_key.slice(1) + " " + row.seasons.year
+                                : null,
                         }))
                     );
                 }
