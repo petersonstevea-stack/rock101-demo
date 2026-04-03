@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Users } from "lucide-react";
+import { Music, Users } from "lucide-react";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -66,6 +66,7 @@ type AppShellProps = {
   studentNavItems?: NavItem[];
   exceptionsCount?: number;
   canSeeClassRoster?: boolean;
+  canSeeShowGroups?: boolean;
 };
 
 function NavButton({
@@ -128,6 +129,7 @@ function NavItems({
   studentNavItems,
   exceptionsCount,
   canSeeClassRoster,
+  canSeeShowGroups,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
@@ -137,6 +139,7 @@ function NavItems({
   studentNavItems?: NavItem[];
   exceptionsCount?: number;
   canSeeClassRoster?: boolean;
+  canSeeShowGroups?: boolean;
 }) {
   const isStaff =
     role === "owner" ||
@@ -152,9 +155,16 @@ function NavItems({
     icon: <Users size={14} />,
   };
 
+  const showGroupsNavItem: NavItem = {
+    tab: "showGroups",
+    label: "Show Groups",
+    icon: <Music size={14} />,
+  };
+
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeClassRoster ? [classRosterNavItem] : []),
+    ...(canSeeShowGroups ? [showGroupsNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
   ];
 
@@ -209,6 +219,7 @@ function SidebarContent({
   exceptionsCount,
   userName,
   canSeeClassRoster,
+  canSeeShowGroups,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -289,6 +300,7 @@ function SidebarContent({
           studentNavItems={studentNavItems}
           exceptionsCount={exceptionsCount}
           canSeeClassRoster={canSeeClassRoster}
+          canSeeShowGroups={canSeeShowGroups}
         />
       </nav>
 
@@ -325,6 +337,7 @@ export default function AppShell({
   exceptionsCount,
   userName,
   canSeeClassRoster,
+  canSeeShowGroups,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -358,6 +371,7 @@ export default function AppShell({
           exceptionsCount={exceptionsCount}
           userName={userName}
           canSeeClassRoster={canSeeClassRoster}
+          canSeeShowGroups={canSeeShowGroups}
         />
       </aside>
 
@@ -440,6 +454,7 @@ export default function AppShell({
               exceptionsCount={exceptionsCount}
               userName={userName}
               canSeeClassRoster={canSeeClassRoster}
+              canSeeShowGroups={canSeeShowGroups}
             />
           </div>
         </div>

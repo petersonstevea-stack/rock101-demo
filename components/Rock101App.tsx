@@ -33,6 +33,7 @@ import LessonSetupView from "@/components/LessonSetupView";
 import MyScheduleView from "@/components/MyScheduleView";
 import StaffProfileView from "@/components/StaffProfileView";
 import ClassRosterView from "@/components/ClassRosterView";
+import ShowGroupSetupView from "@/components/ShowGroupSetupView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -65,7 +66,8 @@ type Tab =
     | "mySchedule"
     | "myProfile"
     | "admin"
-    | "classRoster";
+    | "classRoster"
+    | "showGroups";
 
 type CurriculumState = {
     done: boolean;
@@ -315,6 +317,8 @@ export default function Rock101App() {
     const canSeeManagementTabs = canManageRock101;
     const canSeeClassRoster =
         role === "owner" || role === "general_manager" || role === "instructor";
+    const canSeeShowGroups =
+        role === "owner" || role === "general_manager" || role === "music_director";
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
@@ -1346,6 +1350,7 @@ export default function Rock101App() {
                 studentNavItems={studentNavItems}
                 exceptionsCount={exceptionsCount}
                 canSeeClassRoster={canSeeClassRoster}
+                canSeeShowGroups={canSeeShowGroups}
             >
                 <div className="p-6">
                     <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
@@ -1389,6 +1394,7 @@ export default function Rock101App() {
             studentNavItems={studentNavItems}
             exceptionsCount={exceptionsCount}
             canSeeClassRoster={canSeeClassRoster}
+            canSeeShowGroups={canSeeShowGroups}
         >
             <div className="p-6">
                 {role === "instructor" && (
@@ -2183,6 +2189,14 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         currentUserStaffId={currentUser?.staffId ?? ""}
                         currentUserRole={role ?? ""}
+                        users={filteredUsersBySchool}
+                    />
+                )}
+
+                {tab === "showGroups" && canSeeShowGroups && (
+                    <ShowGroupSetupView
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        schoolName={currentSchoolName}
                         users={filteredUsersBySchool}
                     />
                 )}
