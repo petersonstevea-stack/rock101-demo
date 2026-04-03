@@ -700,13 +700,15 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         const existing = assignmentBySlotMap[slot.id];
         if (newStudentId === (existing?.student_id ?? "")) return;
 
+        // Unassign case — delete any assignment for this slot
         if (newStudentId === "") {
             if (existing) {
                 const snapshot = existing;
-                setCastAssignments((prev) => prev.filter((a) => a.id !== snapshot.id));
+                setCastAssignments((prev) => prev.filter((a) => a.show_song_cast_slot_id !== slot.id));
                 const { error } = await supabase.from("show_song_cast_assignments")
-                    .delete().eq("id", snapshot.id);
+                    .delete().eq("show_song_cast_slot_id", slot.id);
                 if (error) {
+                    console.error("cast assignment delete error:", error);
                     setCastAssignments((prev) => [...prev, snapshot]);
                 }
             }
@@ -725,86 +727,103 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
             return;
         }
 
-        if (existing) {
-            const snapshot = existing;
+        // Assign case — delete existing, then insert new (delete-then-insert pattern)
+        const tempId = `temp-${Date.now()}-${slot.id}`;
+        const optimistic: CastAssignment = {
+            id: tempId,
+            show_song_cast_slot_id: slot.id,
+            student_id: newStudentId,
+            status: "assigned",
+            is_conflict_override: false,
+            override_reason: null,
+            override_approved_by: null,
+            song_id: song.id,
+        };
+        setCastAssignments((prev) => [
+            ...prev.filter((a) => a.show_song_cast_slot_id !== slot.id),
+            optimistic,
+        ]);
+
+        // Step 1: delete any existing assignment for this slot
+        const { error: delError } = await supabase.from("show_song_cast_assignments")
+            .delete().eq("show_song_cast_slot_id", slot.id);
+        if (delError) {
+            console.error("cast assignment delete error:", delError);
+            setCastAssignments((prev) => {
+                const withoutTemp = prev.filter((a) => a.id !== tempId);
+                return existing ? [...withoutTemp, existing] : withoutTemp;
+            });
+            return;
+        }
+
+        // Step 2: insert new assignment
+        const { data, error: insError } = await supabase.from("show_song_cast_assignments")
+            .insert({ show_song_cast_slot_id: slot.id, student_id: newStudentId, status: "assigned", is_conflict_override: false })
+            .select("id").single();
+        if (!insError && data) {
             setCastAssignments((prev) =>
-                prev.map((a) => a.id === snapshot.id
-                    ? { ...a, student_id: newStudentId, is_conflict_override: false } : a)
+                prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
             );
-            const { error } = await supabase.from("show_song_cast_assignments")
-                .update({ student_id: newStudentId, is_conflict_override: false })
-                .eq("id", snapshot.id);
-            if (error) {
-                setCastAssignments((prev) =>
-                    prev.map((a) => a.id === snapshot.id ? snapshot : a)
-                );
-            }
         } else {
-            const tempId = `temp-${Date.now()}-${slot.id}`;
-            const optimistic: CastAssignment = {
-                id: tempId,
-                show_song_cast_slot_id: slot.id,
-                student_id: newStudentId,
-                status: "active",
-                is_conflict_override: false,
-                override_reason: null,
-                override_approved_by: null,
-                song_id: song.id,
-            };
-            setCastAssignments((prev) => [...prev, optimistic]);
-            const { data, error } = await supabase.from("show_song_cast_assignments")
-                .insert({ show_song_cast_slot_id: slot.id, student_id: newStudentId, status: "active", is_conflict_override: false })
-                .select("id").single();
-            if (!error && data) {
-                setCastAssignments((prev) =>
-                    prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
-                );
-            } else {
-                setCastAssignments((prev) => prev.filter((a) => a.id !== tempId));
-            }
+            console.error("cast assignment insert error:", insError);
+            setCastAssignments((prev) => {
+                const withoutTemp = prev.filter((a) => a.id !== tempId);
+                return existing ? [...withoutTemp, existing] : withoutTemp;
+            });
         }
     }
 
     async function handleConfirmOverride() {
         if (!overrideModal) return;
         const { existingAssignmentId, slotId, studentId, songId } = overrideModal;
-        if (existingAssignmentId) {
-            const snapshot = castAssignments.find((a) => a.id === existingAssignmentId);
+
+        const snapshot = existingAssignmentId
+            ? castAssignments.find((a) => a.id === existingAssignmentId)
+            : undefined;
+
+        const tempId = `temp-override-${Date.now()}`;
+        const optimistic: CastAssignment = {
+            id: tempId,
+            show_song_cast_slot_id: slotId,
+            student_id: studentId,
+            status: "assigned",
+            is_conflict_override: true,
+            override_reason: null,
+            override_approved_by: null,
+            song_id: songId,
+        };
+        setCastAssignments((prev) => [
+            ...prev.filter((a) => a.show_song_cast_slot_id !== slotId),
+            optimistic,
+        ]);
+
+        // Step 1: delete any existing assignment for this slot
+        const { error: delError } = await supabase.from("show_song_cast_assignments")
+            .delete().eq("show_song_cast_slot_id", slotId);
+        if (delError) {
+            console.error("cast override delete error:", delError);
+            setCastAssignments((prev) => {
+                const withoutTemp = prev.filter((a) => a.id !== tempId);
+                return snapshot ? [...withoutTemp, snapshot] : withoutTemp;
+            });
+            setOverrideModal(null);
+            return;
+        }
+
+        // Step 2: insert new assignment
+        const { data, error: insError } = await supabase.from("show_song_cast_assignments")
+            .insert({ show_song_cast_slot_id: slotId, student_id: studentId, status: "assigned", is_conflict_override: true })
+            .select("id").single();
+        if (!insError && data) {
             setCastAssignments((prev) =>
-                prev.map((a) => a.id === existingAssignmentId
-                    ? { ...a, student_id: studentId, is_conflict_override: true } : a)
+                prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
             );
-            const { error } = await supabase.from("show_song_cast_assignments")
-                .update({ student_id: studentId, is_conflict_override: true })
-                .eq("id", existingAssignmentId);
-            if (error && snapshot) {
-                setCastAssignments((prev) =>
-                    prev.map((a) => a.id === existingAssignmentId ? snapshot : a)
-                );
-            }
         } else {
-            const tempId = `temp-override-${Date.now()}`;
-            const optimistic: CastAssignment = {
-                id: tempId,
-                show_song_cast_slot_id: slotId,
-                student_id: studentId,
-                status: "active",
-                is_conflict_override: true,
-                override_reason: null,
-                override_approved_by: null,
-                song_id: songId,
-            };
-            setCastAssignments((prev) => [...prev, optimistic]);
-            const { data, error } = await supabase.from("show_song_cast_assignments")
-                .insert({ show_song_cast_slot_id: slotId, student_id: studentId, status: "active", is_conflict_override: true })
-                .select("id").single();
-            if (!error && data) {
-                setCastAssignments((prev) =>
-                    prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
-                );
-            } else {
-                setCastAssignments((prev) => prev.filter((a) => a.id !== tempId));
-            }
+            console.error("cast override insert error:", insError);
+            setCastAssignments((prev) => {
+                const withoutTemp = prev.filter((a) => a.id !== tempId);
+                return snapshot ? [...withoutTemp, snapshot] : withoutTemp;
+            });
         }
         setOverrideModal(null);
     }
