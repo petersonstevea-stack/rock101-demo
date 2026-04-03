@@ -342,13 +342,15 @@ CastingView built in two parts:
 2.4a — Song management: theme song import, slot editor, room assignment, paired display model (Black Flag → Abbey Road alternating pattern), pair color coding.
 2.4b — Student assignment, paired conflict detection, casting equity panel, submission workflow, MD approval.
 allStudents query updated to load across all programs — Rock 101 and Performance Program instructors are the same staff.
+Full spreadsheet grid: fixed room columns alternating by position (Black Flag/Abbey Road), implicit pairing by proximity, standard slot columns, persistence fixed (delete-then-insert with correct status value), casting equity panel, submission and MD approval workflow complete.
 
 ### ✅ Owner school selection fix
 Auto-selects school on login, sidebar selector aligned, view reset fixed.
 
-### 🔜 Step 2.5 — Casting Approval View
-Music Director sees submitted casting for review.
-Approve → students see on My Casting page.
+### ✅ Step 2.5 — Casting Approval View
+Built as part of Step 2.4 — MD approval section inside CastingView.
+Music Director sees submitted casting, can approve or return with notes.
+Approve → students see assignments on My Casting page.
 Return with notes → back to instructor.
 
 ### 🔜 Step 2.6 — My Casting Page (student/parent)
