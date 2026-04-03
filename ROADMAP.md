@@ -354,7 +354,7 @@ Approve → students see assignments on My Casting page.
 Return with notes → back to instructor.
 
 ### ✅ Step 2.6 — My Casting Page (student/parent)
-MyCastingView built — student picker, approved assignments grouped by show group, dual role badges per song, Method App link placeholder, show date and schedule display.
+MyCastingView: student picker, approved assignments by show group, dual role badges, Method App exercise links with part labels, prerequisite exercise chips. Exercise data matched by song title + instrument from method_app_exercises table. Test record live: Stairway to Heaven vocals, exercise 5375.
 
 ### 🔜 Method App exercise data import
 Awaiting CSV from SOR: Song Title | Artist | Instrument | Part Label | Exercise ID
