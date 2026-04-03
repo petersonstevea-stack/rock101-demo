@@ -346,33 +346,11 @@ function SidebarContent({
   );
 }
 
-export default function AppShell({
-  children,
-  schoolName,
-  studentName,
-  instrument,
-  programName,
-  currentTab,
-  onTabChange,
-  onSignOut,
-  canSeeStudentTabs,
-  canSeeManagementTabs,
-  role,
-  isOwner,
-  schoolList,
-  onSchoolChange,
-  studentNavItems,
-  exceptionsCount,
-  userName,
-  canSeeClassRoster,
-  canSeeShowGroups,
-  canSeeCasting,
-  selectedSchoolId,
-}: AppShellProps) {
+export default function AppShell({ children, ...props }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   function handleTabChange(tab: string) {
-    onTabChange(tab);
+    props.onTabChange(tab);
     setDrawerOpen(false);
   }
 
@@ -383,28 +361,7 @@ export default function AppShell({
         className="hidden md:flex w-[200px] shrink-0 flex-col"
         style={{ backgroundColor: "#000000" }}
       >
-        <SidebarContent
-          schoolName={schoolName}
-          studentName={studentName}
-          instrument={instrument}
-          programName={programName}
-          currentTab={currentTab}
-          onTabChange={onTabChange}
-          onSignOut={onSignOut}
-          canSeeStudentTabs={canSeeStudentTabs}
-          canSeeManagementTabs={canSeeManagementTabs}
-          role={role}
-          isOwner={isOwner}
-          schoolList={schoolList}
-          onSchoolChange={onSchoolChange}
-          studentNavItems={studentNavItems}
-          exceptionsCount={exceptionsCount}
-          userName={userName}
-          canSeeClassRoster={canSeeClassRoster}
-          canSeeShowGroups={canSeeShowGroups}
-          canSeeCasting={canSeeCasting}
-          selectedSchoolId={selectedSchoolId}
-        />
+        <SidebarContent {...props} />
       </aside>
 
       {/* Main content */}
@@ -468,28 +425,7 @@ export default function AppShell({
               </button>
             </div>
 
-            <SidebarContent
-              schoolName={schoolName}
-              studentName={studentName}
-              instrument={instrument}
-              programName={programName}
-              currentTab={currentTab}
-              onTabChange={handleTabChange}
-              onSignOut={onSignOut}
-              canSeeStudentTabs={canSeeStudentTabs}
-              canSeeManagementTabs={canSeeManagementTabs}
-              role={role}
-              isOwner={isOwner}
-              schoolList={schoolList}
-              onSchoolChange={onSchoolChange}
-              studentNavItems={studentNavItems}
-              exceptionsCount={exceptionsCount}
-              userName={userName}
-              canSeeClassRoster={canSeeClassRoster}
-              canSeeShowGroups={canSeeShowGroups}
-              canSeeCasting={canSeeCasting}
-              selectedSchoolId={selectedSchoolId}
-            />
+            <SidebarContent {...props} onTabChange={handleTabChange} />
           </div>
         </div>
       )}
