@@ -54,6 +54,9 @@ type ShowGroupSong = {
     order_index: number;
     casting_status: string;
     has_method_lesson: boolean;
+    unlocked_by: string | null;
+    unlocked_at: string | null;
+    unlock_reason: string | null;
 };
 
 type RehearsalAward = {
@@ -185,6 +188,10 @@ export default function PerformanceRehearsalView({
     const [peerNote, setPeerNote] = useState("");
     const [submittingNomination, setSubmittingNomination] = useState(false);
 
+    // ── Casting lock state ───────────────────────────────────────────────────
+    const [unlockPanelSongId, setUnlockPanelSongId] = useState<string | null>(null);
+    const [unlockReasonText, setUnlockReasonText] = useState("");
+
     const selectedGroup = showGroups.find((g) => g.id === selectedGroupId) ?? null;
 
     // ── Load show groups ─────────────────────────────────────────────────────
@@ -249,7 +256,7 @@ export default function PerformanceRehearsalView({
         if (!selectedGroupId) { setShowGroupSongs([]); return; }
         supabase
             .from("show_group_songs")
-            .select("id, show_group_instance_id, title, artist, order_index, casting_status, has_method_lesson")
+            .select("id, show_group_instance_id, title, artist, order_index, casting_status, has_method_lesson, unlocked_by, unlocked_at, unlock_reason")
             .eq("show_group_instance_id", selectedGroupId)
             .order("order_index")
             .then(({ data }) => {
@@ -637,6 +644,52 @@ export default function PerformanceRehearsalView({
         }
     }
 
+    // ── Unlock casting ────────────────────────────────────────────────────────
+    async function handleUnlockCasting(songId: string, reason: string) {
+        if (!reason.trim()) return;
+        await supabase
+            .from("show_group_songs")
+            .update({
+                casting_status: "unlocked",
+                unlocked_by: currentUser?.staffId ?? null,
+                unlocked_at: new Date().toISOString(),
+                unlock_reason: reason.trim(),
+            })
+            .eq("id", songId);
+        setUnlockPanelSongId(null);
+        setUnlockReasonText("");
+        // Reload songs
+        if (selectedGroupId) {
+            const { data } = await supabase
+                .from("show_group_songs")
+                .select("id, show_group_instance_id, title, artist, order_index, casting_status, has_method_lesson, unlocked_by, unlocked_at, unlock_reason")
+                .eq("show_group_instance_id", selectedGroupId)
+                .order("order_index");
+            if (data) setShowGroupSongs(data as ShowGroupSong[]);
+        }
+    }
+
+    // ── Reset to draft ────────────────────────────────────────────────────────
+    async function handleResetToDraft(songId: string) {
+        await supabase
+            .from("show_group_songs")
+            .update({
+                casting_status: "draft",
+                unlocked_by: null,
+                unlocked_at: null,
+                unlock_reason: null,
+            })
+            .eq("id", songId);
+        if (selectedGroupId) {
+            const { data } = await supabase
+                .from("show_group_songs")
+                .select("id, show_group_instance_id, title, artist, order_index, casting_status, has_method_lesson, unlocked_by, unlocked_at, unlock_reason")
+                .eq("show_group_instance_id", selectedGroupId)
+                .order("order_index");
+            if (data) setShowGroupSongs(data as ShowGroupSong[]);
+        }
+    }
+
     // ── Derived data ──────────────────────────────────────────────────────────
     const enrolledStudents = memberships
         .map((m) => students.find((s) => s.id === m.student_id))
@@ -652,6 +705,7 @@ export default function PerformanceRehearsalView({
     const absentCount = attendance.filter((a) => a.status === "absent").length;
 
     const canApprove = role === "music_director" || role === "general_manager" || role === "owner" || role === "instructor";
+    const canManageCasting = role === "general_manager" || role === "music_director" || role === "owner";
 
     const pendingNominations = awards.filter((a) => a.award_type === "peer" && a.status === "pending");
     const approvedPeerAwards = awards.filter((a) => a.award_type === "peer" && a.status === "approved");
@@ -1132,7 +1186,134 @@ export default function PerformanceRehearsalView({
                             )}
                         </div>
                     </div>
+
                 </>
+            )}
+
+            {/* SECTION 6 — Casting Lock/Unlock (management only) */}
+            {selectedGroup && canManageCasting && (
+                <div className="bg-[#111111] p-5 space-y-3">
+                    <div className="text-xs font-medium uppercase tracking-widest text-zinc-400"
+                        style={{ fontFamily: "var(--font-oswald)" }}>
+                        Casting Status
+                    </div>
+
+                    {showGroupSongs.length === 0 ? (
+                        <div className="text-sm text-zinc-500">No songs in this show group yet.</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {showGroupSongs.map((song) => {
+                                const isUnlockPanelOpen = unlockPanelSongId === song.id;
+
+                                return (
+                                    <div key={song.id} className="bg-[#1a1a1a]">
+                                        <div className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+                                            {/* Song info */}
+                                            <div className="flex-1 min-w-0">
+                                                <span className="text-sm text-white font-medium">
+                                                    {song.title}
+                                                </span>
+                                                <span className="ml-2 text-xs text-zinc-500">
+                                                    {song.artist}
+                                                </span>
+                                            </div>
+
+                                            {/* Status + actions */}
+                                            {song.casting_status === "approved" && (
+                                                <>
+                                                    <span className="bg-zinc-700 text-zinc-300 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                                                        🔒 LOCKED
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setUnlockPanelSongId(isUnlockPanelOpen ? null : song.id);
+                                                            setUnlockReasonText("");
+                                                        }}
+                                                        className="border border-amber-400 text-amber-400 px-2 py-0.5 text-[11px] font-medium hover:bg-amber-400/10"
+                                                    >
+                                                        Unlock
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {song.casting_status === "unlocked" && (
+                                                <>
+                                                    <span className="bg-amber-900 text-amber-300 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                                                        ⚠ UNLOCKED
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleResetToDraft(song.id)}
+                                                        className="border border-zinc-600 text-zinc-400 px-2 py-0.5 text-[11px] font-medium hover:bg-zinc-700"
+                                                    >
+                                                        Reset to Draft
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {song.casting_status !== "approved" && song.casting_status !== "unlocked" && (
+                                                <span className={`px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                                                    song.casting_status === "submitted"
+                                                        ? "bg-amber-700 text-amber-200"
+                                                        : song.casting_status === "returned"
+                                                        ? "bg-[#cc0000] text-white"
+                                                        : "bg-zinc-700 text-zinc-400"
+                                                }`}>
+                                                    {song.casting_status}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Unlock reason display (unlocked state) */}
+                                        {song.casting_status === "unlocked" && song.unlock_reason && (
+                                            <div className="px-3 pb-2.5 text-xs italic text-zinc-400">
+                                                {song.unlock_reason}
+                                            </div>
+                                        )}
+
+                                        {/* Inline unlock confirmation panel */}
+                                        {isUnlockPanelOpen && (
+                                            <div className="border-t border-zinc-700 px-3 py-3 space-y-3 bg-[#111111]">
+                                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                                    Unlocking approved casting requires a reason and will trigger re-approval.
+                                                    Students may be notified if assignments change.
+                                                </p>
+                                                <textarea
+                                                    value={unlockReasonText}
+                                                    onChange={(e) => setUnlockReasonText(e.target.value)}
+                                                    placeholder="Reason for unlocking..."
+                                                    rows={2}
+                                                    className="w-full bg-[#1a1a1a] border border-zinc-700 text-white px-3 py-2 text-sm outline-none focus:border-amber-400 resize-none"
+                                                />
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setUnlockPanelSongId(null);
+                                                            setUnlockReasonText("");
+                                                        }}
+                                                        className="border border-zinc-600 text-zinc-400 px-3 py-1 text-xs font-medium hover:bg-zinc-700"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUnlockCasting(song.id, unlockReasonText)}
+                                                        disabled={!unlockReasonText.trim()}
+                                                        className="bg-amber-700 text-amber-100 px-3 py-1 text-xs font-medium hover:bg-amber-600 disabled:opacity-40"
+                                                    >
+                                                        Unlock Casting
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
