@@ -47,6 +47,24 @@ type RehearsalRoom = {
     order_index: number;
 };
 
+type Membership = {
+    id: string;
+    show_group_instance_id: string;
+    student_id: string;
+    status: string;
+    joined_at: string | null;
+};
+
+type StudentRow = {
+    id: string;
+    firstName: string;
+    lastInitial: string;
+    instrument: string;
+    schoolId: string;
+    program: string;
+    active: boolean;
+};
+
 type ShowTypeKey = "heavy" | "steady" | "custom";
 
 type FormState = {
@@ -67,6 +85,7 @@ type ShowGroupSetupViewProps = {
     schoolId: string;
     schoolName: string;
     users: { id: string; name: string; email: string; role: string }[];
+    students: StudentRow[];
 };
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -98,6 +117,8 @@ function generateTimeOptions(): string[] {
 }
 
 const TIME_OPTIONS = generateTimeOptions();
+
+const INSTRUMENT_ORDER = ["vocals", "guitar", "bass", "drums", "keys"];
 
 const DEFAULT_FORM: FormState = {
     seasonId: "",
@@ -166,6 +187,7 @@ export default function ShowGroupSetupView({
     schoolId,
     schoolName,
     users,
+    students,
 }: ShowGroupSetupViewProps) {
     const [showGroups, setShowGroups] = useState<ShowGroupInstance[]>([]);
     const [seasons, setSeasons] = useState<Season[]>([]);
@@ -189,6 +211,12 @@ export default function ShowGroupSetupView({
     // Rooms
     const [newRoomName, setNewRoomName] = useState("");
     const [addingRoom, setAddingRoom] = useState(false);
+
+    // Roster tab
+    const [activeTab, setActiveTab] = useState<"editDetails" | "roster">("editDetails");
+    const [memberships, setMemberships] = useState<Membership[]>([]);
+    const [loadingRoster, setLoadingRoster] = useState(false);
+    const [showPicker, setShowPicker] = useState(false);
 
     // ─── Data loading ────────────────────────────────────────────────────
 
@@ -234,6 +262,17 @@ export default function ShowGroupSetupView({
     useEffect(() => {
         loadAll();
     }, [loadAll]);
+
+    const loadMemberships = useCallback(async (groupId: string) => {
+        setLoadingRoster(true);
+        const { data, error } = await supabase
+            .from("show_group_student_memberships")
+            .select("id, show_group_instance_id, student_id, status, joined_at")
+            .eq("show_group_instance_id", groupId)
+            .neq("status", "removed");
+        if (!error) setMemberships((data ?? []) as Membership[]);
+        setLoadingRoster(false);
+    }, []);
 
     // ─── Derived helpers ─────────────────────────────────────────────────
 
@@ -368,6 +407,9 @@ export default function ShowGroupSetupView({
         }
         setExpandedGroupId(group.id);
         setSaveError("");
+        setActiveTab("editDetails");
+        setMemberships([]);
+        setShowPicker(false);
         const showType = detectShowType(group, themeTypes);
         setEditForm({
             seasonId: group.season_id ?? "",
@@ -465,6 +507,260 @@ export default function ShowGroupSetupView({
             .update({ is_active: false })
             .eq("id", roomId);
         await loadAll();
+    }
+
+    // ─── Roster handlers ────────────────────────────────────────────────
+
+    function handleRosterTabOpen(groupId: string) {
+        setActiveTab("roster");
+        setMemberships([]);
+        loadMemberships(groupId);
+    }
+
+    async function handleAddStudent(studentId: string) {
+        if (!expandedGroupId) return;
+        const { error } = await supabase
+            .from("show_group_student_memberships")
+            .insert({
+                show_group_instance_id: expandedGroupId,
+                student_id: studentId,
+                status: "active",
+                joined_at: new Date().toISOString(),
+            });
+        if (!error) await loadMemberships(expandedGroupId);
+    }
+
+    async function handleRemoveStudent(membershipId: string) {
+        if (!expandedGroupId) return;
+        const { error } = await supabase
+            .from("show_group_student_memberships")
+            .update({ status: "removed" })
+            .eq("id", membershipId);
+        if (!error) await loadMemberships(expandedGroupId);
+    }
+
+    function getInstrumentBucket(instrument: string): string {
+        const lower = instrument.toLowerCase();
+        return INSTRUMENT_ORDER.includes(lower) ? lower : "other";
+    }
+
+    function instrumentLabel(bucket: string): string {
+        return bucket === "other"
+            ? "Other"
+            : bucket.charAt(0).toUpperCase() + bucket.slice(1);
+    }
+
+    function renderRosterTab(group: ShowGroupInstance) {
+        type EnrolledEntry = { membership: Membership; student: StudentRow };
+
+        const enrolledIds = new Set(memberships.map((m) => m.student_id));
+
+        const enrolled: EnrolledEntry[] = memberships
+            .map((m) => {
+                const s = students.find((st) => st.id === m.student_id);
+                return s ? { membership: m, student: s } : null;
+            })
+            .filter((x): x is EnrolledEntry => x !== null)
+            .sort((a, b) => {
+                const ai = INSTRUMENT_ORDER.indexOf(getInstrumentBucket(a.student.instrument));
+                const bi = INSTRUMENT_ORDER.indexOf(getInstrumentBucket(b.student.instrument));
+                const ao = ai === -1 ? INSTRUMENT_ORDER.length : ai;
+                const bo = bi === -1 ? INSTRUMENT_ORDER.length : bi;
+                if (ao !== bo) return ao - bo;
+                return (a.student.firstName + a.student.lastInitial).localeCompare(
+                    b.student.firstName + b.student.lastInitial
+                );
+            });
+
+        const counts: Record<string, number> = {};
+        enrolled.forEach(({ student }) => {
+            const bucket = getInstrumentBucket(student.instrument);
+            counts[bucket] = (counts[bucket] ?? 0) + 1;
+        });
+        const summaryParts = [
+            ...INSTRUMENT_ORDER.filter((i) => counts[i] > 0).map(
+                (i) => `${counts[i]} ${i}`
+            ),
+            ...(counts["other"] > 0 ? [`${counts["other"]} other`] : []),
+        ];
+
+        const enrolledByInstrument: { bucket: string; entries: EnrolledEntry[] }[] = [];
+        INSTRUMENT_ORDER.forEach((bucket) => {
+            const entries = enrolled.filter(
+                (e) => getInstrumentBucket(e.student.instrument) === bucket
+            );
+            if (entries.length > 0) enrolledByInstrument.push({ bucket, entries });
+        });
+        const otherEnrolled = enrolled.filter(
+            (e) => getInstrumentBucket(e.student.instrument) === "other"
+        );
+        if (otherEnrolled.length > 0)
+            enrolledByInstrument.push({ bucket: "other", entries: otherEnrolled });
+
+        const available = students
+            .filter(
+                (s) =>
+                    s.program === "performance_program" &&
+                    s.schoolId === group.school_id &&
+                    s.active &&
+                    !enrolledIds.has(s.id)
+            )
+            .sort((a, b) => {
+                const ai = INSTRUMENT_ORDER.indexOf(getInstrumentBucket(a.instrument));
+                const bi = INSTRUMENT_ORDER.indexOf(getInstrumentBucket(b.instrument));
+                const ao = ai === -1 ? INSTRUMENT_ORDER.length : ai;
+                const bo = bi === -1 ? INSTRUMENT_ORDER.length : bi;
+                if (ao !== bo) return ao - bo;
+                return (a.firstName + a.lastInitial).localeCompare(b.firstName + b.lastInitial);
+            });
+
+        const availableByInstrument: { bucket: string; items: StudentRow[] }[] = [];
+        INSTRUMENT_ORDER.forEach((bucket) => {
+            const items = available.filter(
+                (s) => getInstrumentBucket(s.instrument) === bucket
+            );
+            if (items.length > 0) availableByInstrument.push({ bucket, items });
+        });
+        const otherAvailable = available.filter(
+            (s) => getInstrumentBucket(s.instrument) === "other"
+        );
+        if (otherAvailable.length > 0)
+            availableByInstrument.push({ bucket: "other", items: otherAvailable });
+
+        if (loadingRoster) {
+            return (
+                <div className="py-8 text-center text-sm text-zinc-400">
+                    Loading roster...
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                {/* Section A — Enrolled Students */}
+                <div>
+                    {enrolled.length === 0 ? (
+                        <p className="mb-3 text-sm text-zinc-500">
+                            No students enrolled yet.
+                        </p>
+                    ) : (
+                        <>
+                            <p className="mb-3 text-sm text-zinc-400">
+                                {enrolled.length} student
+                                {enrolled.length !== 1 ? "s" : ""} enrolled
+                                {summaryParts.length > 0 &&
+                                    ` — ${summaryParts.join(" · ")}`}
+                            </p>
+                            {enrolledByInstrument.map(({ bucket, entries }) => (
+                                <div key={bucket}>
+                                    <div
+                                        className="mb-1 mt-3 text-xs font-bold uppercase text-zinc-400"
+                                        style={{ fontFamily: "var(--font-oswald)" }}
+                                    >
+                                        {instrumentLabel(bucket)}
+                                    </div>
+                                    {entries.map(({ membership, student }) => (
+                                        <div
+                                            key={membership.id}
+                                            className="flex items-center gap-3 bg-[#111111] px-3 py-2"
+                                        >
+                                            <span className="flex-1 text-sm text-white">
+                                                {student.firstName}{" "}
+                                                {student.lastInitial}
+                                            </span>
+                                            <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs uppercase text-white">
+                                                {student.instrument}
+                                            </span>
+                                            {membership.status !== "active" && (
+                                                <span className="rounded-none bg-zinc-800 px-2 py-0.5 text-xs uppercase text-zinc-400">
+                                                    {membership.status}
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleRemoveStudent(membership.id)
+                                                }
+                                                className="rounded-none border border-[#cc0000] px-2 py-1 text-xs text-[#cc0000] hover:bg-[#cc0000] hover:text-white"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </>
+                    )}
+                </div>
+
+                {/* Section B — Add Students */}
+                <div className="mt-4">
+                    {!showPicker ? (
+                        <button
+                            type="button"
+                            onClick={() => setShowPicker(true)}
+                            className="rounded-none border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                        >
+                            + Add Student
+                        </button>
+                    ) : (
+                        <div className="border border-zinc-700 p-4">
+                            <div
+                                className="mb-3 text-sm font-bold uppercase text-zinc-300"
+                                style={{ fontFamily: "var(--font-oswald)" }}
+                            >
+                                Add Students
+                            </div>
+                            {available.length === 0 ? (
+                                <p className="text-sm text-zinc-500">
+                                    No available Performance Program students to add.
+                                </p>
+                            ) : (
+                                availableByInstrument.map(({ bucket, items }) => (
+                                    <div key={bucket}>
+                                        <div
+                                            className="mb-1 mt-3 text-xs font-bold uppercase text-zinc-400"
+                                            style={{ fontFamily: "var(--font-oswald)" }}
+                                        >
+                                            {instrumentLabel(bucket)}
+                                        </div>
+                                        {items.map((s) => (
+                                            <div
+                                                key={s.id}
+                                                className="flex items-center gap-3 bg-[#111111] px-3 py-2"
+                                            >
+                                                <span className="flex-1 text-sm text-white">
+                                                    {s.firstName} {s.lastInitial}
+                                                </span>
+                                                <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs uppercase text-white">
+                                                    {s.instrument}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddStudent(s.id)}
+                                                    className="rounded-none bg-[#cc0000] px-2 py-1 text-xs text-white hover:bg-[#b30000]"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))
+                            )}
+                            <div className="mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPicker(false)}
+                                    className="rounded-none border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     // ─── Form fields renderer ────────────────────────────────────────────
@@ -905,142 +1201,184 @@ export default function ShowGroupSetupView({
 
                                     {/* Expanded panel */}
                                     {isExpanded && (
-                                        <div className="space-y-6 border-t border-zinc-700 px-5 py-5">
-                                            {/* Edit form */}
-                                            <div>
-                                                <h3
-                                                    className="mb-4 text-sm font-bold uppercase text-zinc-300"
-                                                    style={{
-                                                        fontFamily:
-                                                            "var(--font-oswald)",
-                                                    }}
+                                        <div className="border-t border-zinc-700">
+                                            {/* Tab buttons */}
+                                            <div className="flex gap-2 px-5 pt-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setActiveTab("editDetails")
+                                                    }
+                                                    className={`rounded-none px-4 py-1.5 text-xs font-bold uppercase ${
+                                                        activeTab === "editDetails"
+                                                            ? "bg-[#cc0000] text-white"
+                                                            : "border border-zinc-600 bg-transparent text-zinc-400"
+                                                    }`}
                                                 >
                                                     Edit Details
-                                                </h3>
-                                                {renderFormFields(
-                                                    editForm,
-                                                    handleEditFormChange
-                                                )}
-                                                {saveError && (
-                                                    <p className="mt-3 text-sm text-[#cc0000]">
-                                                        {saveError}
-                                                    </p>
-                                                )}
-                                                <div className="mt-5 flex flex-wrap gap-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            handleSaveEdit(
-                                                                group.id
-                                                            )
-                                                        }
-                                                        disabled={saving}
-                                                        className="rounded-none bg-[#cc0000] px-5 py-2 text-sm font-medium text-white hover:bg-[#b30000] disabled:opacity-50"
-                                                    >
-                                                        {saving
-                                                            ? "Saving..."
-                                                            : "Save Changes"}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            handleToggleStatus(
-                                                                group
-                                                            )
-                                                        }
-                                                        className="rounded-none border border-zinc-600 px-5 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
-                                                    >
-                                                        {isActive
-                                                            ? "Set Inactive"
-                                                            : "Set Active"}
-                                                    </button>
-                                                </div>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleRosterTabOpen(group.id)
+                                                    }
+                                                    className={`rounded-none px-4 py-1.5 text-xs font-bold uppercase ${
+                                                        activeTab === "roster"
+                                                            ? "bg-[#cc0000] text-white"
+                                                            : "border border-zinc-600 bg-transparent text-zinc-400"
+                                                    }`}
+                                                >
+                                                    Roster
+                                                </button>
                                             </div>
 
-                                            {/* Rehearsal Rooms */}
-                                            <div className="border-t border-zinc-800 pt-5">
-                                                <h3
-                                                    className="mb-3 text-sm font-bold uppercase text-zinc-300"
-                                                    style={{
-                                                        fontFamily:
-                                                            "var(--font-oswald)",
-                                                    }}
-                                                >
-                                                    Rehearsal Rooms
-                                                    <span className="ml-2 text-xs font-normal normal-case text-zinc-500">
-                                                        school-level · affects
-                                                        all show groups
-                                                    </span>
-                                                </h3>
-                                                {rooms.length === 0 ? (
-                                                    <p className="mb-4 text-sm text-zinc-500">
-                                                        No rehearsal rooms added
-                                                        yet.
-                                                    </p>
-                                                ) : (
-                                                    <div className="mb-4 space-y-1">
-                                                        {rooms.map((room) => (
-                                                            <div
-                                                                key={room.id}
-                                                                className="flex items-center justify-between rounded-none bg-zinc-900 px-3 py-2"
+                                            {/* Edit Details tab */}
+                                            {activeTab === "editDetails" && (
+                                                <div className="space-y-6 px-5 py-5">
+                                                    {/* Edit form */}
+                                                    <div>
+                                                        <h3
+                                                            className="mb-4 text-sm font-bold uppercase text-zinc-300"
+                                                            style={{
+                                                                fontFamily:
+                                                                    "var(--font-oswald)",
+                                                            }}
+                                                        >
+                                                            Edit Details
+                                                        </h3>
+                                                        {renderFormFields(
+                                                            editForm,
+                                                            handleEditFormChange
+                                                        )}
+                                                        {saveError && (
+                                                            <p className="mt-3 text-sm text-[#cc0000]">
+                                                                {saveError}
+                                                            </p>
+                                                        )}
+                                                        <div className="mt-5 flex flex-wrap gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleSaveEdit(
+                                                                        group.id
+                                                                    )
+                                                                }
+                                                                disabled={saving}
+                                                                className="rounded-none bg-[#cc0000] px-5 py-2 text-sm font-medium text-white hover:bg-[#b30000] disabled:opacity-50"
                                                             >
-                                                                <div className="flex items-center gap-3">
-                                                                    <span className="w-5 text-right text-xs text-zinc-500">
-                                                                        {
-                                                                            room.order_index
-                                                                        }
-                                                                    </span>
-                                                                    <span className="text-sm text-white">
-                                                                        {
-                                                                            room.name
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleDeleteRoom(
-                                                                            room.id,
-                                                                            room.name
-                                                                        )
-                                                                    }
-                                                                    className="text-xs text-zinc-500 hover:text-[#cc0000]"
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            </div>
-                                                        ))}
+                                                                {saving
+                                                                    ? "Saving..."
+                                                                    : "Save Changes"}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleToggleStatus(
+                                                                        group
+                                                                    )
+                                                                }
+                                                                className="rounded-none border border-zinc-600 px-5 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                                                            >
+                                                                {isActive
+                                                                    ? "Set Inactive"
+                                                                    : "Set Active"}
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                )}
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newRoomName}
-                                                        onChange={(e) =>
-                                                            setNewRoomName(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === "Enter")
-                                                                handleAddRoom();
-                                                        }}
-                                                        placeholder="New room name"
-                                                        className="flex-1 rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleAddRoom}
-                                                        disabled={
-                                                            !newRoomName.trim() ||
-                                                            addingRoom
-                                                        }
-                                                        className="rounded-none bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600 disabled:opacity-50"
-                                                    >
-                                                        Add Room
-                                                    </button>
+
+                                                    {/* Rehearsal Rooms */}
+                                                    <div className="border-t border-zinc-800 pt-5">
+                                                        <h3
+                                                            className="mb-3 text-sm font-bold uppercase text-zinc-300"
+                                                            style={{
+                                                                fontFamily:
+                                                                    "var(--font-oswald)",
+                                                            }}
+                                                        >
+                                                            Rehearsal Rooms
+                                                            <span className="ml-2 text-xs font-normal normal-case text-zinc-500">
+                                                                school-level · affects
+                                                                all show groups
+                                                            </span>
+                                                        </h3>
+                                                        {rooms.length === 0 ? (
+                                                            <p className="mb-4 text-sm text-zinc-500">
+                                                                No rehearsal rooms added
+                                                                yet.
+                                                            </p>
+                                                        ) : (
+                                                            <div className="mb-4 space-y-1">
+                                                                {rooms.map((room) => (
+                                                                    <div
+                                                                        key={room.id}
+                                                                        className="flex items-center justify-between rounded-none bg-zinc-900 px-3 py-2"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="w-5 text-right text-xs text-zinc-500">
+                                                                                {
+                                                                                    room.order_index
+                                                                                }
+                                                                            </span>
+                                                                            <span className="text-sm text-white">
+                                                                                {
+                                                                                    room.name
+                                                                                }
+                                                                            </span>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleDeleteRoom(
+                                                                                    room.id,
+                                                                                    room.name
+                                                                                )
+                                                                            }
+                                                                            className="text-xs text-zinc-500 hover:text-[#cc0000]"
+                                                                        >
+                                                                            Remove
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={newRoomName}
+                                                                onChange={(e) =>
+                                                                    setNewRoomName(
+                                                                        e.target.value
+                                                                    )
+                                                                }
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter")
+                                                                        handleAddRoom();
+                                                                }}
+                                                                placeholder="New room name"
+                                                                className="flex-1 rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleAddRoom}
+                                                                disabled={
+                                                                    !newRoomName.trim() ||
+                                                                    addingRoom
+                                                                }
+                                                                className="rounded-none bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600 disabled:opacity-50"
+                                                            >
+                                                                Add Room
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
+
+                                            {/* Roster tab */}
+                                            {activeTab === "roster" && (
+                                                <div className="px-5 py-5">
+                                                    {renderRosterTab(group)}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

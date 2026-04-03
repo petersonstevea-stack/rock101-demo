@@ -331,6 +331,7 @@ export default function Rock101App() {
         role === "owner" || role === "general_manager" || role === "music_director";
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [performanceStudents, setPerformanceStudents] = useState<any[]>([]);
 
     const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
         if (isOwner) return selectedSchoolId;
@@ -360,6 +361,10 @@ export default function Rock101App() {
         });
     }, [allUsers, effectiveSchoolFilter]);
 
+    const filteredPerfStudentsBySchool = useMemo(() => {
+        if (effectiveSchoolFilter === "all") return performanceStudents;
+        return performanceStudents.filter((s) => s.schoolId === effectiveSchoolFilter);
+    }, [performanceStudents, effectiveSchoolFilter]);
 
     const filteredClassesBySchool = useMemo(() => {
         // All staff at the school see all classes. Filter by school only.
@@ -549,6 +554,30 @@ export default function Rock101App() {
 
         loadUsers();
     }, []);
+
+    useEffect(() => {
+        async function loadPerfStudents() {
+            const { data, error } = await supabase
+                .from("students")
+                .select("id, first_name, last_initial, instrument, school_id, program, active")
+                .eq("program", "performance_program");
+            if (!error && data) {
+                setPerformanceStudents(
+                    data.map((s) => ({
+                        id: s.id,
+                        firstName: s.first_name,
+                        lastInitial: s.last_initial ?? "",
+                        instrument: s.instrument ?? "guitar",
+                        schoolId: s.school_id ?? "",
+                        program: s.program,
+                        active: s.active ?? true,
+                    }))
+                );
+            }
+        }
+        loadPerfStudents();
+    }, []);
+
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -2214,6 +2243,7 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         schoolName={currentSchoolName}
                         users={filteredUsersBySchool}
+                        students={filteredPerfStudentsBySchool}
                     />
                 )}
 
