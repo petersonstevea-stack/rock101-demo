@@ -5,8 +5,10 @@
 
 ## Current Status
 - **Phase 1 — Rock 101 Stabilization: ✅ COMPLETE (April 2026)**
+- **Phase 2 — Performance Program: 🔄 In Progress**
 - Rock 101 pilot: live and functional with real students and schools — enrollment, progress tracking, parent email flow all operational
-- Performance Program: schema partially exists, UI not started
+- Performance Program: casting, rehearsal, and My Casting views live — Step 2.8 (Pike13 sync) still 🔜 not started
+- Phase 3 (Navigation & Student Experience): 🔜 not started
 - All other programs: future phase only
 
 ---
@@ -371,43 +373,65 @@ Stage Ready owns casting/progress/parent comms.
 
 ---
 
-## PHASE 3 — Platform Hardening
+## 🔜 PHASE 3 — Navigation & Student Experience
+**Goal:** Restructure navigation for Performance Program context and build a dedicated student-facing experience.
+
+### 🔜 Step 3.1 — Navigation restructure
+Nest Performance Program navigation contextually:
+- Show Groups becomes the top-level Performance Program entry
+- Casting, Rehearsal, and My Casting nest under their respective show group (selected show group drives context)
+- Consider a Performance Program "hub" page that shows all show groups and clicking one sets context for all sub-navigation
+- Class Roster, Class Setup, Lesson Setup, Manage Lessons could similarly nest under a Rock 101 hub
+- Bands and Pipeline nav items need to be evaluated — currently placeholders
+
+### 🔜 Step 3.2 — Student login experience
+Students currently see the same nav as staff. Build a dedicated student-facing experience:
+- Landing page: My Casting (Performance) + My Progress (Rock 101) in one view
+- Simplified nav: Dashboard, My Casting, My Progress, My Profile only
+- No access to school management tools
+- Parent experience: same simplified view but for their linked student(s)
+- Casting change notifications surfaced prominently
+- Method App links front and center
+
+---
+
+## PHASE 4 — Platform Hardening
 **Goal:** Prepare for multi-school scale and franchisor oversight.
 
-### Step 3.1 — School Hierarchy Fields
+### Step 4.1 — School Hierarchy Fields
 - Add franchise and corporate hierarchy slugs to `schools` table
 - Backfill existing schools
 
-### Step 3.2 — Role + Scope Permission System
+### Step 4.2 — Role + Scope Permission System
 - Implement full role + scope permission checks
 - Multi-school views for Franchise Owners and District Managers
 - System-wide view for Franchisor Admin
 
-### Step 3.3 — Reporting Foundations
+### Step 4.3 — Reporting Foundations
 - School-level reporting
 - Multi-school reporting
 - Show and casting reports
 
 ---
 
-## PHASE 4 — Future Programs (Little Wing, Rookies, Summer Camps)
+## PHASE 5 — Future Programs (Little Wing, Rookies, Summer Camps)
 **Goal:** Build remaining program delivery engines.
 - See `ARCHITECTURE.md` for full design of each program
 - Do not start until Phase 1 and 2 are complete and stable
 
 ---
 
-## PHASE 5 — Parent Dashboard + Student Login
+## PHASE 6 — Parent Dashboard + Student Login
 - Rock 101 milestone visibility for parents
 - Broader program visibility
 - Student login (future — do not block in data model)
 
 ---
 
-## PHASE 6 — Pike 13 Integration
+## PHASE 7 — Pike 13 Integration
 **Goal:** Connect Stage Ready to Pike 13 (School of Rock's school management system) for staff sync, schedule display, and attendance.
 
-### Step 6.1 — Integration Spec (Design Before Building)
+### Step 7.1 — Integration Spec (Design Before Building)
 
 #### Staff Integration
 - Staff enrollment should flow from Pike 13 — when a staff member is added in Pike 13, Stage Ready should auto-create their profile
