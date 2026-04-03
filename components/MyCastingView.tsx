@@ -8,7 +8,8 @@ import type { SessionUser } from "@/lib/session";
 
 type Student = {
     id: string;
-    name: string;
+    first_name: string;
+    last_initial: string | null;
     instrument: string | null;
 };
 
@@ -98,14 +99,13 @@ export default function MyCastingView({
     // Load performance program students at this school
     useEffect(() => {
         async function loadStudents() {
-            console.log("MyCastingView: schoolId =", schoolId);
             setLoadingStudents(true);
             const { data, error } = await supabase
                 .from("students")
-                .select("id, name, instrument")
+                .select("id, first_name, last_initial, instrument")
                 .eq("school_id", schoolId)
                 .eq("program", "performance_program")
-                .order("name");
+                .order("first_name", { ascending: true });
             if (error) {
                 console.error("MyCastingView load students error:", error);
             } else {
@@ -289,7 +289,7 @@ export default function MyCastingView({
                         <option value="">— Select a student —</option>
                         {students.map((s) => (
                             <option key={s.id} value={s.id}>
-                                {s.name}{s.instrument ? ` · ${s.instrument}` : ""}
+                                {s.first_name}{s.last_initial ? ` ${s.last_initial}.` : ""}{s.instrument ? ` · ${s.instrument}` : ""}
                             </option>
                         ))}
                     </select>
@@ -315,7 +315,7 @@ export default function MyCastingView({
                             <p className="text-sm text-zinc-300">
                                 No approved casting assignments yet for{" "}
                                 <span className="font-semibold text-white">
-                                    {selectedStudent?.name ?? "this student"}
+                                    {selectedStudent ? `${selectedStudent.first_name}${selectedStudent.last_initial ? ` ${selectedStudent.last_initial}.` : ""}` : "this student"}
                                 </span>
                                 .
                             </p>
