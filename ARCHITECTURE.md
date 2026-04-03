@@ -294,6 +294,21 @@ Not stored — derived by counting slots per student_id within a show group inst
 Genre-based themes (Arena Rock, Punk, etc.) are unseeded — to be populated via CSV import or manual entry.
 Seeding: owner/MD uploads songs per theme in future admin tool.
 
+### Method App Exercise Tables
+- method_app_exercises: canonical lookup table for Method App
+  exercise IDs per song+instrument. Matched to show_group_songs
+  by title+artist (no FK — loose coupling by design).
+
+- method_app_exercise_prerequisites: 1-3 related/warmup exercises
+  per song part. ON DELETE CASCADE from method_app_exercises.
+
+URL construction (never stored, always derived):
+  https://method.schoolofrock.com/comp.html#/exercise/{exercise_id}
+
+Data populated via bulk CSV import once SOR provides the data.
+Until then, has_method_lesson = true flags songs with known
+exercises but no URL yet.
+
 ---
 
 ## Non-Negotiable Architecture Rules

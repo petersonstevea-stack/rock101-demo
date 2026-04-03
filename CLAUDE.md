@@ -426,8 +426,30 @@ Tracked per song via show_group_songs.casting_status:
   draft → submitted → approved → returned
 
 ### Method App Integration
-Songs with associated Method App lessons have has_method_lesson = true and float to the top of the casting song list. Method App links appear on My Casting page.
-(No API integration — treated as complementary tool.)
+The School of Rock Method App (method.schoolofrock.com) has exercise pages for many songs. URL pattern:
+  https://method.schoolofrock.com/comp.html#/exercise/{exercise_id}
+
+Each song can have multiple exercise IDs — one per instrument/part.
+Example: Stairway to Heaven has separate exercises for vocals, guitar, bass, drums, keys.
+
+Data is stored in two tables:
+- method_app_exercises: one row per song + instrument + part
+  Columns: song_title, artist, instrument, part_label, exercise_id
+  Matched to show_group_songs by title + artist at query time.
+
+- method_app_exercise_prerequisites: related/warmup exercises
+  per song part (1-3 per part). E.g. Drums → Paradiddles.
+  Columns: method_app_exercise_id, related_exercise_id,
+  related_exercise_label, sort_order
+
+Data source: SOR provides a CSV with:
+  Song Title | Artist | Instrument | Part Label | Exercise ID
+
+Related exercises added manually by music directors or provided by SOR.
+
+My Casting page shows:
+- "Open in Method App →" button per song per instrument match
+- "Practice first: X · Y · Z" links for related exercises
 
 ### Roles for Performance Program
 - owner / general_manager / music_director: create/manage show groups

@@ -356,6 +356,11 @@ Return with notes → back to instructor.
 ### ✅ Step 2.6 — My Casting Page (student/parent)
 MyCastingView built — student picker, approved assignments grouped by show group, dual role badges per song, Method App link placeholder, show date and schedule display.
 
+### 🔜 Method App exercise data import
+Awaiting CSV from SOR: Song Title | Artist | Instrument | Part Label | Exercise ID
+Schema ready: method_app_exercises + method_app_exercise_prerequisites tables in place.
+Once data arrives: bulk match on title+artist, update has_method_lesson = true for matched songs, surface links on My Casting page.
+
 ### 🔜 Step 2.7 — Weekly Rehearsal View (Performance)
 Same pattern as Rock 101 weekly execution view.
 Tonight's rehearsal agenda, attendance, per-song notes.
