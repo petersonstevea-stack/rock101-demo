@@ -13,7 +13,6 @@ const FIELDS = [
     "person_id",
     "full_name",
     "email",
-    "guardian_email",
     "service_category",
     "state",
 ];
@@ -22,7 +21,6 @@ const FIELDS = [
 const F_PERSON_ID = 0;
 const F_FULL_NAME = 1;
 const F_EMAIL = 2;
-const F_GUARDIAN_EMAIL = 3;
 
 const FILTER = ["and", [
     ["eq", "state", "registered"],
@@ -109,7 +107,7 @@ export async function GET() {
             return {
                 first_name,
                 last_initial,
-                parent_email: row[F_EMAIL] || row[F_GUARDIAN_EMAIL] || "",
+                parent_email: row[F_EMAIL] ?? "",
                 pike13_person_id: String(row[F_PERSON_ID]),
                 school: "del-mar",
                 school_id: "del-mar",
