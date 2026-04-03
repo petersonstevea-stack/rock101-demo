@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Star } from "lucide-react";
 import {
     fetchAllCurriculumItems,
     type CurriculumItem,
@@ -335,8 +336,6 @@ export default function Rock101App() {
         role === "owner" || role === "general_manager" || role === "music_director";
     const canSeeCasting =
         role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
-    const canSeeMyCasting = !!role;
-
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
     const effectiveSchoolFilter: SchoolFilter = useMemo(() => {
@@ -650,6 +649,7 @@ export default function Rock101App() {
             { tab: "graduationRequirements", label: "Grad Requirements" },
             { tab: "groupRehearsal", label: "Group Rehearsal" },
             { tab: "certificate", label: "Certificate" },
+            { tab: "myCasting", label: "My Casting", icon: <Star size={14} /> },
         ];
     }, []);
 
@@ -1385,7 +1385,6 @@ export default function Rock101App() {
                 canSeeClassRoster={canSeeClassRoster}
                 canSeeShowGroups={canSeeShowGroups}
                 canSeeCasting={canSeeCasting}
-                canSeeMyCasting={canSeeMyCasting}
                 selectedSchoolId={selectedSchoolId}
             >
                 <div className="p-6">
@@ -1432,7 +1431,6 @@ export default function Rock101App() {
             canSeeClassRoster={canSeeClassRoster}
             canSeeShowGroups={canSeeShowGroups}
             canSeeCasting={canSeeCasting}
-            canSeeMyCasting={canSeeMyCasting}
             selectedSchoolId={selectedSchoolId}
         >
             <div className="p-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Music, Sliders, Star, Users } from "lucide-react";
+import { Music, Sliders, Users } from "lucide-react";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -69,7 +69,6 @@ type AppShellProps = {
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
   canSeeCasting?: boolean;
-  canSeeMyCasting?: boolean;
 };
 
 function NavButton({
@@ -134,7 +133,6 @@ function NavItems({
   canSeeClassRoster,
   canSeeShowGroups,
   canSeeCasting,
-  canSeeMyCasting,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
@@ -146,7 +144,6 @@ function NavItems({
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
   canSeeCasting?: boolean;
-  canSeeMyCasting?: boolean;
 }) {
   const isStaff =
     role === "owner" ||
@@ -174,12 +171,6 @@ function NavItems({
     icon: <Sliders size={14} />,
   };
 
-  const myCastingNavItem: NavItem = {
-    tab: "myCasting",
-    label: "My Casting",
-    icon: <Star size={14} />,
-  };
-
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeClassRoster ? [classRosterNavItem] : []),
@@ -199,10 +190,6 @@ function NavItems({
             <NavButton key={item.tab} item={item} currentTab={currentTab} onTabChange={onTabChange} />
           ))}
         </div>
-      )}
-
-      {canSeeMyCasting && (
-        <NavButton item={myCastingNavItem} currentTab={currentTab} onTabChange={onTabChange} />
       )}
 
       {schoolNavItems.length > 0 && (
@@ -245,7 +232,6 @@ function SidebarContent({
   canSeeClassRoster,
   canSeeShowGroups,
   canSeeCasting,
-  canSeeMyCasting,
   selectedSchoolId,
 }: Omit<AppShellProps, "children">) {
   return (
@@ -331,7 +317,6 @@ function SidebarContent({
           canSeeClassRoster={canSeeClassRoster}
           canSeeShowGroups={canSeeShowGroups}
           canSeeCasting={canSeeCasting}
-          canSeeMyCasting={canSeeMyCasting}
         />
       </nav>
 
