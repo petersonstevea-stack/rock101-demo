@@ -98,6 +98,7 @@ export default function MyCastingView({
     // Load performance program students at this school
     useEffect(() => {
         async function loadStudents() {
+            console.log("MyCastingView: schoolId =", schoolId);
             setLoadingStudents(true);
             const { data, error } = await supabase
                 .from("students")
