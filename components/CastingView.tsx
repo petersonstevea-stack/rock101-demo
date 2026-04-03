@@ -118,9 +118,10 @@ const PAIR_COLORS = [
     "#10b981", "#f97316", "#ec4899",
 ];
 
-const SLOT_COLUMN_ORDER = [
-    "Drums", "Bass", "Lead Vocals", "Guitar 1", "Guitar 2", "Guitar 3",
-    "Keys 1", "Keys 2", "Harmony Vox", "BV 1", "BV 2",
+const STANDARD_COLUMNS = [
+    "Drums", "Guitar 1", "Guitar 2", "Guitar 3",
+    "Bass", "Vocal 1", "Vocal 2", "Vocal 3",
+    "Auxiliary 1", "Auxiliary 2",
 ];
 
 const DAY_LABELS: Record<string, string> = {
@@ -133,8 +134,12 @@ const SONG_SELECT_COLS =
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function getPairColor(pairGroup: number): string {
-    return PAIR_COLORS[(pairGroup - 1) % PAIR_COLORS.length];
+function getPairIndex(orderIndex: number): number {
+    return Math.ceil(orderIndex / 2) - 1; // 0-based
+}
+
+function getPairColor(orderIndex: number): string {
+    return PAIR_COLORS[getPairIndex(orderIndex) % PAIR_COLORS.length];
 }
 
 function formatTime(t: string | null): string {
@@ -154,15 +159,26 @@ function castingStatusStyle(status: string): { bg: string; label: string } {
     }
 }
 
-function sortColumns(labels: string[]): string[] {
-    return [...labels].sort((a, b) => {
-        const ai = SLOT_COLUMN_ORDER.indexOf(a);
-        const bi = SLOT_COLUMN_ORDER.indexOf(b);
-        if (ai !== -1 && bi !== -1) return ai - bi;
-        if (ai !== -1) return -1;
-        if (bi !== -1) return 1;
-        return a.localeCompare(b);
-    });
+function getTypeNameForColumn(col: string): string {
+    const lower = col.toLowerCase();
+    if (lower.startsWith("drum")) return "drums";
+    if (lower.startsWith("guitar")) return "guitar";
+    if (lower.startsWith("bass")) return "bass";
+    if (lower.startsWith("vocal") || lower.startsWith("bv ") || lower.startsWith("harmony")) return "vocals";
+    if (lower.startsWith("key")) return "keys";
+    return "auxiliary";
+}
+
+function matchesInstrumentForColumn(instrument: string, col: string): boolean {
+    const inst = instrument.toLowerCase();
+    const colL = col.toLowerCase();
+    if (colL.startsWith("drum")) return inst.includes("drum");
+    if (colL.startsWith("guitar")) return inst.includes("guitar");
+    if (colL.startsWith("bass")) return inst === "bass";
+    if (colL.startsWith("vocal") || colL.startsWith("bv") || colL.startsWith("harmony"))
+        return inst.includes("vocal") || inst === "singer";
+    if (colL.startsWith("key")) return inst.includes("key");
+    return false;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -182,8 +198,15 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
     const [rooms, setRooms] = useState<RehearsalRoom[]>([]);
     const [castSlotTypes, setCastSlotTypes] = useState<CastSlotType[]>([]);
 
-    // All slots for all songs keyed by song id
+    // All slots keyed by song id
     const [allSlots, setAllSlots] = useState<Record<string, CastSlot[]>>({});
+
+    // Extra columns beyond standard (from DB or user-added)
+    const [extraColumns, setExtraColumns] = useState<string[]>([]);
+
+    // Add column modal
+    const [addColumnOpen, setAddColumnOpen] = useState(false);
+    const [addColumnName, setAddColumnName] = useState("");
 
     // Memberships + assignments
     const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -209,6 +232,9 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
 
     // Conflict override modal
     const [overrideModal, setOverrideModal] = useState<OverrideModal | null>(null);
+
+    // Drag conflict banner
+    const [reorderConflictBanner, setReorderConflictBanner] = useState<string | null>(null);
 
     // Equity panel
     const [equityOpen, setEquityOpen] = useState(false);
@@ -271,7 +297,11 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
     }, []);
 
     const loadAllSlots = useCallback(async (songIds: string[]) => {
-        if (songIds.length === 0) { setAllSlots({}); return; }
+        if (songIds.length === 0) {
+            setAllSlots({});
+            setExtraColumns([]);
+            return;
+        }
         const { data } = await supabase
             .from("show_song_cast_slots")
             .select("id, show_group_song_id, cast_slot_type_id, slot_label, max_students, order_index, cast_slot_types(name)")
@@ -279,6 +309,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
             .order("order_index", { ascending: true });
         if (data) {
             const grouped: Record<string, CastSlot[]> = {};
+            const allLabels = new Set<string>();
             for (const row of data as any[]) {
                 const sid = row.show_group_song_id;
                 if (!grouped[sid]) grouped[sid] = [];
@@ -291,8 +322,10 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                     order_index: row.order_index,
                     type_name: (row.cast_slot_types as any)?.name ?? "",
                 });
+                allLabels.add(row.slot_label);
             }
             setAllSlots(grouped);
+            setExtraColumns([...allLabels].filter((l) => !STANDARD_COLUMNS.includes(l)));
         }
     }, []);
 
@@ -327,10 +360,11 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
     useEffect(() => {
         if (!selectedGroupId) {
             setSongs([]); setRooms([]); setMemberships([]);
-            setCastAssignments([]); setAllSlots({});
+            setCastAssignments([]); setAllSlots({}); setExtraColumns([]);
             setSlotEditorSongId(null); setAddSongsOpen(false);
             setRemovingSongId(null); setEquityOpen(false);
             setSubmitOpen(false); setReturningNotesSongId(null);
+            setReorderConflictBanner(null);
             return;
         }
         async function load() {
@@ -380,13 +414,14 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         [songs]
     );
 
-    const gridColumns = useMemo(() => {
-        const allLabels = new Set<string>();
-        for (const slots of Object.values(allSlots)) {
-            for (const slot of slots) allLabels.add(slot.slot_label);
+    // All columns = standard + any extra from DB or user-added
+    const columns = useMemo(() => {
+        const all = [...STANDARD_COLUMNS];
+        for (const col of extraColumns) {
+            if (!all.includes(col)) all.push(col);
         }
-        return sortColumns([...allLabels]);
-    }, [allSlots]);
+        return all;
+    }, [extraColumns]);
 
     const enrolledStudents = useMemo(
         () => memberships
@@ -394,6 +429,27 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
             .filter(Boolean) as StudentRow[],
         [memberships, students]
     );
+
+    // O(1) lookup: slotId → assignment
+    const assignmentBySlotMap = useMemo(() => {
+        const map: Record<string, CastAssignment> = {};
+        for (const a of castAssignments) {
+            map[a.show_song_cast_slot_id] = a;
+        }
+        return map;
+    }, [castAssignments]);
+
+    // O(1) lookup: songId → { columnLabel → slot }
+    const slotMap = useMemo(() => {
+        const map: Record<string, Record<string, CastSlot>> = {};
+        for (const [songId, slots] of Object.entries(allSlots)) {
+            map[songId] = {};
+            for (const slot of slots) {
+                map[songId][slot.slot_label] = slot;
+            }
+        }
+        return map;
+    }, [allSlots]);
 
     const equityData = useMemo(
         () => enrolledStudents
@@ -422,19 +478,32 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         [songs]
     );
 
-    // ─── Conflict helpers ───────────────────────────────────────────────────
+    // ─── Room helpers (computed from order_index) ───────────────────────────
+
+    function getComputedRoomLabel(song: Song): string {
+        const isOdd = song.order_index % 2 !== 0;
+        if (rooms.length === 0) return isOdd ? "Room 1" : "Room 2";
+        if (rooms.length === 1) return rooms[0].name;
+        return isOdd ? rooms[0].name : rooms[1].name;
+    }
+
+    // ─── Conflict helpers (computed from order_index pairs) ─────────────────
+
+    function getPairPartner(song: Song): Song | null {
+        const isOdd = song.order_index % 2 !== 0;
+        const partnerIdx = isOdd ? song.order_index + 1 : song.order_index - 1;
+        return sortedSongs.find((s) => s.order_index === partnerIdx) ?? null;
+    }
 
     function getConflictedStudentIds(song: Song): Map<string, string> {
         const result = new Map<string, string>();
-        if (!song.pair_group) return result;
-        const pairedSongs = songs.filter(
-            (s) => s.pair_group === song.pair_group && s.id !== song.id
-        );
-        for (const ps of pairedSongs) {
-            for (const a of castAssignments) {
-                if (a.song_id === ps.id && !result.has(a.student_id)) {
-                    result.set(a.student_id, ps.title);
-                }
+        const partner = getPairPartner(song);
+        if (!partner) return result;
+        const partnerSlots = allSlots[partner.id] ?? [];
+        for (const slot of partnerSlots) {
+            const assignment = assignmentBySlotMap[slot.id];
+            if (assignment && !result.has(assignment.student_id)) {
+                result.set(assignment.student_id, partner.title);
             }
         }
         return result;
@@ -444,19 +513,83 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         return `${student.firstName} ${student.lastInitial}.`;
     }
 
+    // ─── Get cast_slot_type_id for a column label ───────────────────────────
+
+    function getCastSlotTypeIdForColumn(col: string): string {
+        const typeName = getTypeNameForColumn(col);
+        const found = castSlotTypes.find((t) => t.name.toLowerCase() === typeName);
+        return found?.id ?? castSlotTypes[0]?.id ?? "";
+    }
+
     // ─── Drag and drop ──────────────────────────────────────────────────────
 
-    function handleDragEnd(result: any) {
+    async function handleDragEnd(result: any) {
         if (!result.destination) return;
         const srcIdx = result.source.index;
         const dstIdx = result.destination.index;
         if (srcIdx === dstIdx) return;
+
         const newSongs = Array.from(sortedSongs);
         const [moved] = newSongs.splice(srcIdx, 1);
         newSongs.splice(dstIdx, 0, moved);
         const updated = newSongs.map((s, i) => ({ ...s, order_index: i + 1 }));
         setSongs(updated);
-        Promise.all(
+
+        // Find new pair partner for moved song
+        const movedNewOrderIndex = updated[dstIdx].order_index;
+        const isOdd = movedNewOrderIndex % 2 !== 0;
+        const partnerNewOrderIndex = isOdd ? movedNewOrderIndex + 1 : movedNewOrderIndex - 1;
+        const newPartner = updated.find((s) => s.order_index === partnerNewOrderIndex);
+
+        const conflictIds: string[] = [];
+
+        if (newPartner) {
+            const movedSlots = allSlots[moved.id] ?? [];
+            const partnerSlots = allSlots[newPartner.id] ?? [];
+
+            // Students assigned to moved song
+            const movedStudentIds = new Set(
+                castAssignments
+                    .filter((a) => movedSlots.some((s) => s.id === a.show_song_cast_slot_id))
+                    .map((a) => a.student_id)
+            );
+            // Students assigned to partner song
+            const partnerStudentIds = new Set(
+                castAssignments
+                    .filter((a) => partnerSlots.some((s) => s.id === a.show_song_cast_slot_id))
+                    .map((a) => a.student_id)
+            );
+
+            // Assignments in partner that conflict with moved song students
+            const conflictInPartner = castAssignments.filter(
+                (a) => partnerSlots.some((s) => s.id === a.show_song_cast_slot_id) &&
+                    movedStudentIds.has(a.student_id)
+            );
+            // Assignments in moved that conflict with partner song students
+            const conflictInMoved = castAssignments.filter(
+                (a) => movedSlots.some((s) => s.id === a.show_song_cast_slot_id) &&
+                    partnerStudentIds.has(a.student_id)
+            );
+
+            const allConflicting = [...conflictInPartner, ...conflictInMoved];
+            const uniqueIds = [...new Set(allConflicting.map((a) => a.id))];
+
+            if (uniqueIds.length > 0) {
+                conflictIds.push(...uniqueIds);
+                setCastAssignments((prev) => prev.filter((a) => !uniqueIds.includes(a.id)));
+                setReorderConflictBanner(
+                    `⚠ ${uniqueIds.length} slot(s) cleared — student(s) are now in both rooms for this pair. Please reassign.`
+                );
+                await Promise.all(
+                    uniqueIds.map((id) =>
+                        supabase.from("show_song_cast_assignments").delete().eq("id", id)
+                    )
+                );
+            }
+        }
+
+        // Save new order_index values
+        await Promise.all(
             updated.map((s) =>
                 supabase.from("show_group_songs").update({ order_index: s.order_index }).eq("id", s.id)
             )
@@ -464,21 +597,6 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
     }
 
     // ─── Song management ────────────────────────────────────────────────────
-
-    async function handleRoomChange(songId: string, roomId: string) {
-        const val = roomId === "" ? null : roomId;
-        const { error } = await supabase.from("show_group_songs")
-            .update({ rehearsal_room_id: val }).eq("id", songId);
-        if (!error) setSongs((prev) => prev.map((s) => s.id === songId ? { ...s, rehearsal_room_id: val } : s));
-    }
-
-    async function handlePairGroupChange(songId: string, value: string) {
-        const val = value === "" ? null : parseInt(value, 10);
-        if (val !== null && (isNaN(val) || val < 1 || val > 20)) return;
-        const { error } = await supabase.from("show_group_songs")
-            .update({ pair_group: val }).eq("id", songId);
-        if (!error) setSongs((prev) => prev.map((s) => s.id === songId ? { ...s, pair_group: val } : s));
-    }
 
     async function handleRemoveSong(songId: string) {
         const { error } = await supabase.from("show_group_songs").delete().eq("id", songId);
@@ -493,6 +611,39 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
     }
 
     // ─── Slot management ────────────────────────────────────────────────────
+
+    async function handleCreateSlot(songId: string, columnLabel: string) {
+        const typeId = getCastSlotTypeIdForColumn(columnLabel);
+        if (!typeId) return;
+        const songSlots = allSlots[songId] ?? [];
+        const nextOrder = songSlots.length > 0
+            ? Math.max(...songSlots.map((s) => s.order_index)) + 1 : 1;
+        const { data, error } = await supabase.from("show_song_cast_slots")
+            .insert({
+                show_group_song_id: songId,
+                cast_slot_type_id: typeId,
+                slot_label: columnLabel,
+                max_students: 1,
+                order_index: nextOrder,
+            })
+            .select("id, show_group_song_id, cast_slot_type_id, slot_label, max_students, order_index, cast_slot_types(name)")
+            .single();
+        if (!error && data) {
+            const d = data as any;
+            setAllSlots((prev) => ({
+                ...prev,
+                [songId]: [...(prev[songId] ?? []), {
+                    id: d.id,
+                    show_group_song_id: d.show_group_song_id,
+                    cast_slot_type_id: d.cast_slot_type_id,
+                    slot_label: d.slot_label,
+                    max_students: d.max_students,
+                    order_index: d.order_index,
+                    type_name: d.cast_slot_types?.name ?? "",
+                }],
+            }));
+        }
+    }
 
     async function handleAddSlot() {
         if (!slotEditorSongId || !addSlotTypeId || !addSlotLabel.trim()) return;
@@ -524,6 +675,10 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                 ...prev,
                 [slotEditorSongId]: [...(prev[slotEditorSongId] ?? []), newSlot],
             }));
+            // If label isn't in columns, add it as extra
+            if (!columns.includes(d.slot_label)) {
+                setExtraColumns((prev) => [...prev, d.slot_label]);
+            }
             setAddSlotTypeId(""); setAddSlotLabel(""); setAddSlotMax(1);
         }
     }
@@ -539,16 +694,21 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         }
     }
 
-    // ─── Grid assignment handler ─────────────────────────────────────────────
+    // ─── Grid assignment handler (optimistic UI) ─────────────────────────────
 
     async function handleGridCellChange(slot: CastSlot, newStudentId: string, song: Song) {
-        const existing = castAssignments.find((a) => a.show_song_cast_slot_id === slot.id);
+        const existing = assignmentBySlotMap[slot.id];
         if (newStudentId === (existing?.student_id ?? "")) return;
 
         if (newStudentId === "") {
             if (existing) {
-                await supabase.from("show_song_cast_assignments").delete().eq("id", existing.id);
-                setCastAssignments((prev) => prev.filter((a) => a.id !== existing.id));
+                const snapshot = existing;
+                setCastAssignments((prev) => prev.filter((a) => a.id !== snapshot.id));
+                const { error } = await supabase.from("show_song_cast_assignments")
+                    .delete().eq("id", snapshot.id);
+                if (error) {
+                    setCastAssignments((prev) => [...prev, snapshot]);
+                }
             }
             return;
         }
@@ -566,35 +726,41 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         }
 
         if (existing) {
+            const snapshot = existing;
+            setCastAssignments((prev) =>
+                prev.map((a) => a.id === snapshot.id
+                    ? { ...a, student_id: newStudentId, is_conflict_override: false } : a)
+            );
             const { error } = await supabase.from("show_song_cast_assignments")
                 .update({ student_id: newStudentId, is_conflict_override: false })
-                .eq("id", existing.id);
-            if (!error) {
+                .eq("id", snapshot.id);
+            if (error) {
                 setCastAssignments((prev) =>
-                    prev.map((a) => a.id === existing.id
-                        ? { ...a, student_id: newStudentId, is_conflict_override: false } : a)
+                    prev.map((a) => a.id === snapshot.id ? snapshot : a)
                 );
             }
         } else {
+            const tempId = `temp-${Date.now()}-${slot.id}`;
+            const optimistic: CastAssignment = {
+                id: tempId,
+                show_song_cast_slot_id: slot.id,
+                student_id: newStudentId,
+                status: "active",
+                is_conflict_override: false,
+                override_reason: null,
+                override_approved_by: null,
+                song_id: song.id,
+            };
+            setCastAssignments((prev) => [...prev, optimistic]);
             const { data, error } = await supabase.from("show_song_cast_assignments")
-                .insert({
-                    show_song_cast_slot_id: slot.id,
-                    student_id: newStudentId,
-                    status: "active",
-                    is_conflict_override: false,
-                })
+                .insert({ show_song_cast_slot_id: slot.id, student_id: newStudentId, status: "active", is_conflict_override: false })
                 .select("id").single();
             if (!error && data) {
-                setCastAssignments((prev) => [...prev, {
-                    id: (data as any).id,
-                    show_song_cast_slot_id: slot.id,
-                    student_id: newStudentId,
-                    status: "active",
-                    is_conflict_override: false,
-                    override_reason: null,
-                    override_approved_by: null,
-                    song_id: song.id,
-                }]);
+                setCastAssignments((prev) =>
+                    prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
+                );
+            } else {
+                setCastAssignments((prev) => prev.filter((a) => a.id !== tempId));
             }
         }
     }
@@ -603,35 +769,41 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
         if (!overrideModal) return;
         const { existingAssignmentId, slotId, studentId, songId } = overrideModal;
         if (existingAssignmentId) {
+            const snapshot = castAssignments.find((a) => a.id === existingAssignmentId);
+            setCastAssignments((prev) =>
+                prev.map((a) => a.id === existingAssignmentId
+                    ? { ...a, student_id: studentId, is_conflict_override: true } : a)
+            );
             const { error } = await supabase.from("show_song_cast_assignments")
                 .update({ student_id: studentId, is_conflict_override: true })
                 .eq("id", existingAssignmentId);
-            if (!error) {
+            if (error && snapshot) {
                 setCastAssignments((prev) =>
-                    prev.map((a) => a.id === existingAssignmentId
-                        ? { ...a, student_id: studentId, is_conflict_override: true } : a)
+                    prev.map((a) => a.id === existingAssignmentId ? snapshot : a)
                 );
             }
         } else {
+            const tempId = `temp-override-${Date.now()}`;
+            const optimistic: CastAssignment = {
+                id: tempId,
+                show_song_cast_slot_id: slotId,
+                student_id: studentId,
+                status: "active",
+                is_conflict_override: true,
+                override_reason: null,
+                override_approved_by: null,
+                song_id: songId,
+            };
+            setCastAssignments((prev) => [...prev, optimistic]);
             const { data, error } = await supabase.from("show_song_cast_assignments")
-                .insert({
-                    show_song_cast_slot_id: slotId,
-                    student_id: studentId,
-                    status: "active",
-                    is_conflict_override: true,
-                })
+                .insert({ show_song_cast_slot_id: slotId, student_id: studentId, status: "active", is_conflict_override: true })
                 .select("id").single();
             if (!error && data) {
-                setCastAssignments((prev) => [...prev, {
-                    id: (data as any).id,
-                    show_song_cast_slot_id: slotId,
-                    student_id: studentId,
-                    status: "active",
-                    is_conflict_override: true,
-                    override_reason: null,
-                    override_approved_by: null,
-                    song_id: songId,
-                }]);
+                setCastAssignments((prev) =>
+                    prev.map((a) => a.id === tempId ? { ...a, id: (data as any).id } : a)
+                );
+            } else {
+                setCastAssignments((prev) => prev.filter((a) => a.id !== tempId));
             }
         }
         setOverrideModal(null);
@@ -697,6 +869,16 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
             await Promise.all([loadAllSlots(ids), loadCastAssignments(ids)]);
             setCustomTitle(""); setCustomArtist(""); setCustomHasMethodLesson(false);
         }
+    }
+
+    // ─── Add column handler ──────────────────────────────────────────────────
+
+    function handleAddColumn() {
+        const name = addColumnName.trim();
+        if (!name || columns.includes(name)) return;
+        setExtraColumns((prev) => [...prev, name]);
+        setAddColumnName("");
+        setAddColumnOpen(false);
     }
 
     // ─── Submit / approval handlers ─────────────────────────────────────────
@@ -772,7 +954,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                         <p className="text-sm text-zinc-300">
                             This student is assigned to{" "}
                             <span className="text-white font-medium">&ldquo;{overrideModal.conflictSongTitle}&rdquo;</span>{" "}
-                            in the other room during this pair. This conflict requires Music Director approval.
+                            in the other room during this rehearsal slot. This conflict requires Music Director approval.
                         </p>
                         <div className="flex gap-3 mt-5">
                             <button type="button" onClick={() => setOverrideModal(null)}
@@ -782,6 +964,36 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                             <button type="button" onClick={handleConfirmOverride}
                                 className="px-4 py-2 text-sm bg-orange-800 text-white hover:bg-orange-700">
                                 Request Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add column modal */}
+            {addColumnOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/70" onClick={() => { setAddColumnOpen(false); setAddColumnName(""); }} />
+                    <div className="relative bg-[#1a1a1a] border border-zinc-700 p-6 max-w-xs mx-4 w-full">
+                        <div className="text-sm font-bold text-white mb-3">Add Column</div>
+                        <input
+                            type="text"
+                            value={addColumnName}
+                            onChange={(e) => setAddColumnName(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleAddColumn(); if (e.key === "Escape") { setAddColumnOpen(false); setAddColumnName(""); } }}
+                            placeholder="e.g. Guitar 4, Harmonica"
+                            autoFocus
+                            className="w-full bg-zinc-800 border border-zinc-700 text-white text-sm px-3 py-2 outline-none mb-4"
+                        />
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => { setAddColumnOpen(false); setAddColumnName(""); }}
+                                className="px-3 py-1.5 text-sm border border-zinc-600 text-zinc-400 hover:text-white">
+                                Cancel
+                            </button>
+                            <button type="button" onClick={handleAddColumn}
+                                disabled={!addColumnName.trim() || columns.includes(addColumnName.trim())}
+                                className="px-3 py-1.5 text-sm bg-[#cc0000] text-white hover:bg-[#b30000] disabled:opacity-50 disabled:cursor-not-allowed">
+                                Add
                             </button>
                         </div>
                     </div>
@@ -803,28 +1015,6 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                             <button type="button"
                                 onClick={() => { setSlotEditorSongId(null); setAddSlotTypeId(""); setAddSlotLabel(""); setAddSlotMax(1); }}
                                 className="text-zinc-400 hover:text-white text-2xl leading-none w-8 text-center">×</button>
-                        </div>
-
-                        {/* Song settings */}
-                        <div className="px-5 py-4 border-b border-zinc-800 shrink-0 space-y-3">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs text-zinc-500 w-16 shrink-0">Room</span>
-                                <select value={slotEditorSong.rehearsal_room_id ?? ""}
-                                    onChange={(e) => handleRoomChange(slotEditorSong.id, e.target.value)}
-                                    className="flex-1 bg-zinc-800 border border-zinc-700 text-white text-xs px-2 py-1.5 outline-none">
-                                    <option value="">— none —</option>
-                                    {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs text-zinc-500 w-16 shrink-0">Pair #</span>
-                                <input type="number" min={1} max={20}
-                                    value={slotEditorSong.pair_group ?? ""}
-                                    onChange={(e) => handlePairGroupChange(slotEditorSong.id, e.target.value)}
-                                    placeholder="—"
-                                    className="w-20 bg-zinc-800 border border-zinc-700 text-white text-xs px-2 py-1.5 text-center outline-none" />
-                                <span className="text-xs text-zinc-600">Songs with the same pair # are in different rooms simultaneously</span>
-                            </div>
                         </div>
 
                         {/* Slots list */}
@@ -877,7 +1067,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                     </select>
                                     <input type="text" value={addSlotLabel}
                                         onChange={(e) => setAddSlotLabel(e.target.value)}
-                                        placeholder="Label (e.g. Guitar 1)"
+                                        placeholder="Label (e.g. Guitar 4)"
                                         className="w-full bg-zinc-800 border border-zinc-700 text-white text-xs px-2 py-1.5 outline-none" />
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-zinc-500">Max students:</label>
@@ -1082,183 +1272,220 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                 No songs added yet. Use &quot;+ Add Songs&quot; above.
                             </div>
                         ) : (
-                            <div style={{ overflowX: "auto" }}>
-                                <DragDropContext onDragEnd={handleDragEnd}>
-                                    <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
-                                        <thead>
-                                            <tr>
-                                                {/* Room */}
-                                                <th style={{
-                                                    position: "sticky", left: 0, zIndex: 31,
-                                                    backgroundColor: "#0a0a0a",
-                                                    width: 100, minWidth: 100,
-                                                    padding: "8px 10px",
-                                                    textAlign: "left",
-                                                    borderRight: "1px solid #27272a",
-                                                    borderBottom: "1px solid #27272a",
-                                                    whiteSpace: "nowrap",
-                                                }}>
-                                                    <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>Room</span>
-                                                </th>
-                                                {/* Song */}
-                                                <th style={{
-                                                    position: "sticky", left: 100, zIndex: 30,
-                                                    backgroundColor: "#0a0a0a",
-                                                    width: 220, minWidth: 220,
-                                                    padding: "8px 10px",
-                                                    textAlign: "left",
-                                                    borderRight: "1px solid #27272a",
-                                                    borderBottom: "1px solid #27272a",
-                                                    whiteSpace: "nowrap",
-                                                }}>
-                                                    <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>Song</span>
-                                                </th>
-                                                {/* Slot columns */}
-                                                {gridColumns.map((col) => (
-                                                    <th key={col} style={{
-                                                        minWidth: 140,
-                                                        padding: "8px 8px",
-                                                        textAlign: "left",
-                                                        borderRight: "1px solid #1c1c1e",
-                                                        borderBottom: "1px solid #27272a",
+                            <>
+                                {/* Drag conflict banner */}
+                                {reorderConflictBanner && (
+                                    <div
+                                        className="flex items-center justify-between px-4 py-3 text-sm text-white"
+                                        style={{ backgroundColor: "#78350f" }}>
+                                        <span>{reorderConflictBanner}</span>
+                                        <button type="button" onClick={() => setReorderConflictBanner(null)}
+                                            className="ml-4 text-orange-200 hover:text-white text-lg leading-none">×</button>
+                                    </div>
+                                )}
+
+                                <div style={{ overflowX: "auto" }}>
+                                    <DragDropContext onDragEnd={handleDragEnd}>
+                                        <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
+                                            <thead>
+                                                <tr>
+                                                    {/* Room header */}
+                                                    <th style={{
+                                                        position: "sticky", left: 0, zIndex: 31,
                                                         backgroundColor: "#0a0a0a",
+                                                        width: 90, minWidth: 90,
+                                                        padding: "8px 10px",
+                                                        textAlign: "left",
+                                                        borderRight: "1px solid #27272a",
+                                                        borderBottom: "1px solid #27272a",
                                                         whiteSpace: "nowrap",
                                                     }}>
-                                                        <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "var(--font-oswald)" }}>
-                                                            {col}
-                                                        </span>
+                                                        <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "var(--font-oswald)" }}>Room</span>
                                                     </th>
-                                                ))}
-                                                {/* Actions */}
-                                                <th style={{
-                                                    width: 50, minWidth: 50,
-                                                    padding: "8px 4px",
-                                                    borderBottom: "1px solid #27272a",
-                                                    backgroundColor: "#0a0a0a",
-                                                }} />
-                                            </tr>
-                                        </thead>
+                                                    {/* Song header */}
+                                                    <th style={{
+                                                        position: "sticky", left: 90, zIndex: 30,
+                                                        backgroundColor: "#0a0a0a",
+                                                        width: 200, minWidth: 200,
+                                                        padding: "8px 10px",
+                                                        textAlign: "left",
+                                                        borderRight: "1px solid #27272a",
+                                                        borderBottom: "1px solid #27272a",
+                                                        whiteSpace: "nowrap",
+                                                    }}>
+                                                        <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "var(--font-oswald)" }}>Song</span>
+                                                    </th>
+                                                    {/* Slot column headers */}
+                                                    {columns.map((col) => (
+                                                        <th key={col} style={{
+                                                            minWidth: 140,
+                                                            padding: "8px 8px",
+                                                            textAlign: "left",
+                                                            borderRight: "1px solid #1c1c1e",
+                                                            borderBottom: "1px solid #27272a",
+                                                            backgroundColor: "#0a0a0a",
+                                                            whiteSpace: "nowrap",
+                                                        }}>
+                                                            <span style={{ color: "#71717a", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "var(--font-oswald)" }}>
+                                                                {col}
+                                                            </span>
+                                                        </th>
+                                                    ))}
+                                                    {/* Add column button */}
+                                                    <th style={{
+                                                        width: 80, minWidth: 80,
+                                                        padding: "6px 8px",
+                                                        borderBottom: "1px solid #27272a",
+                                                        backgroundColor: "#0a0a0a",
+                                                        textAlign: "center",
+                                                    }}>
+                                                        <button type="button"
+                                                            onClick={() => setAddColumnOpen(true)}
+                                                            title="Add column"
+                                                            style={{
+                                                                color: "#52525b",
+                                                                fontSize: 16,
+                                                                background: "none",
+                                                                border: "1px solid #3f3f46",
+                                                                cursor: "pointer",
+                                                                padding: "1px 7px",
+                                                                lineHeight: "1.4",
+                                                                borderRadius: 0,
+                                                            }}>
+                                                            +
+                                                        </button>
+                                                    </th>
+                                                    {/* Actions header */}
+                                                    <th style={{
+                                                        width: 44, minWidth: 44,
+                                                        padding: "8px 4px",
+                                                        borderBottom: "1px solid #27272a",
+                                                        backgroundColor: "#0a0a0a",
+                                                    }} />
+                                                </tr>
+                                            </thead>
 
-                                        <Droppable droppableId="songs-table" type="TABLE_ROW">
-                                            {(droppableProvided) => (
-                                                <tbody
-                                                    ref={droppableProvided.innerRef}
-                                                    {...droppableProvided.droppableProps}
-                                                >
-                                                    {sortedSongs.map((song, index) => {
-                                                        const pairColor = song.pair_group ? getPairColor(song.pair_group) : null;
-                                                        const statusStyle = castingStatusStyle(song.casting_status);
-                                                        const room = rooms.find((r) => r.id === song.rehearsal_room_id);
-                                                        const songSlots = allSlots[song.id] ?? [];
-                                                        const rowBg = index % 2 === 1 ? "#161616" : "#1a1a1a";
+                                            <Droppable droppableId="songs-table" type="TABLE_ROW">
+                                                {(droppableProvided) => (
+                                                    <tbody
+                                                        ref={droppableProvided.innerRef}
+                                                        {...droppableProvided.droppableProps}
+                                                    >
+                                                        {sortedSongs.map((song, index) => {
+                                                            const pairColor = getPairColor(song.order_index);
+                                                            const statusStyle = castingStatusStyle(song.casting_status);
+                                                            const roomLabel = getComputedRoomLabel(song);
+                                                            const songSlotMap = slotMap[song.id] ?? {};
+                                                            const rowBg = index % 2 === 1 ? "#161616" : "#1a1a1a";
+                                                            const conflictMap = getConflictedStudentIds(song);
 
-                                                        return (
-                                                            <Draggable key={song.id} draggableId={song.id} index={index}>
-                                                                {(dragProvided, snapshot) => (
-                                                                    <tr
-                                                                        ref={dragProvided.innerRef}
-                                                                        {...dragProvided.draggableProps}
-                                                                        style={{
-                                                                            ...dragProvided.draggableProps.style,
-                                                                            backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
-                                                                        }}
-                                                                    >
-                                                                        {/* Room cell (sticky) */}
-                                                                        <td style={{
-                                                                            position: "sticky", left: 0, zIndex: 20,
-                                                                            backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
-                                                                            width: 100, minWidth: 100,
-                                                                            padding: "6px 10px",
-                                                                            borderRight: "1px solid #27272a",
-                                                                            borderBottom: "1px solid #1c1c1e",
-                                                                            verticalAlign: "middle",
-                                                                            ...(pairColor ? { borderLeft: `4px solid ${pairColor}` } : { borderLeft: "4px solid transparent" }),
-                                                                        }}>
-                                                                            <span style={{ color: room ? "#a1a1aa" : "#52525b", fontSize: 12 }}>
-                                                                                {room ? room.name : "—"}
-                                                                            </span>
-                                                                        </td>
-
-                                                                        {/* Song cell (sticky) */}
-                                                                        <td style={{
-                                                                            position: "sticky", left: 100, zIndex: 19,
-                                                                            backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
-                                                                            width: 220, minWidth: 220,
-                                                                            padding: "6px 10px",
-                                                                            borderRight: "1px solid #27272a",
-                                                                            borderBottom: "1px solid #1c1c1e",
-                                                                            verticalAlign: "middle",
-                                                                        }}>
-                                                                            <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                                                                                <span
-                                                                                    {...dragProvided.dragHandleProps}
-                                                                                    style={{ color: "#52525b", cursor: "grab", fontSize: 13, lineHeight: "1.6", flexShrink: 0, userSelect: "none" }}>
-                                                                                    ⠿
+                                                            return (
+                                                                <Draggable key={song.id} draggableId={song.id} index={index}>
+                                                                    {(dragProvided, snapshot) => (
+                                                                        <tr
+                                                                            ref={dragProvided.innerRef}
+                                                                            {...dragProvided.draggableProps}
+                                                                            style={{
+                                                                                ...dragProvided.draggableProps.style,
+                                                                                backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
+                                                                            }}
+                                                                        >
+                                                                            {/* Room cell (sticky) */}
+                                                                            <td style={{
+                                                                                position: "sticky", left: 0, zIndex: 20,
+                                                                                backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
+                                                                                width: 90, minWidth: 90,
+                                                                                padding: "6px 10px",
+                                                                                borderRight: "1px solid #27272a",
+                                                                                borderBottom: "1px solid #1c1c1e",
+                                                                                verticalAlign: "middle",
+                                                                                borderLeft: `4px solid ${pairColor}`,
+                                                                            }}>
+                                                                                <span style={{ color: "#a1a1aa", fontSize: 11, whiteSpace: "nowrap" }}>
+                                                                                    {roomLabel}
                                                                                 </span>
-                                                                                <div style={{ minWidth: 0, flex: 1 }}>
-                                                                                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>
-                                                                                        {index + 1}. {song.title}
-                                                                                    </div>
-                                                                                    <div style={{ fontSize: 11, color: "#71717a", marginTop: 1 }}>
-                                                                                        {song.artist}
-                                                                                    </div>
-                                                                                    <div style={{ display: "flex", gap: 3, marginTop: 3, flexWrap: "wrap" }}>
-                                                                                        {song.has_method_lesson && (
-                                                                                            <span style={{ backgroundColor: "#166534", color: "#bbf7d0", fontSize: 9, padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                                                                                                METHOD APP
+                                                                            </td>
+
+                                                                            {/* Song cell (sticky) */}
+                                                                            <td style={{
+                                                                                position: "sticky", left: 90, zIndex: 19,
+                                                                                backgroundColor: snapshot.isDragging ? "#2a2a2a" : rowBg,
+                                                                                width: 200, minWidth: 200,
+                                                                                padding: "6px 10px",
+                                                                                borderRight: "1px solid #27272a",
+                                                                                borderBottom: "1px solid #1c1c1e",
+                                                                                verticalAlign: "middle",
+                                                                                borderLeft: `4px solid ${pairColor}`,
+                                                                            }}>
+                                                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                                                                                    <span
+                                                                                        {...dragProvided.dragHandleProps}
+                                                                                        style={{ color: "#52525b", cursor: "grab", fontSize: 13, lineHeight: "1.6", flexShrink: 0, userSelect: "none" }}>
+                                                                                        ⠿
+                                                                                    </span>
+                                                                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                                                                        <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>
+                                                                                            {index + 1}. {song.title}
+                                                                                        </div>
+                                                                                        <div style={{ fontSize: 11, color: "#71717a", marginTop: 1 }}>
+                                                                                            {song.artist}
+                                                                                        </div>
+                                                                                        <div style={{ display: "flex", gap: 3, marginTop: 3, flexWrap: "wrap" }}>
+                                                                                            {song.has_method_lesson && (
+                                                                                                <span style={{ backgroundColor: "#166534", color: "#bbf7d0", fontSize: 9, padding: "1px 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                                                                                                    METHOD APP
+                                                                                                </span>
+                                                                                            )}
+                                                                                            <span className={statusStyle.bg} style={{ color: "#fff", fontSize: 9, padding: "1px 4px", textTransform: "uppercase" }}>
+                                                                                                {statusStyle.label}
                                                                                             </span>
-                                                                                        )}
-                                                                                        {song.pair_group && pairColor && (
-                                                                                            <span style={{ color: pairColor, backgroundColor: pairColor + "22", fontSize: 9, padding: "1px 4px", textTransform: "uppercase", fontWeight: 700 }}>
-                                                                                                PAIR {song.pair_group}
-                                                                                            </span>
-                                                                                        )}
-                                                                                        <span className={statusStyle.bg} style={{ color: "#fff", fontSize: 9, padding: "1px 4px", textTransform: "uppercase" }}>
-                                                                                            {statusStyle.label}
-                                                                                        </span>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
+                                                                            </td>
 
-                                                                        {/* Slot cells */}
-                                                                        {gridColumns.map((col) => {
-                                                                            const slot = songSlots.find((s) => s.slot_label === col);
-                                                                            if (!slot) {
+                                                                            {/* Slot cells */}
+                                                                            {columns.map((col) => {
+                                                                                const slot = songSlotMap[col];
+                                                                                if (!slot) {
+                                                                                    return (
+                                                                                        <td key={col}
+                                                                                            onClick={() => handleCreateSlot(song.id, col)}
+                                                                                            style={{
+                                                                                                minWidth: 140,
+                                                                                                backgroundColor: "#0d0d0d",
+                                                                                                borderRight: "1px solid #1c1c1e",
+                                                                                                borderBottom: "1px solid #1c1c1e",
+                                                                                                cursor: "pointer",
+                                                                                            }}
+                                                                                            title={`Click to add ${col} slot for this song`}
+                                                                                            onMouseEnter={(e) => { (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#151515"; }}
+                                                                                            onMouseLeave={(e) => { (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#0d0d0d"; }}
+                                                                                        />
+                                                                                    );
+                                                                                }
+
+                                                                                const assignment = assignmentBySlotMap[slot.id];
+                                                                                const isConflictCell = assignment?.is_conflict_override ?? false;
+
+                                                                                // Group students by instrument match
+                                                                                const matching = enrolledStudents.filter((s) => matchesInstrumentForColumn(s.instrument, col));
+                                                                                const others = enrolledStudents.filter((s) => !matchesInstrumentForColumn(s.instrument, col));
+
                                                                                 return (
                                                                                     <td key={col} style={{
                                                                                         minWidth: 140,
-                                                                                        backgroundColor: "#0d0d0d",
+                                                                                        padding: "4px 4px",
                                                                                         borderRight: "1px solid #1c1c1e",
                                                                                         borderBottom: "1px solid #1c1c1e",
-                                                                                    }} />
-                                                                                );
-                                                                            }
-                                                                            const primaryAssignment = castAssignments.find(
-                                                                                (a) => a.show_song_cast_slot_id === slot.id
-                                                                            );
-                                                                            const allAssignments = castAssignments.filter(
-                                                                                (a) => a.show_song_cast_slot_id === slot.id
-                                                                            );
-                                                                            const extraCount = allAssignments.length - 1;
-                                                                            const conflictMap = getConflictedStudentIds(song);
-                                                                            const isConflictCell = primaryAssignment?.is_conflict_override ?? false;
-
-                                                                            return (
-                                                                                <td key={col} style={{
-                                                                                    minWidth: 140,
-                                                                                    padding: "4px 4px",
-                                                                                    borderRight: "1px solid #1c1c1e",
-                                                                                    borderBottom: "1px solid #1c1c1e",
-                                                                                    verticalAlign: "middle",
-                                                                                    ...(isConflictCell ? { outline: "1px solid #f97316", outlineOffset: "-1px" } : {}),
-                                                                                }}>
-                                                                                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                                                                                        verticalAlign: "middle",
+                                                                                        ...(isConflictCell ? { outline: "1px solid #f97316", outlineOffset: "-1px" } : {}),
+                                                                                    }}>
                                                                                         <select
-                                                                                            value={primaryAssignment?.student_id ?? ""}
+                                                                                            value={assignment?.student_id ?? ""}
                                                                                             onChange={(e) => handleGridCellChange(slot, e.target.value, song)}
                                                                                             style={{
-                                                                                                flex: 1,
+                                                                                                width: "100%",
                                                                                                 backgroundColor: "#0f0f0f",
                                                                                                 color: "#fff",
                                                                                                 fontSize: 12,
@@ -1266,63 +1493,72 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                                                                 borderRadius: 0,
                                                                                                 padding: "3px 4px",
                                                                                                 outline: "none",
-                                                                                                width: "100%",
                                                                                                 minWidth: 0,
+                                                                                                cursor: "pointer",
                                                                                             }}>
                                                                                             <option value="">—</option>
-                                                                                            {enrolledStudents.map((s) => {
+                                                                                            {matching.map((s) => {
                                                                                                 const isConflict = conflictMap.has(s.id);
                                                                                                 return (
                                                                                                     <option key={s.id} value={s.id}>
-                                                                                                        {isConflict ? "⚠ " : ""}{getStudentDisplayName(s)} ({s.instrument}){isConflict ? " — conflict" : ""}
+                                                                                                        {isConflict ? "⚠ " : ""}{getStudentDisplayName(s)} ({s.instrument})
+                                                                                                    </option>
+                                                                                                );
+                                                                                            })}
+                                                                                            {matching.length > 0 && others.length > 0 && (
+                                                                                                <option disabled>──────────</option>
+                                                                                            )}
+                                                                                            {others.map((s) => {
+                                                                                                const isConflict = conflictMap.has(s.id);
+                                                                                                return (
+                                                                                                    <option key={s.id} value={s.id}>
+                                                                                                        {isConflict ? "⚠ " : ""}{getStudentDisplayName(s)} ({s.instrument})
                                                                                                     </option>
                                                                                                 );
                                                                                             })}
                                                                                         </select>
-                                                                                        {extraCount > 0 && (
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                title={`+${extraCount} more — open slot editor`}
-                                                                                                onClick={() => setSlotEditorSongId(song.id)}
-                                                                                                style={{ fontSize: 10, color: "#a1a1aa", background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap", padding: "0 2px" }}>
-                                                                                                +{extraCount}
-                                                                                            </button>
-                                                                                        )}
-                                                                                    </div>
-                                                                                </td>
-                                                                            );
-                                                                        })}
+                                                                                    </td>
+                                                                                );
+                                                                            })}
 
-                                                                        {/* Actions cell */}
-                                                                        <td style={{
-                                                                            width: 50,
-                                                                            padding: "4px 4px",
-                                                                            borderBottom: "1px solid #1c1c1e",
-                                                                            textAlign: "center",
-                                                                            verticalAlign: "middle",
-                                                                        }}>
-                                                                            <button type="button"
-                                                                                onClick={() => {
-                                                                                    setSlotEditorSongId(song.id);
-                                                                                    setAddSlotTypeId(""); setAddSlotLabel(""); setAddSlotMax(1);
-                                                                                }}
-                                                                                title="Edit slots, room, pair"
-                                                                                style={{ color: "#71717a", fontSize: 13, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
-                                                                                ✎
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                )}
-                                                            </Draggable>
-                                                        );
-                                                    })}
-                                                    {droppableProvided.placeholder}
-                                                </tbody>
-                                            )}
-                                        </Droppable>
-                                    </table>
-                                </DragDropContext>
-                            </div>
+                                                                            {/* Add column placeholder cell */}
+                                                                            <td style={{
+                                                                                width: 80, minWidth: 80,
+                                                                                borderBottom: "1px solid #1c1c1e",
+                                                                                backgroundColor: "#0a0a0a",
+                                                                            }} />
+
+                                                                            {/* Actions cell */}
+                                                                            <td style={{
+                                                                                width: 44,
+                                                                                padding: "4px 4px",
+                                                                                borderBottom: "1px solid #1c1c1e",
+                                                                                textAlign: "center",
+                                                                                verticalAlign: "middle",
+                                                                            }}>
+                                                                                <button type="button"
+                                                                                    onClick={() => {
+                                                                                        setSlotEditorSongId(song.id);
+                                                                                        setAddSlotTypeId(""); setAddSlotLabel(""); setAddSlotMax(1);
+                                                                                    }}
+                                                                                    title="Edit slots"
+                                                                                    style={{ color: "#71717a", fontSize: 13, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>
+                                                                                    ✎
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </Draggable>
+                                                            );
+                                                        })}
+                                                        {droppableProvided.placeholder}
+                                                    </tbody>
+                                                )}
+                                            </Droppable>
+                                        </table>
+                                    </DragDropContext>
+                                </div>
+                            </>
                         )}
 
                         {/* SECTION 4 — CASTING EQUITY PANEL */}
