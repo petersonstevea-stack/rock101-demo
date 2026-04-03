@@ -7,7 +7,7 @@ export async function GET() {
         return new NextResponse("PIKE13_ACCESS_TOKEN is not set", { status: 500, headers: { "Content-Type": "text/plain" } });
     }
 
-    const res = await fetch("https://delmar-sor.pike13.com/api/v2/desk/people.json", {
+    const res = await fetch("https://delmar-sor.pike13.com/api/v2/desk/staff_members.json", {
         headers: { Authorization: `Bearer ${token}` },
     });
 
