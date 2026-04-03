@@ -11,8 +11,7 @@ const PIKE13_REPORT_URL =
 
 const FIELDS = [
     "person_id",
-    "first_name",
-    "last_name",
+    "full_name",
     "email",
     "guardian_email",
     "service_category",
@@ -21,10 +20,9 @@ const FIELDS = [
 
 // Field indices (match FIELDS array order)
 const F_PERSON_ID = 0;
-const F_FIRST_NAME = 1;
-const F_LAST_NAME = 2;
-const F_EMAIL = 3;
-const F_GUARDIAN_EMAIL = 4;
+const F_FULL_NAME = 1;
+const F_EMAIL = 2;
+const F_GUARDIAN_EMAIL = 3;
 
 const FILTER = ["and", [
     ["eq", "state", "registered"],
@@ -102,17 +100,24 @@ export async function GET() {
         }
 
         // ── Build preview records ────────────────────────────────────────────
-        const willImport = Array.from(seenIds.values()).map((row) => ({
-            first_name: row[F_FIRST_NAME] ?? "",
-            last_initial: (row[F_LAST_NAME] as string)?.charAt(0).toUpperCase() ?? "",
-            parent_email: row[F_EMAIL] || row[F_GUARDIAN_EMAIL] || "",
-            pike13_person_id: String(row[F_PERSON_ID]),
-            school: "del-mar",
-            school_id: "del-mar",
-            program: "rock_101",
-            active: true,
-            instrument: "",
-        }));
+        const willImport = Array.from(seenIds.values()).map((row) => {
+            const fullName: string = row[F_FULL_NAME] ?? "";
+            const parts = fullName.trim().split(" ");
+            const first_name = parts[0] ?? "";
+            const last_initial = parts[1]?.charAt(0).toUpperCase() ?? "";
+
+            return {
+                first_name,
+                last_initial,
+                parent_email: row[F_EMAIL] || row[F_GUARDIAN_EMAIL] || "",
+                pike13_person_id: String(row[F_PERSON_ID]),
+                school: "del-mar",
+                school_id: "del-mar",
+                program: "rock_101",
+                active: true,
+                instrument: "",
+            };
+        });
 
         return NextResponse.json({
             total_enrolled_rows: allRows.length,
