@@ -260,6 +260,7 @@ export default function ShowGroupSetupView({
     }
 
     function buildAutoName(form: FormState): string {
+        if (!schoolName || schoolName === "All Schools") return "";
         if (!form.showType || form.showType === "custom") return "";
         const theme = themes.find((t) => t.id === form.themeId);
         const season = seasons.find((s) => s.id === form.seasonId);
