@@ -55,7 +55,27 @@ type ShowGroupData = {
     songs: SongGroup[];
 };
 
+type MethodExercisePrereq = {
+    id: string;
+    related_exercise_id: number;
+    related_exercise_label: string;
+    sort_order: number;
+};
+
+type MethodExercise = {
+    id: string;
+    song_title: string;
+    instrument: string;
+    part_label: string;
+    exercise_id: number;
+    prerequisites: MethodExercisePrereq[];
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function methodUrl(id: number): string {
+    return `https://method.schoolofrock.com/comp.html#/exercise/${id}`;
+}
 
 function formatTime(time: string | null): string {
     if (!time) return "";
@@ -93,6 +113,7 @@ export default function MyCastingView({
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedStudentId, setSelectedStudentId] = useState<string>("");
     const [showGroups, setShowGroups] = useState<ShowGroupData[]>([]);
+    const [methodExercises, setMethodExercises] = useState<Map<string, MethodExercise[]>>(new Map());
     const [loading, setLoading] = useState(false);
     const [loadingStudents, setLoadingStudents] = useState(true);
 
@@ -120,6 +141,7 @@ export default function MyCastingView({
     useEffect(() => {
         if (!selectedStudentId) {
             setShowGroups([]);
+            setMethodExercises(new Map());
             return;
         }
 
@@ -163,6 +185,7 @@ export default function MyCastingView({
             if (error) {
                 console.error("MyCastingView load assignments error:", error);
                 setShowGroups([]);
+                setMethodExercises(new Map());
                 setLoading(false);
                 return;
             }
@@ -201,6 +224,54 @@ export default function MyCastingView({
                     season_key: season.season_key,
                     year: season.year,
                 });
+            }
+
+            // Load Method App exercises for this student's instrument + these songs
+            const studentInstrument = students.find((s) => s.id === selectedStudentId)?.instrument;
+            const songTitles = [...new Set(rows.map((r) => r.song_title))];
+
+            if (songTitles.length > 0 && studentInstrument) {
+                const { data: exerciseData, error: exerciseError } = await supabase
+                    .from("method_app_exercises")
+                    .select(`
+                        id,
+                        song_title,
+                        instrument,
+                        part_label,
+                        exercise_id,
+                        method_app_exercise_prerequisites (
+                            id,
+                            related_exercise_id,
+                            related_exercise_label,
+                            sort_order
+                        )
+                    `)
+                    .in("song_title", songTitles)
+                    .eq("instrument", studentInstrument);
+
+                if (!exerciseError && exerciseData) {
+                    const map = new Map<string, MethodExercise[]>();
+                    for (const ex of exerciseData as any[]) {
+                        const key = ex.song_title;
+                        if (!map.has(key)) map.set(key, []);
+                        const prereqs: MethodExercisePrereq[] = (ex.method_app_exercise_prerequisites ?? [])
+                            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+                            .slice(0, 3);
+                        map.get(key)!.push({
+                            id: ex.id,
+                            song_title: ex.song_title,
+                            instrument: ex.instrument,
+                            part_label: ex.part_label,
+                            exercise_id: ex.exercise_id,
+                            prerequisites: prereqs,
+                        });
+                    }
+                    setMethodExercises(map);
+                } else {
+                    setMethodExercises(new Map());
+                }
+            } else {
+                setMethodExercises(new Map());
             }
 
             // Group by show group, then by song within each group
@@ -409,63 +480,101 @@ export default function MyCastingView({
 
                                         {/* Song tiles */}
                                         <div className="space-y-2">
-                                            {group.songs.map((song, idx) => (
-                                                <div
-                                                    key={song.song_id}
-                                                    className="flex flex-wrap items-start justify-between gap-4 rounded-none bg-[#1a1a1a] p-4"
-                                                >
-                                                    {/* Left — song info */}
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="w-8 shrink-0 text-right font-oswald text-xl font-bold text-zinc-600">
-                                                            {idx + 1}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-oswald text-lg font-bold uppercase leading-tight tracking-wide text-white">
-                                                                {song.song_title}
+                                            {group.songs.map((song, idx) => {
+                                                const exercises = methodExercises.get(song.song_title) ?? [];
+                                                return (
+                                                    <div
+                                                        key={song.song_id}
+                                                        className="flex flex-wrap items-start justify-between gap-4 rounded-none bg-[#1a1a1a] p-4"
+                                                    >
+                                                        {/* Left — song info */}
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="w-8 shrink-0 text-right font-oswald text-xl font-bold text-zinc-600">
+                                                                {idx + 1}
                                                             </div>
-                                                            <div className="mt-0.5 text-sm text-zinc-400">
-                                                                {song.artist}
-                                                            </div>
-                                                            {song.has_method_lesson && (
-                                                                <div className="mt-2 flex items-center gap-2">
-                                                                    <span className="rounded-none bg-green-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-green-300">
-                                                                        Method App
-                                                                    </span>
-                                                                    <a
-                                                                        href="https://app.methodapp.com"
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="text-xs text-green-400 underline hover:text-green-300"
-                                                                    >
-                                                                        Open in Method App →
-                                                                    </a>
+                                                            <div>
+                                                                <div className="font-oswald text-lg font-bold uppercase leading-tight tracking-wide text-white">
+                                                                    {song.song_title}
                                                                 </div>
-                                                            )}
+                                                                <div className="mt-0.5 text-sm text-zinc-400">
+                                                                    {song.artist}
+                                                                </div>
+
+                                                                {/* Method App section */}
+                                                                {exercises.length > 0 ? (
+                                                                    <div className="mt-2 space-y-2">
+                                                                        {exercises.map((ex) => (
+                                                                            <div key={ex.id} className="space-y-1">
+                                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                                    <span className="rounded-none bg-green-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-green-300">
+                                                                                        Method App
+                                                                                    </span>
+                                                                                    <span className="text-xs text-zinc-400">
+                                                                                        {ex.part_label}
+                                                                                    </span>
+                                                                                    <a
+                                                                                        href={methodUrl(ex.exercise_id)}
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="text-xs text-green-400 underline hover:text-green-300"
+                                                                                    >
+                                                                                        Open in Method App →
+                                                                                    </a>
+                                                                                </div>
+                                                                                {ex.prerequisites.length > 0 && (
+                                                                                    <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                                                                                        <span className="text-[10px] text-zinc-500">
+                                                                                            Practice first:
+                                                                                        </span>
+                                                                                        {ex.prerequisites.map((prereq) => (
+                                                                                            <a
+                                                                                                key={prereq.id}
+                                                                                                href={methodUrl(prereq.related_exercise_id)}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                                className="rounded-none bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-zinc-700 hover:text-white"
+                                                                                            >
+                                                                                                {prereq.related_exercise_label}
+                                                                                            </a>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : song.has_method_lesson ? (
+                                                                    <div className="mt-2">
+                                                                        <span className="rounded-none bg-green-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-green-300">
+                                                                            Method App
+                                                                        </span>
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Right — role badges */}
+                                                        <div className="flex flex-col items-end gap-1.5">
+                                                            {song.roles.map((role, rIdx) => (
+                                                                <div key={rIdx} className="flex items-center gap-1.5">
+                                                                    {role.is_conflict_override && (
+                                                                        <span className="rounded-none bg-orange-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-orange-300">
+                                                                            Override
+                                                                        </span>
+                                                                    )}
+                                                                    {role.type_name && (
+                                                                        <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-300">
+                                                                            {role.type_name}
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="rounded-none bg-[#cc0000] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-white">
+                                                                        {role.slot_label}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
-
-                                                    {/* Right — role badges */}
-                                                    <div className="flex flex-col items-end gap-1.5">
-                                                        {song.roles.map((role, rIdx) => (
-                                                            <div key={rIdx} className="flex items-center gap-1.5">
-                                                                {role.is_conflict_override && (
-                                                                    <span className="rounded-none bg-orange-900 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-orange-300">
-                                                                        Override
-                                                                    </span>
-                                                                )}
-                                                                {role.type_name && (
-                                                                    <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-[10px] uppercase tracking-widest text-zinc-300">
-                                                                        {role.type_name}
-                                                                    </span>
-                                                                )}
-                                                                <span className="rounded-none bg-[#cc0000] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-white">
-                                                                    {role.slot_label}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 );
