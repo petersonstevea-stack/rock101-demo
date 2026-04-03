@@ -34,6 +34,7 @@ import MyScheduleView from "@/components/MyScheduleView";
 import StaffProfileView from "@/components/StaffProfileView";
 import ClassRosterView from "@/components/ClassRosterView";
 import ShowGroupSetupView from "@/components/ShowGroupSetupView";
+import CastingView from "@/components/CastingView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -67,7 +68,8 @@ type Tab =
     | "myProfile"
     | "admin"
     | "classRoster"
-    | "showGroups";
+    | "showGroups"
+    | "casting";
 
 type CurriculumState = {
     done: boolean;
@@ -329,6 +331,8 @@ export default function Rock101App() {
         role === "owner" || role === "general_manager" || role === "instructor";
     const canSeeShowGroups =
         role === "owner" || role === "general_manager" || role === "music_director";
+    const canSeeCasting =
+        role === "owner" || role === "general_manager" || role === "music_director" || role === "instructor";
 
     const [allUsers, setAllUsers] = useState<any[]>([]);
     const [performanceStudents, setPerformanceStudents] = useState<any[]>([]);
@@ -1394,6 +1398,7 @@ export default function Rock101App() {
                 exceptionsCount={exceptionsCount}
                 canSeeClassRoster={canSeeClassRoster}
                 canSeeShowGroups={canSeeShowGroups}
+                canSeeCasting={canSeeCasting}
                 selectedSchoolId={selectedSchoolId}
             >
                 <div className="p-6">
@@ -2244,6 +2249,14 @@ export default function Rock101App() {
                         schoolName={currentSchoolName}
                         users={filteredUsersBySchool}
                         students={filteredPerfStudentsBySchool}
+                    />
+                )}
+
+                {tab === "casting" && canSeeCasting && (
+                    <CastingView
+                        currentUser={currentUser}
+                        schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
+                        schoolName={currentSchoolName}
                     />
                 )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Music, Users } from "lucide-react";
+import { Music, Sliders, Users } from "lucide-react";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -68,6 +68,7 @@ type AppShellProps = {
   exceptionsCount?: number;
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
+  canSeeCasting?: boolean;
 };
 
 function NavButton({
@@ -131,6 +132,7 @@ function NavItems({
   exceptionsCount,
   canSeeClassRoster,
   canSeeShowGroups,
+  canSeeCasting,
 }: {
   currentTab: string;
   onTabChange: (tab: string) => void;
@@ -141,6 +143,7 @@ function NavItems({
   exceptionsCount?: number;
   canSeeClassRoster?: boolean;
   canSeeShowGroups?: boolean;
+  canSeeCasting?: boolean;
 }) {
   const isStaff =
     role === "owner" ||
@@ -162,10 +165,17 @@ function NavItems({
     icon: <Music size={14} />,
   };
 
+  const castingNavItem: NavItem = {
+    tab: "casting",
+    label: "Casting",
+    icon: <Sliders size={14} />,
+  };
+
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeClassRoster ? [classRosterNavItem] : []),
     ...(canSeeShowGroups ? [showGroupsNavItem] : []),
+    ...(canSeeCasting ? [castingNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
   ];
 
@@ -221,6 +231,7 @@ function SidebarContent({
   userName,
   canSeeClassRoster,
   canSeeShowGroups,
+  canSeeCasting,
   selectedSchoolId,
 }: Omit<AppShellProps, "children">) {
   return (
@@ -305,6 +316,7 @@ function SidebarContent({
           exceptionsCount={exceptionsCount}
           canSeeClassRoster={canSeeClassRoster}
           canSeeShowGroups={canSeeShowGroups}
+          canSeeCasting={canSeeCasting}
         />
       </nav>
 
@@ -342,6 +354,7 @@ export default function AppShell({
   userName,
   canSeeClassRoster,
   canSeeShowGroups,
+  canSeeCasting,
   selectedSchoolId,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -377,6 +390,7 @@ export default function AppShell({
           userName={userName}
           canSeeClassRoster={canSeeClassRoster}
           canSeeShowGroups={canSeeShowGroups}
+          canSeeCasting={canSeeCasting}
           selectedSchoolId={selectedSchoolId}
         />
       </aside>
@@ -461,6 +475,7 @@ export default function AppShell({
               userName={userName}
               canSeeClassRoster={canSeeClassRoster}
               canSeeShowGroups={canSeeShowGroups}
+              canSeeCasting={canSeeCasting}
               selectedSchoolId={selectedSchoolId}
             />
           </div>
