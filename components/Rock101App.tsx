@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     fetchAllCurriculumItems,
     type CurriculumItem,
@@ -111,6 +111,7 @@ export default function Rock101App() {
     const [selectedStudentName, setSelectedStudentName] = useState("");
     const [selectedSchoolId, setSelectedSchoolId] =
         useState<SchoolFilter>("all");
+    const isInitialMount = useRef(true);
     const [managementLandingView, setManagementLandingView] =
         useState<ManagementLandingView>("classes");
     const [classesVersion, setClassesVersion] = useState(0);
@@ -133,6 +134,13 @@ export default function Rock101App() {
                 if (data) setSchoolList(data);
             });
     }, []);
+
+    // Bug 1 fix: auto-select first school for owners instead of landing on "all"
+    useEffect(() => {
+        if (currentUser?.role === "owner" && selectedSchoolId === "all" && schoolList.length > 0) {
+            setSelectedSchoolId(schoolList[0].id);
+        }
+    }, [schoolList, currentUser]);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -261,7 +269,9 @@ export default function Rock101App() {
             const schoolIdFilter =
                 ownerRole && selectedSchoolId !== "all"
                     ? selectedSchoolId
-                    : (currentUser?.schoolId ?? "");
+                    : ownerRole
+                        ? (schoolList[0]?.id ?? "")
+                        : (currentUser?.schoolId ?? "");
             const { data, error } = await supabase
                 .from("rock_classes")
                 .select("*")
@@ -540,6 +550,10 @@ export default function Rock101App() {
         loadUsers();
     }, []);
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
         setSelectedClassId(null);
         setSelectedStudentName("");
         setManagementLandingView("classes");
@@ -1351,6 +1365,7 @@ export default function Rock101App() {
                 exceptionsCount={exceptionsCount}
                 canSeeClassRoster={canSeeClassRoster}
                 canSeeShowGroups={canSeeShowGroups}
+                selectedSchoolId={selectedSchoolId}
             >
                 <div className="p-6">
                     <div className="rounded-none border border-zinc-800 bg-zinc-900 p-6">
@@ -1395,6 +1410,7 @@ export default function Rock101App() {
             exceptionsCount={exceptionsCount}
             canSeeClassRoster={canSeeClassRoster}
             canSeeShowGroups={canSeeShowGroups}
+            selectedSchoolId={selectedSchoolId}
         >
             <div className="p-6">
                 {role === "instructor" && (

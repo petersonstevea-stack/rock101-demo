@@ -63,6 +63,7 @@ type AppShellProps = {
   isOwner?: boolean;
   schoolList?: { id: string; name: string }[];
   onSchoolChange?: (schoolId: string) => void;
+  selectedSchoolId?: string;
   studentNavItems?: NavItem[];
   exceptionsCount?: number;
   canSeeClassRoster?: boolean;
@@ -220,6 +221,7 @@ function SidebarContent({
   userName,
   canSeeClassRoster,
   canSeeShowGroups,
+  selectedSchoolId,
 }: Omit<AppShellProps, "children">) {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
@@ -245,15 +247,17 @@ function SidebarContent({
           <select
             className="mt-1 w-full bg-transparent leading-snug text-white outline-none"
             style={{ fontSize: "13px", fontWeight: 500 }}
-            value={schoolName}
+            value={selectedSchoolId ?? "all"}
             onChange={(e) => {
-              const selected = schoolList.find((s) => s.name === e.target.value);
+              const val = e.target.value;
+              if (val === "all") { onSchoolChange("all"); return; }
+              const selected = schoolList.find((s) => s.id === val);
               if (selected) onSchoolChange(selected.id);
             }}
           >
             <option value="all" style={{ backgroundColor: "#000000" }}>All Schools</option>
             {schoolList.map((s) => (
-              <option key={s.id} value={s.name} style={{ backgroundColor: "#000000" }}>
+              <option key={s.id} value={s.id} style={{ backgroundColor: "#000000" }}>
                 {s.name}
               </option>
             ))}
@@ -338,6 +342,7 @@ export default function AppShell({
   userName,
   canSeeClassRoster,
   canSeeShowGroups,
+  selectedSchoolId,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -372,6 +377,7 @@ export default function AppShell({
           userName={userName}
           canSeeClassRoster={canSeeClassRoster}
           canSeeShowGroups={canSeeShowGroups}
+          selectedSchoolId={selectedSchoolId}
         />
       </aside>
 
@@ -455,6 +461,7 @@ export default function AppShell({
               userName={userName}
               canSeeClassRoster={canSeeClassRoster}
               canSeeShowGroups={canSeeShowGroups}
+              selectedSchoolId={selectedSchoolId}
             />
           </div>
         </div>
