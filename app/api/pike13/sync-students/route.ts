@@ -6,27 +6,65 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const PIKE13_REPORT_URL =
+    "https://delmar-sor.pike13.com/desk/api/v3/reports/clients/queries";
+
+const BASE_FIELDS = [
+    "person_id",
+    "first_name",
+    "last_name",
+    "email",
+    "guardian_email",
+    "guardian_name",
+    "also_staff",
+    "future_visits",
+    "custom_fields",
+];
+
+const FILTER = ["and", [
+    ["gt", "future_visits", 0],
+    ["eq", "also_staff", "f"],
+    ["eq", "person_state", "active"],
+]];
+
+async function fetchPage(token: string, startingAfter?: string): Promise<any> {
+    const body: any = {
+        data: {
+            type: "queries",
+            attributes: {
+                fields: BASE_FIELDS,
+                filter: FILTER,
+                page: { limit: 500, ...(startingAfter ? { starting_after: startingAfter } : {}) },
+            },
+        },
+    };
+
+    const res = await fetch(PIKE13_REPORT_URL, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Pike13 report fetch failed (${res.status}): ${text}`);
+    }
+
+    return res.json();
+}
+
 export async function GET() {
     try {
         const token = process.env.PIKE13_ACCESS_TOKEN;
         if (!token) {
-            return new NextResponse("PIKE13_ACCESS_TOKEN is not set", { status: 500, headers: { "Content-Type": "text/plain" } });
+            return new NextResponse("PIKE13_ACCESS_TOKEN is not set", {
+                status: 500,
+                headers: { "Content-Type": "text/plain" },
+            });
         }
-
-        const headers = { Authorization: `Bearer ${token}` };
-
-        // ── Fetch staff IDs to exclude ───────────────────────────────────────
-        const staffRes = await fetch(
-            "https://delmar-sor.pike13.com/api/v2/desk/staff_members",
-            { headers }
-        );
-        if (!staffRes.ok) {
-            return new NextResponse(`Pike13 staff fetch failed: ${staffRes.status}`, { status: 502, headers: { "Content-Type": "text/plain" } });
-        }
-        const staffData = await staffRes.json();
-        const staffIds = new Set<number>(
-            (staffData.staff_members ?? staffData.people ?? []).map((s: any) => s.id)
-        );
 
         // ── Fetch school_id from Supabase ────────────────────────────────────
         const { data: schoolRows, error: schoolError } = await supabase
@@ -36,73 +74,61 @@ export async function GET() {
             .limit(1);
 
         if (schoolError) {
-            return new NextResponse(`Supabase school lookup failed: ${schoolError.message}`, { status: 500, headers: { "Content-Type": "text/plain" } });
+            return new NextResponse(`Supabase school lookup failed: ${schoolError.message}`, {
+                status: 500,
+                headers: { "Content-Type": "text/plain" },
+            });
         }
         const schoolId: string | null = schoolRows?.[0]?.id ?? null;
 
-        // ── Paginate through all Pike13 people ───────────────────────────────
-        const allPeople: any[] = [];
-        let page = 1;
+        // ── Paginate through Reporting API ───────────────────────────────────
+        const allRows: any[][] = [];
+        let instrumentColIndex: number | null = null;
+        let startingAfter: string | undefined = undefined;
 
         while (true) {
-            const url = `https://delmar-sor.pike13.com/api/v2/desk/people?per_page=100&page=${page}`;
-            const res = await fetch(url, { headers });
+            const json = await fetchPage(token, startingAfter);
+            const attrs = json?.data?.attributes ?? {};
+            const rows: any[][] = attrs.rows ?? [];
 
-            if (!res.ok) {
-                return new NextResponse(`Pike13 people fetch failed at page ${page}: ${res.status}`, { status: 502, headers: { "Content-Type": "text/plain" } });
+            // On first page, find the instrument column index from field metadata
+            if (instrumentColIndex === null) {
+                const fieldMeta: any[] = attrs.fields ?? [];
+                const idx = fieldMeta.findIndex(
+                    (f: any) =>
+                        (typeof f === "string" && f.toLowerCase().includes("instrument")) ||
+                        (typeof f?.name === "string" && f.name.toLowerCase().includes("instrument"))
+                );
+                instrumentColIndex = idx >= 0 ? idx : null;
             }
 
-            const data = await res.json();
-            const people: any[] = data.people ?? [];
-            allPeople.push(...people);
+            allRows.push(...rows);
 
-            if (!data.meta?.next) break;
-            page++;
+            if (!attrs.has_more) break;
+            startingAfter = attrs.last_key;
+            if (!startingAfter) break;
         }
 
-        // ── Filter and build preview records ─────────────────────────────────
-        let deletedExcluded = 0;
-        let staffExcluded = 0;
-        const willImport: any[] = [];
+        // ── Build preview records ────────────────────────────────────────────
+        const willImport = allRows.map((row) => {
+            const instrument =
+                instrumentColIndex !== null ? (row[instrumentColIndex] ?? "") : "";
 
-        for (const p of allPeople) {
-            if (p.deleted_at || p.hidden_at) {
-                deletedExcluded++;
-                continue;
-            }
-            if (staffIds.has(p.id)) {
-                staffExcluded++;
-                continue;
-            }
-
-            // Extract instrument from custom fields
-            const instrumentField = (p.custom_fields ?? []).find(
-                (f: any) => f.name?.toLowerCase() === "instrument"
-            );
-            let instrument = "";
-            if (instrumentField) {
-                const val = instrumentField.value;
-                instrument = Array.isArray(val) ? val[0] ?? "" : val ?? "";
-            }
-
-            willImport.push({
-                first_name: p.first_name ?? "",
-                last_initial: p.last_name?.charAt(0).toUpperCase() ?? "",
-                instrument,
-                parent_email: p.email ?? p.guardian_email ?? "",
+            return {
+                first_name: row[1] ?? "",
+                last_initial: (row[2] as string)?.charAt(0).toUpperCase() ?? "",
+                parent_email: row[3] || row[4] || "",
+                pike13_person_id: String(row[0]),
                 school: "del-mar",
                 school_id: schoolId,
-                pike13_person_id: String(p.id),
                 program: "rock_101",
                 active: true,
-            });
-        }
+                instrument,
+            };
+        });
 
         return NextResponse.json({
-            total_in_pike13: allPeople.length,
-            staff_excluded: staffExcluded,
-            deleted_excluded: deletedExcluded,
-            total_will_import: willImport.length,
+            total_active_students: willImport.length,
             will_import: willImport,
         });
 
