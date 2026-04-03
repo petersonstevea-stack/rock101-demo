@@ -392,7 +392,7 @@ export default function PerformanceRehearsalView({
             .insert({
                 show_group_instance_id: selectedGroupId,
                 rehearsal_date: selectedDate,
-                instructor_user_id: currentUser.staffId ?? null,
+                instructor_user_id: null,
                 notes: null,
             })
             .select()

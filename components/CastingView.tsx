@@ -1399,7 +1399,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                             const conflictMap = getConflictedStudentIds(song);
 
                                                             return (
-                                                                <Draggable key={song.id} draggableId={song.id} index={index}>
+                                                                <Draggable key={song.id} draggableId={song.id} index={index} isDragDisabled={song.casting_status === "approved"}>
                                                                     {(dragProvided, snapshot) => (
                                                                         <tr
                                                                             ref={dragProvided.innerRef}
@@ -1434,12 +1434,12 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                                                 borderRight: "1px solid #27272a",
                                                                                 borderBottom: "1px solid #1c1c1e",
                                                                                 verticalAlign: "middle",
-                                                                                borderLeft: `4px solid ${pairColor}`,
+                                                                                borderLeft: song.casting_status === "approved" ? "4px solid #166534" : `4px solid ${pairColor}`,
                                                                             }}>
                                                                                 <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
                                                                                     <span
                                                                                         {...dragProvided.dragHandleProps}
-                                                                                        style={{ color: "#52525b", cursor: "grab", fontSize: 13, lineHeight: "1.6", flexShrink: 0, userSelect: "none" }}>
+                                                                                        style={{ color: song.casting_status === "approved" ? "#3f3f46" : "#52525b", cursor: song.casting_status === "approved" ? "default" : "grab", fontSize: 13, lineHeight: "1.6", flexShrink: 0, userSelect: "none" }}>
                                                                                         ⠿
                                                                                     </span>
                                                                                     <div style={{ minWidth: 0, flex: 1 }}>
@@ -1456,7 +1456,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                                                                 </span>
                                                                                             )}
                                                                                             <span className={statusStyle.bg} style={{ color: "#fff", fontSize: 9, padding: "1px 4px", textTransform: "uppercase" }}>
-                                                                                                {statusStyle.label}
+                                                                                                {statusStyle.label}{song.casting_status === "approved" ? " 🔒" : ""}
                                                                                             </span>
                                                                                         </div>
                                                                                     </div>
@@ -1467,19 +1467,20 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                                             {columns.map((col) => {
                                                                                 const slot = songSlotMap[col];
                                                                                 if (!slot) {
+                                                                                    const isApproved = song.casting_status === "approved";
                                                                                     return (
                                                                                         <td key={col}
-                                                                                            onClick={() => handleCreateSlot(song.id, col)}
+                                                                                            onClick={() => { if (!isApproved) handleCreateSlot(song.id, col); }}
                                                                                             style={{
                                                                                                 minWidth: 140,
                                                                                                 backgroundColor: "#0d0d0d",
                                                                                                 borderRight: "1px solid #1c1c1e",
                                                                                                 borderBottom: "1px solid #1c1c1e",
-                                                                                                cursor: "pointer",
+                                                                                                cursor: isApproved ? "default" : "pointer",
                                                                                             }}
-                                                                                            title={`Click to add ${col} slot for this song`}
-                                                                                            onMouseEnter={(e) => { (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#151515"; }}
-                                                                                            onMouseLeave={(e) => { (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#0d0d0d"; }}
+                                                                                            title={isApproved ? undefined : `Click to add ${col} slot for this song`}
+                                                                                            onMouseEnter={(e) => { if (!isApproved) (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#151515"; }}
+                                                                                            onMouseLeave={(e) => { if (!isApproved) (e.currentTarget as HTMLTableCellElement).style.backgroundColor = "#0d0d0d"; }}
                                                                                         />
                                                                                     );
                                                                                 }
@@ -1490,6 +1491,30 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                                                                                 // Group students by instrument match
                                                                                 const matching = enrolledStudents.filter((s) => matchesInstrumentForColumn(s.instrument, col));
                                                                                 const others = enrolledStudents.filter((s) => !matchesInstrumentForColumn(s.instrument, col));
+
+                                                                                const isApproved = song.casting_status === "approved";
+                                                                                const assignedStudent = assignment?.student_id
+                                                                                    ? enrolledStudents.find((s) => s.id === assignment.student_id)
+                                                                                    : null;
+
+                                                                                if (isApproved) {
+                                                                                    return (
+                                                                                        <td key={col} style={{
+                                                                                            minWidth: 140,
+                                                                                            padding: "4px 8px",
+                                                                                            borderRight: "1px solid #1c1c1e",
+                                                                                            borderBottom: "1px solid #1c1c1e",
+                                                                                            verticalAlign: "middle",
+                                                                                        }}>
+                                                                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                                                                                                <span style={{ color: "#a1a1aa", fontSize: 12 }}>
+                                                                                                    {assignedStudent ? getStudentDisplayName(assignedStudent) : "—"}
+                                                                                                </span>
+                                                                                                <span style={{ color: "#52525b", fontSize: 10, flexShrink: 0 }}>🔒</span>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    );
+                                                                                }
 
                                                                                 return (
                                                                                     <td key={col} style={{
