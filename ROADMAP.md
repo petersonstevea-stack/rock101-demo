@@ -353,11 +353,8 @@ Music Director sees submitted casting, can approve or return with notes.
 Approve → students see assignments on My Casting page.
 Return with notes → back to instructor.
 
-### 🔜 Step 2.6 — My Casting Page (student/parent)
-Student sees their approved cast assignments.
-Song title, artist, their role/instrument.
-Method App link for songs with has_method_lesson = true.
-Show date.
+### ✅ Step 2.6 — My Casting Page (student/parent)
+MyCastingView built — student picker, approved assignments grouped by show group, dual role badges per song, Method App link placeholder, show date and schedule display.
 
 ### 🔜 Step 2.7 — Weekly Rehearsal View (Performance)
 Same pattern as Rock 101 weekly execution view.
