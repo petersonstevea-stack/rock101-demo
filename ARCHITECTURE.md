@@ -244,6 +244,58 @@ All staff-facing profile fields use the `profile_` prefix:
 
 ---
 
+## Performance Program Schema
+
+### Core Tables (pre-existing, now in active use)
+- `programs` — catalog of programs (performance_program exists)
+- `seasons` — Fall/Spring/Summer per year
+- `show_theme_types` — Heavy Rotation, Steady Rotation (+ custom)
+- `show_themes` — 71 themed shows pre-seeded
+- `show_group_instances` — one per show group per season
+- `show_group_songs` — songs selected for a show group instance
+- `show_group_student_memberships` — students enrolled in a show group
+- `show_song_cast_slots` — instrument slots per song
+- `show_song_cast_assignments` — student → slot assignments
+- `cast_slot_types` — drums, bass, guitar, keys, vocals, auxiliary
+
+### New Tables Added in Phase 2
+- `rehearsal_rooms`: school_id, name, order_index, is_active
+- `theme_songs`: canonical song catalog per show theme (seeded)
+- `theme_song_cast_slots`: default slot templates per theme song
+
+### Key Column Additions
+`show_group_instances`: day_of_week, start_time, end_time
+
+`show_group_songs`:
+  song_key, duration_seconds, rehearsal_room_id,
+  has_method_lesson, casting_status, pair_group
+
+`show_song_cast_assignments`:
+  is_conflict_override, override_reason,
+  override_approved_by, override_approved_at
+
+### Data Flow: Themed Show Creation
+1. Music Director selects a show theme (e.g. "Led Zeppelin")
+2. Songs copied from theme_songs → show_group_songs for that instance
+3. Default cast slots copied from theme_song_cast_slots → show_song_cast_slots
+4. Instructor then selects which songs to cast each round
+
+### Paired Casting Data Model
+`show_group_songs.pair_group` (integer, nullable)
+Songs with the same pair_group integer within a show group rehearse simultaneously in different rooms.
+Null = unpaired. No separate pairs table needed.
+
+### Casting Equity
+Computed at query time from show_song_cast_assignments.
+Not stored — derived by counting slots per student_id within a show group instance.
+
+### Theme Song Library
+795 songs seeded across 16 single-artist themes.
+Genre-based themes (Arena Rock, Punk, etc.) are unseeded — to be populated via CSV import or manual entry.
+Seeding: owner/MD uploads songs per theme in future admin tool.
+
+---
+
 ## Non-Negotiable Architecture Rules
 - Use relational structure for anything operationally important
 - Do not hide critical logic in notes or free text fields

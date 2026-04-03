@@ -324,35 +324,50 @@ How it works:
 
 ---
 
-## PHASE 2 — Performance Program Build
-**Goal:** Build the show production and casting UI on top of the existing schema.
+## 🔄 PHASE 2 — Performance Program
+**Goal:** Build the full Performance Program workflow from show group setup through student casting and My Casting page.
 
-### Step 2.1 — Show Group Builder
-- Create/edit show group instances (school + season + year + theme + venue)
-- Show Theme Type → filtered Show Theme selection flow
-- Show Director assignment (any staff member)
+### ✅ Step 2.1 — Delete dead performance scaffolding
+(features/performance/, app/performance/, Shows Overview.tsx)
 
-### Step 2.2 — Student Membership
-- Add/remove students from a show group
-- Support multiple show groups per student
-- Membership status tracking
+### ✅ Step 2.2 — Show Group Setup (ShowGroupSetupView)
+Owner/GM/MD can create and manage show groups.
+Includes season, theme type, theme selection, scheduling, rehearsal rooms, and instructor assignment.
 
-### Step 2.3 — Setlist Builder
-- Add songs to a show group
-- Set order, tuning, capo, notes per song
+### 🔄 Step 2.3 — Student Enrollment (in progress)
+Roster tab inside ShowGroupSetupView.
+Add/remove Performance Program students from a show group.
+Writes to show_group_student_memberships.
 
-### Step 2.4 — Casting Tool
-- Grid-style casting UI per song
-- Cast slots: drums, bass, guitar 1/2/3, keys, lead vocals, backing vocals, auxiliary
-- Multi-student backing vocals (no cap)
-- Understudies stored relationally per slot
-- Auxiliary slots with custom label
+### 🔜 Step 2.4 — Casting Tool
+THE centerpiece of Phase 2.
+- Song selection per round with drag-to-reorder
+- Student assignment to cast slots via dropdown
+- Paired song conflict detection (same pair_group = blocked)
+- Casting equity warnings per student
+- Submit for Music Director approval
+- MD approves or returns with notes
+- casting_status per song: draft→submitted→approved→returned
 
-### Step 2.5 — Show Dashboard
-- School-level view of active shows
-- Songs fully cast vs incomplete
-- Student load across songs
-- Performance date and venue display
+### 🔜 Step 2.5 — Casting Approval View
+Music Director sees submitted casting for review.
+Approve → students see on My Casting page.
+Return with notes → back to instructor.
+
+### 🔜 Step 2.6 — My Casting Page (student/parent)
+Student sees their approved cast assignments.
+Song title, artist, their role/instrument.
+Method App link for songs with has_method_lesson = true.
+Show date.
+
+### 🔜 Step 2.7 — Weekly Rehearsal View (Performance)
+Same pattern as Rock 101 weekly execution view.
+Tonight's rehearsal agenda, attendance, per-song notes.
+
+### 🔜 Step 2.8 — Pike13 enrollment sync
+Replace manual student enrollment with Pike13 API.
+Pike13 becomes source of truth for show group membership.
+Stage Ready owns casting/progress/parent comms.
 
 ---
 

@@ -377,6 +377,73 @@ Large two-tone display heading:
 
 ---
 
+## Performance Program — Domain Knowledge
+
+### Program Overview
+The Performance Program serves Rock 101 graduates and higher-baseline students. Ages 9–18. Group size 5–22 students, typically 16–18. Students take both private lessons and weekly group rehearsals, same as Rock 101.
+
+Music range: anything from Taylor Swift to Frank Zappa. Center of gravity: Led Zeppelin, Nirvana, Metallica, Van Halen, Green Day, The Beatles, Pink Floyd, MCR, Guns N' Roses.
+
+### Seasons
+3 seasons per year: Fall, Spring, Summer. Each ~4 months.
+Managed via the `seasons` table and `program_cycles`.
+
+### Show Groups
+Each show group rehearses on the same night weekly, 1.5–3hrs.
+Each student is cast on 4–10 songs per season.
+Show group names follow the pattern:
+"{School} – {Theme} {Season Year}" e.g. "Del Mar – Led Zeppelin Spring 2026"
+
+### Show Types
+- Heavy Rotation: 21 pre-built themed shows (most popular artists)
+- Steady Rotation: 50 pre-built themed shows
+- Custom: blank show — school designs their own (e.g. "Power Rock II")
+When a themed show is selected, songs are pre-populated from the theme_songs table into show_group_songs.
+
+### Rehearsal Rooms
+Each school has named rehearsal rooms (stored in rehearsal_rooms table). Del Mar rooms: "Black Flag" and "Abbey Road". The system supports up to 4 rooms per school.
+Songs are assigned to rooms via show_group_songs.rehearsal_room_id.
+
+### Paired Casting (CRITICAL CONSTRAINT)
+Songs are cast in pairs — two songs rehearsing simultaneously in different rooms. Songs sharing the same pair_group integer within a show group are a pair.
+RULE: A student CANNOT be cast on both songs in a pair (they can't be in two rooms at once).
+The casting tool enforces this by hiding already-cast students in paired song dropdowns.
+OVERRIDE: In rare cases, a conflict override can be approved by management. Stored via is_conflict_override + override_approved_by on show_song_cast_assignments.
+
+### Casting Equity
+The tool tracks how many cast slots each student has across all songs. Warning indicators fire when a student is significantly over or under cast relative to their peers.
+
+### Casting Workflow
+1. Instructor selects songs for the current round (4–8 to start, growing to 16–20 by end of season)
+2. Instructor drags songs to set performance order
+3. Instructor assigns students to cast slots via dropdown
+4. Instructor submits casting for Music Director approval
+5. Music Director approves or returns with notes
+6. On approval: students see assignments on My Casting page
+
+### Casting Status
+Tracked per song via show_group_songs.casting_status:
+  draft → submitted → approved → returned
+
+### Method App Integration
+Songs with associated Method App lessons have has_method_lesson = true and float to the top of the casting song list. Method App links appear on My Casting page.
+(No API integration — treated as complementary tool.)
+
+### Roles for Performance Program
+- owner / general_manager / music_director: create/manage show groups
+- instructor / music_director: casting tool
+- music_director / owner / general_manager: approve casting
+- student / parent: My Casting page (read-only)
+Music Director is a formal SOR role, near-peer with GM.
+Never use "director" alone — always "music_director".
+
+### Fake Test Students
+100 fake Performance Program students exist at Del Mar for testing. Identified by "-" prefix on first name (e.g. "-Aiden").
+Distribution: 35 guitar, 20 vocals, 15 bass, 20 drums, 10 keys.
+Delete these before going live with real students.
+
+---
+
 ## Performance Program — Early Work Exists
 There are folders in the codebase containing early Performance Program work (approximately 5% complete). Before doing any Performance Program build work, Claude Code must first audit these folders and produce an inventory of:
 - What files exist and what they do
