@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 const SYSTEM_EMAIL_PATTERNS = ["it@", "it+", "it-", "it_"];
 
 const isSystemAccount = (email: string) =>
@@ -52,11 +57,6 @@ export async function GET() {
     }
 
     // ── 4. Fetch Supabase staff ──────────────────────────────────────────────
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     const { data: supabaseStaff, error: supabaseError } = await supabase
         .from("staff")
         .select("id, name, email, pike13_person_id, pike13_role, active")
