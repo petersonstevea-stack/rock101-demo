@@ -23,10 +23,12 @@ const F_FULL_NAME = 1;
 const F_EMAIL = 2;
 
 async function fetchPage(token: string, startingAfter?: string): Promise<any> {
-    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
     const filter = ["and", [
         ["eq", "state", "registered"],
-        ["gte", "start_at", today],
+        ["gt", "start_at", yesterdayStr],
         ["or", [
             ["eq", "service_category", "Lessons"],
             ["eq", "service_category", "Classes and Rehearsals"],
