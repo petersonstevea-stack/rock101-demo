@@ -361,9 +361,8 @@ Awaiting CSV from SOR: Song Title | Artist | Instrument | Part Label | Exercise 
 Schema ready: method_app_exercises + method_app_exercise_prerequisites tables in place.
 Once data arrives: bulk match on title+artist, update has_method_lesson = true for matched songs, surface links on My Casting page.
 
-### 🔜 Step 2.7 — Weekly Rehearsal View (Performance)
-Same pattern as Rock 101 weekly execution view.
-Tonight's rehearsal agenda, attendance, per-song notes.
+### ✅ Step 2.7 — Weekly Rehearsal View (Performance)
+PerformanceRehearsalView: show group selector, date-based session management, attendance tracking (present/late/absent/excused), song priority with auto-suggest (new songs + lowest prior grade), readiness grades 1-4, weekly awards (instructor awards + peer nominations with approval flow), casting lock/unlock for GM/MD/owner with reason tracking and audit trail.
 
 ### 🔜 Step 2.8 — Pike13 enrollment sync
 Replace manual student enrollment with Pike13 API.
