@@ -1427,6 +1427,7 @@ export default function Rock101App() {
             exceptionsCount={exceptionsCount}
             canSeeClassRoster={canSeeClassRoster}
             canSeeShowGroups={canSeeShowGroups}
+            canSeeCasting={canSeeCasting}
             selectedSchoolId={selectedSchoolId}
         >
             <div className="p-6">
