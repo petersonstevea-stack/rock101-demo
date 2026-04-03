@@ -8,16 +8,61 @@ const supabase = createClient(
 
 const PIKE13_BASE = "https://delmar-sor.pike13.com";
 
+// ── Program detection ────────────────────────────────────────────────────────
+
+function detectProgram(serviceName: string): string | null {
+    const s = serviceName.toLowerCase();
+
+    // Exclude first — these are never students to import
+    if (
+        s.includes("camp") ||
+        s.includes("workshop") ||
+        s.includes("trial") ||
+        s.includes("make up") ||
+        s.includes("makeup") ||
+        s.includes("admin") ||
+        s.includes("front desk") ||
+        s.includes("paid break") ||
+        s.includes("repair") ||
+        s.includes("birthday")
+    ) {
+        return null;
+    }
+
+    // Program detection by rehearsal service name
+    if (s.includes("seasonal") || s.includes("show rehearsal") || s.includes("house band")) {
+        return "performance_program";
+    }
+    if (s.includes("adult")) return "adult_band";
+    if (s.includes("rock 101") || s.includes("r101")) return "rock_101";
+    if (s.includes("rookies")) return "rookies";
+    if (s.includes("little wing")) return "little_wing";
+
+    // Lessons-only placeholder — overridden if student also has a program rehearsal
+    return "lessons_only";
+}
+
+const PROGRAM_PRIORITY: Record<string, number> = {
+    performance_program: 5,
+    rock_101: 4,
+    rookies: 3,
+    little_wing: 2,
+    adult_band: 1,
+    lessons_only: 0,
+};
+
 // ── Pass 1: Enrollments Reporting API ───────────────────────────────────────
 
-const ENROLL_FIELDS = ["person_id", "full_name", "email", "service_category", "state"];
-
-async function fetchEnrollmentPage(token: string, filter: any[], startingAfter?: string): Promise<any> {
+async function fetchEnrollmentPage(
+    token: string,
+    filter: unknown[],
+    startingAfter?: string
+): Promise<unknown> {
     const body = {
         data: {
             type: "queries",
             attributes: {
-                fields: ENROLL_FIELDS,
+                fields: ["person_id", "service_name"],
                 filter,
                 page: {
                     limit: 500,
@@ -44,7 +89,7 @@ async function fetchEnrollmentPage(token: string, filter: any[], startingAfter?:
     return res.json();
 }
 
-async function getActivePersonIds(token: string): Promise<Set<number>> {
+async function getActiveProgramMap(token: string): Promise<Map<number, string>> {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -52,23 +97,35 @@ async function getActivePersonIds(token: string): Promise<Set<number>> {
     const filter = ["and", [
         ["eq", "state", "registered"],
         ["gt", "start_at", yesterdayStr],
-        ["or", [
-            ["eq", "service_category", "Lessons"],
-            ["eq", "service_category", "Classes and Rehearsals"],
-        ]],
     ]];
 
-    const activeIds = new Set<number>();
+    // person_id → best program slug so far
+    const programMap = new Map<number, string>();
     let startingAfter: string | undefined = undefined;
 
     while (true) {
-        const json = await fetchEnrollmentPage(token, filter, startingAfter);
+        const json = await fetchEnrollmentPage(token, filter, startingAfter) as {
+            data?: { attributes?: { rows?: unknown[][]; has_more?: boolean; last_key?: string } };
+        };
         const attrs = json?.data?.attributes ?? {};
-        const rows: any[][] = attrs.rows ?? [];
+        const rows: unknown[][] = attrs.rows ?? [];
 
         for (const row of rows) {
             const personId = Number(row[0]);
-            if (personId) activeIds.add(personId);
+            const serviceName = String(row[1] ?? "");
+
+            if (!personId) continue;
+
+            const program = detectProgram(serviceName);
+            if (program === null) continue; // excluded service type
+
+            const current = programMap.get(personId);
+            const currentPriority = current !== undefined ? (PROGRAM_PRIORITY[current] ?? -1) : -1;
+            const newPriority = PROGRAM_PRIORITY[program] ?? -1;
+
+            if (newPriority > currentPriority) {
+                programMap.set(personId, program);
+            }
         }
 
         if (!attrs.has_more) break;
@@ -76,7 +133,7 @@ async function getActivePersonIds(token: string): Promise<Set<number>> {
         if (!startingAfter) break;
     }
 
-    return activeIds;
+    return programMap;
 }
 
 // ── Pass 2: Core API batch client lookup ─────────────────────────────────────
@@ -93,8 +150,8 @@ function chunk<T>(arr: T[], size: number): T[][] {
     return chunks;
 }
 
-async function enrichPersonIds(token: string, personIds: number[]): Promise<Map<number, any>> {
-    const detailMap = new Map<number, any>();
+async function enrichPersonIds(token: string, personIds: number[]): Promise<Map<number, unknown>> {
+    const detailMap = new Map<number, unknown>();
     const batches = chunk(personIds, 50);
 
     for (let i = 0; i < batches.length; i++) {
@@ -113,9 +170,9 @@ async function enrichPersonIds(token: string, personIds: number[]): Promise<Map<
         }
 
         const data = await res.json();
-        const people: any[] = data.people ?? [];
+        const people: unknown[] = (data as { people?: unknown[] }).people ?? [];
 
-        for (const p of people) {
+        for (const p of people as { id: number }[]) {
             detailMap.set(p.id, p);
         }
     }
@@ -123,9 +180,10 @@ async function enrichPersonIds(token: string, personIds: number[]): Promise<Map<
     return detailMap;
 }
 
-function extractInstrument(person: any): string {
-    const fields: any[] = person.custom_fields ?? [];
-    const field = fields.find((f: any) => f.name === "Instrument");
+function extractInstrument(person: unknown): string {
+    const p = person as { custom_fields?: { name?: string; value?: string | string[] }[] };
+    const fields = p.custom_fields ?? [];
+    const field = fields.find((f) => f.name === "Instrument");
     if (!field) return "";
     const val = field.value;
     if (Array.isArray(val)) return val[0] ?? "";
@@ -144,19 +202,33 @@ export async function GET() {
             });
         }
 
-        // Pass 1 — get active person IDs
-        const activePersonIds = await getActivePersonIds(token);
+        // Pass 1 — get active person IDs with program assignments
+        const programMap = await getActiveProgramMap(token);
 
         // Pass 2 — enrich with Core API details
-        const personIdArray = Array.from(activePersonIds);
+        const personIdArray = Array.from(programMap.keys());
         const detailMap = await enrichPersonIds(token, personIdArray);
 
         // Merge
-        const willImport: any[] = [];
+        const willImport: unknown[] = [];
         let totalMissingDetails = 0;
 
+        const byProgram: Record<string, number> = {
+            performance_program: 0,
+            rock_101: 0,
+            rookies: 0,
+            little_wing: 0,
+            adult_band: 0,
+            lessons_only: 0,
+        };
+
         for (const personId of personIdArray) {
-            const p = detailMap.get(personId);
+            const p = detailMap.get(personId) as {
+                first_name?: string;
+                last_name?: string;
+                email?: string;
+                guardian_email?: string;
+            } | undefined;
 
             if (!p) {
                 totalMissingDetails++;
@@ -165,6 +237,9 @@ export async function GET() {
 
             const instrument = extractInstrument(p);
             const parentEmail = p.guardian_email || p.email || "";
+            const program = programMap.get(personId) ?? "lessons_only";
+
+            byProgram[program] = (byProgram[program] ?? 0) + 1;
 
             willImport.push({
                 first_name: p.first_name ?? "",
@@ -173,16 +248,17 @@ export async function GET() {
                 parent_email: parentEmail,
                 school: "del-mar",
                 school_id: "del-mar",
-                program: "rock_101",
+                program,
                 active: true,
                 pike13_person_id: String(personId),
             });
         }
 
         return NextResponse.json({
-            total_active_person_ids: activePersonIds.size,
+            total_active_person_ids: programMap.size,
             total_enriched: willImport.length,
             total_missing_details: totalMissingDetails,
+            by_program: byProgram,
             will_import: willImport,
         });
 
