@@ -231,6 +231,7 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
 
     useEffect(() => {
         if (!schoolId) return;
+        console.log("CastingView: loading show groups for schoolId:", schoolId);
         setLoadingGroups(true);
         supabase
             .from("show_group_instances")
@@ -239,7 +240,10 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
             .eq("status", "active")
             .order("name")
             .then(({ data, error }) => {
-                if (!error && data) {
+                if (error) {
+                    console.error("CastingView: show groups query error", error, "schoolId:", schoolId);
+                }
+                if (data) {
                     setShowGroups(
                         data.map((row: any) => ({
                             id: row.id,
