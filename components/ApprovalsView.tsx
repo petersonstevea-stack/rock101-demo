@@ -158,16 +158,17 @@ export default function ApprovalsView() {
                 })
                 .eq("id", item.id);
         } else if (item.type === "photo") {
-            await supabase
+            const { error } = await supabase
                 .from("student_profiles")
                 .update({
-                    photo_url: item.pendingPhotoUrl ?? null,
+                    photo_url: item.pendingPhotoUrl,
                     pending_photo_url: null,
                     pending_photo_submitted_at: null,
                     pending_reviewed_at: new Date().toISOString(),
                     is_published: true,
                 })
                 .eq("id", item.id);
+            if (error) console.error("photo approve error:", error);
         } else {
             await supabase
                 .from("student_show_history")
