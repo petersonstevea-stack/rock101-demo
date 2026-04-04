@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Star, Music, Headphones, User } from "lucide-react";
 import MyCastingView from "@/components/MyCastingView";
 import PPPrivateLessonView from "@/components/PPPrivateLessonView";
+import StudentProfileView from "@/components/StudentProfileView";
 import { supabase } from "@/lib/supabaseClient";
 
 type PerformanceProgramShellProps = {
@@ -271,11 +272,12 @@ export default function PerformanceProgramShell({
                     )}
 
                     {activeTab === "profile" && (
-                        <div className="px-6">
-                            <p className="text-sm text-zinc-500">
-                                Student profile coming soon.
-                            </p>
-                        </div>
+                        <StudentProfileView
+                            studentId={studentId}
+                            studentName={studentName}
+                            schoolId={schoolId}
+                            isOwnProfile={true}
+                        />
                     )}
                 </div>
             </div>
