@@ -29,6 +29,24 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             });
     }, []);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const params = new URLSearchParams(window.location.search);
+        const ssoError = params.get("sso_error");
+        if (ssoError) {
+            const messages: Record<string, string> = {
+                not_authorized: "Your account is not authorized for Stage Ready.",
+                school_not_found: "Your school is not yet connected to Stage Ready.",
+                pike13_denied: "Pike13 login was cancelled.",
+                profile_fetch_failed: "Could not retrieve your Pike13 profile.",
+                token_exchange_failed: "Pike13 authentication failed.",
+                unexpected: "An unexpected error occurred. Please try again.",
+            };
+            setError(messages[ssoError] ?? "Login error. Please try again.");
+            window.history.replaceState({}, "", "/");
+        }
+    }, []);
+
     async function handleForgotPassword() {
         setIsResetMode(true);
 
@@ -255,6 +273,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                     </button>
                                 )}
                             </p>
+
+                            {!isResetMode && (
+                                <>
+                                    <p className="mt-4 text-center text-xs text-white/40">
+                                        or
+                                    </p>
+                                    <a
+                                        href="/api/auth/pike13/sso"
+                                        className="mt-2 flex w-full items-center justify-center rounded-none bg-zinc-700 py-4 text-white transition hover:bg-zinc-600"
+                                    >
+                                        Sign in with School of Rock
+                                    </a>
+                                </>
+                            )}
                         </>
                     )}
 
