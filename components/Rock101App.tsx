@@ -162,6 +162,10 @@ export default function Rock101App() {
         const checkUser = async () => {
             const { data } = await supabase.auth.getUser();
 
+            console.log('checkUser metadata:', JSON.stringify(data?.user?.user_metadata ?? 'none'));
+            console.log('checkUser metaRole:', data?.user?.user_metadata?.role);
+            console.log('checkUser metaStudents:', data?.user?.user_metadata?.students);
+
             if (data?.user) {
                 const authEmail = data.user.email?.trim().toLowerCase();
 
@@ -1366,6 +1370,14 @@ export default function Rock101App() {
                     }
                 }}
             />
+        );
+    }
+
+    if (programShell === null && !currentUser) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-black">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-[#cc0000]" />
+            </div>
         );
     }
 
