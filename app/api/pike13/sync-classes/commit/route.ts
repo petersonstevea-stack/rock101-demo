@@ -213,6 +213,9 @@ export async function GET() {
                 pike13_service_id: String(serviceId),
                 pike13_event_id: eventId,
                 program_id: program,
+                staff_names: (occs[0].staff_members ?? [])
+                    .map((s) => s.name)
+                    .filter((n): n is string => n != null),
             };
 
             const { data: upsertedClass, error: classError } = await supabase

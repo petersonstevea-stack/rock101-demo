@@ -39,6 +39,9 @@ type ShowGroupInstance = {
     day_of_week: string | null;
     start_time: string | null;
     end_time: string | null;
+    show_date: string | null;
+    rock_class_id: string | null;
+    rock_classes: { staff_names: string[] | null } | null;
 };
 
 type RehearsalRoom = {
@@ -73,7 +76,7 @@ type FormState = {
     themeId: string;
     name: string;
     venueName: string;
-    instructorId: string;
+    showDate: string;
 };
 
 type ShowGroupSetupViewProps = {
@@ -96,7 +99,7 @@ const DEFAULT_FORM: FormState = {
     themeId: "",
     name: "",
     venueName: "",
-    instructorId: "",
+    showDate: "",
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -193,7 +196,7 @@ export default function ShowGroupSetupView({
                 supabase
                     .from("show_group_instances")
                     .select(
-                        "id, school_id, season_id, theme_type_id, show_theme_id, name, venue_name, class_instructor_id, start_date, end_date, status, day_of_week, start_time, end_time"
+                        "id, school_id, season_id, theme_type_id, show_theme_id, name, venue_name, class_instructor_id, start_date, end_date, status, day_of_week, start_time, end_time, show_date, rock_class_id, rock_classes(staff_names)"
                     )
                     .eq("school_id", schoolId)
                     .order("start_date", { ascending: false }),
@@ -215,7 +218,7 @@ export default function ShowGroupSetupView({
                     .order("order_index"),
             ]);
 
-        setShowGroups((groupsRes.data ?? []) as ShowGroupInstance[]);
+        setShowGroups((groupsRes.data ?? []) as unknown as ShowGroupInstance[]);
         setSeasons(
             [...((seasonsRes.data ?? []) as Season[])].sort(sortSeasons)
         );
@@ -242,21 +245,15 @@ export default function ShowGroupSetupView({
 
     // ─── Derived helpers ─────────────────────────────────────────────────
 
-    function getInstructors() {
-        return users.filter(
-            (u) => u.role === "instructor" || u.role === "music_director"
-        );
-    }
-
-    function getSeasonLabel(seasonId: string | null): string {
+function getSeasonLabel(seasonId: string | null): string {
         if (!seasonId) return "";
         const s = seasons.find((x) => x.id === seasonId);
         return s ? formatSeason(s) : "";
     }
 
     function getThemeLabel(themeId: string | null): string {
-        if (!themeId) return "Custom Show";
-        return themes.find((t) => t.id === themeId)?.name ?? "Custom Show";
+        if (!themeId) return "";
+        return themes.find((t) => t.id === themeId)?.name ?? "";
     }
 
     function getInstructorName(instructorId: string | null): string {
@@ -346,7 +343,7 @@ export default function ShowGroupSetupView({
                     : null,
             name: createForm.name.trim(),
             venue_name: createForm.venueName.trim() || null,
-            class_instructor_id: createForm.instructorId || null,
+            show_date: createForm.showDate || null,
             status: "active",
         });
         setCreating(false);
@@ -378,7 +375,7 @@ export default function ShowGroupSetupView({
             themeId: group.show_theme_id ?? "",
             name: group.name,
             venueName: group.venue_name ?? "",
-            instructorId: group.class_instructor_id ?? "",
+            showDate: group.show_date ?? "",
         });
     }
 
@@ -404,7 +401,7 @@ export default function ShowGroupSetupView({
                         : null,
                 name: editForm.name.trim(),
                 venue_name: editForm.venueName.trim() || null,
-                class_instructor_id: editForm.instructorId || null,
+                show_date: editForm.showDate || null,
             })
             .eq("id", groupId);
         setSaving(false);
@@ -720,7 +717,6 @@ export default function ShowGroupSetupView({
         form: FormState,
         onChange: (updates: Partial<FormState>) => void
     ) {
-        const instructors = getInstructors();
         const filteredThemes = getFilteredThemes(form.showType, themeTypes, themes);
 
         return (
@@ -850,32 +846,20 @@ export default function ShowGroupSetupView({
                     />
                 </div>
 
-                {/* Class Instructor */}
+                {/* Show Date */}
                 <div>
                     <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                        Class Instructor{" "}
+                        Show Date{" "}
                         <span className="normal-case text-zinc-500">
                             (optional)
                         </span>
                     </label>
-                    <select
-                        value={form.instructorId}
-                        onChange={(e) =>
-                            onChange({ instructorId: e.target.value })
-                        }
+                    <input
+                        type="date"
+                        value={form.showDate}
+                        onChange={(e) => onChange({ showDate: e.target.value })}
                         className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                    >
-                        <option value="">— Unassigned —</option>
-                        {instructors.map((u) => (
-                            <option
-                                key={u.id}
-                                value={u.id}
-                                style={{ backgroundColor: "#000" }}
-                            >
-                                {u.name}
-                            </option>
-                        ))}
-                    </select>
+                    />
                 </div>
             </div>
         );
@@ -976,6 +960,11 @@ export default function ShowGroupSetupView({
                                 group.class_instructor_id
                             );
                             const isActive = group.status === "active";
+                            const hasTheme =
+                                group.show_theme_id != null ||
+                                group.theme_type_id != null;
+                            const staffNames =
+                                group.rock_classes?.staff_names ?? [];
 
                             return (
                                 <div
@@ -983,11 +972,7 @@ export default function ShowGroupSetupView({
                                     className="rounded-none bg-[#1a1a1a]"
                                 >
                                     {/* Tile header */}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleExpand(group)}
-                                        className="flex w-full items-center justify-between px-5 py-4 text-left"
-                                    >
+                                    <div className="flex w-full items-center justify-between px-5 py-4">
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <div className="min-w-0 flex-1">
                                                 <div
@@ -999,6 +984,11 @@ export default function ShowGroupSetupView({
                                                 >
                                                     {group.name}
                                                 </div>
+                                                {staffNames.length > 0 && (
+                                                    <div className="mt-0.5 text-xs text-zinc-500">
+                                                        {staffNames.join(" · ")}
+                                                    </div>
+                                                )}
                                                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-zinc-400">
                                                     {group.day_of_week && (
                                                         <span>
@@ -1043,21 +1033,39 @@ export default function ShowGroupSetupView({
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="ml-4 shrink-0 text-zinc-500">
-                                            {isExpanded ? "▲" : "▼"}
-                                        </div>
-                                    </button>
+                                    </div>
 
-                                    {/* Casting shortcut */}
-                                    {onStartCasting && isActive && (
-                                        <div className="flex justify-end border-t border-zinc-800 px-5 py-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => onStartCasting(group.id)}
-                                                className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs font-bold uppercase text-white hover:bg-[#b30000]"
-                                            >
-                                                Go to Casting
-                                            </button>
+                                    {/* Casting button row */}
+                                    {isActive && (
+                                        <div className="flex items-center justify-end gap-3 border-t border-zinc-800 px-5 py-2">
+                                            {hasTheme ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleExpand(group)}
+                                                        className="text-xs text-zinc-400 underline hover:text-white"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    {onStartCasting && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onStartCasting(group.id)}
+                                                            className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs font-bold uppercase text-white hover:bg-[#b30000]"
+                                                        >
+                                                            Go to Casting
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleExpand(group)}
+                                                    className="rounded-none bg-zinc-700 px-4 py-1.5 text-xs font-bold uppercase text-white hover:bg-zinc-600"
+                                                >
+                                                    Setup Casting
+                                                </button>
+                                            )}
                                         </div>
                                     )}
 
