@@ -102,7 +102,7 @@ export default function StudentProfileView({
                 .from("student_show_history")
                 .select("id, show_name, season_year, status")
                 .eq("student_id", studentId)
-                .eq("status", "approved")
+                .in("status", ["approved", "pending"])
                 .order("season_year", { ascending: false });
             setShowHistory(history ?? []);
 
@@ -143,6 +143,15 @@ export default function StudentProfileView({
 
         setPendingMsg("Your profile has been submitted for review.");
         setEditMode(false);
+
+        // Reload profile to show pending state
+        const { data: updated } = await supabase
+            .from("student_profiles")
+            .select("*")
+            .eq("student_id", studentId)
+            .maybeSingle();
+        if (updated) setProfile(updated);
+
         setSaving(false);
     }
 
@@ -237,8 +246,86 @@ export default function StudentProfileView({
                 </div>
             )}
 
+            {/* Show history section */}
+            <div className="mt-8 px-6">
+                <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
+
+                {showHistory.length === 0 ? (
+                    <p className="mt-3 text-sm text-zinc-500">No completed shows yet.</p>
+                ) : (
+                    <div className="mt-3 space-y-2">
+                        {showHistory.map((entry) => (
+                            <div
+                                key={entry.id}
+                                className="flex items-center justify-between rounded-none bg-[#111111] px-4 py-3"
+                            >
+                                <p className="text-sm text-white">{entry.show_name}</p>
+                                <div className="flex items-center gap-2">
+                                    {entry.status === "pending" && (
+                                        <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
+                                            Pending review
+                                        </span>
+                                    )}
+                                    <span className="text-xs text-zinc-500">{entry.season_year}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {isOwnProfile && (
+                    <>
+                        {!addingShow ? (
+                            <button
+                                type="button"
+                                onClick={() => setAddingShow(true)}
+                                className="mt-3 text-xs text-zinc-600 transition hover:text-white"
+                            >
+                                + Add a completed show
+                            </button>
+                        ) : (
+                            <div className="mt-4 space-y-2">
+                                <input
+                                    type="text"
+                                    placeholder="Show name"
+                                    value={newShowName}
+                                    onChange={(e) => setNewShowName(e.target.value)}
+                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Season / Year (e.g. Spring 2025)"
+                                    value={newSeasonYear}
+                                    onChange={(e) => setNewSeasonYear(e.target.value)}
+                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                />
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleAddShow}
+                                        className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000]"
+                                    >
+                                        Submit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddingShow(false)}
+                                        className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                                <p className="text-xs text-zinc-600">
+                                    Show submissions are reviewed by staff before appearing on your profile.
+                                </p>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
             {/* Profile content */}
-            <div className="mt-8 space-y-3 px-6">
+            <div className="mt-10 space-y-3 px-6">
                 {!editMode ? (
                     <>
                         {profile?.favorite_bands && (
@@ -368,77 +455,6 @@ export default function StudentProfileView({
                             Profile changes are reviewed by staff before appearing publicly.
                         </p>
                     </div>
-                )}
-            </div>
-
-            {/* Show history section */}
-            <div className="mt-10 px-6">
-                <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
-
-                {showHistory.length === 0 ? (
-                    <p className="mt-3 text-sm text-zinc-500">No completed shows yet.</p>
-                ) : (
-                    <div className="mt-3 space-y-2">
-                        {showHistory.map((entry) => (
-                            <div
-                                key={entry.id}
-                                className="flex items-center justify-between rounded-none bg-[#111111] px-4 py-3"
-                            >
-                                <p className="text-sm text-white">{entry.show_name}</p>
-                                <span className="text-xs text-zinc-500">{entry.season_year}</span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {isOwnProfile && (
-                    <>
-                        {!addingShow ? (
-                            <button
-                                type="button"
-                                onClick={() => setAddingShow(true)}
-                                className="mt-3 text-xs text-zinc-600 transition hover:text-white"
-                            >
-                                + Add a completed show
-                            </button>
-                        ) : (
-                            <div className="mt-4 space-y-2">
-                                <input
-                                    type="text"
-                                    placeholder="Show name"
-                                    value={newShowName}
-                                    onChange={(e) => setNewShowName(e.target.value)}
-                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Season / Year (e.g. Spring 2025)"
-                                    value={newSeasonYear}
-                                    onChange={(e) => setNewSeasonYear(e.target.value)}
-                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                />
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleAddShow}
-                                        className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000]"
-                                    >
-                                        Submit
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAddingShow(false)}
-                                        className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                                <p className="text-xs text-zinc-600">
-                                    Show submissions are reviewed by staff before appearing on your profile.
-                                </p>
-                            </div>
-                        )}
-                    </>
                 )}
             </div>
         </div>
