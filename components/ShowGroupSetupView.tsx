@@ -1080,7 +1080,7 @@ function getSeasonLabel(seasonId: string | null): string {
                         create one.
                     </div>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         {showGroups.map((group) => {
                             const isExpanded = expandedGroupId === group.id;
                             const isRosterOpen = rosterGroupId === group.id;
@@ -1097,7 +1097,7 @@ function getSeasonLabel(seasonId: string | null): string {
                             return (
                                 <div
                                     key={group.id}
-                                    className="rounded-none bg-[#1a1a1a]"
+                                    className={`rounded-none bg-[#1a1a1a]${isExpanded || isRosterOpen ? " md:col-span-2" : ""}`}
                                 >
                                     {/* Tile header — click to toggle ROSTER/SESSIONS */}
                                     <div
