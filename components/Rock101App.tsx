@@ -1639,7 +1639,7 @@ export default function Rock101App() {
                                         School Students
                                     </h2>
                                     <p className="mt-2 text-zinc-300">
-                                        View and open any Rock 101 student profile for this school.
+                                        View Rock 101 and Performance Program students.
                                     </p>
                                 </div>
                                 <div className="text-sm text-zinc-400">

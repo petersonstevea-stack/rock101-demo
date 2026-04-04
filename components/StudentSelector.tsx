@@ -74,25 +74,33 @@ export default function StudentSelector({
 
       <div className="flex flex-wrap gap-2">
         {filtered.map((student) => {
+          const isR101 = student.program === "rock101" || student.program === "rock_101";
           const isPP = student.program === "performance_program";
           const isSelected = selected.name === student.name;
-          const borderColor = isPP ? "#ffffff" : "#cc0000";
+          const bgColor = isR101 ? "#cc0000" : "#1a1a1a";
 
           return (
             <button
               key={student.name}
               type="button"
               onClick={() => onSelect(student)}
-              className={`rounded-none px-4 py-2 ${
-                isSelected
-                  ? "bg-[#cc0000] text-white"
-                  : "bg-zinc-800 hover:bg-zinc-700 text-white"
-              }`}
+              className="rounded-none px-4 py-2 text-left text-white transition"
               style={{
-                borderLeft: `3px solid ${borderColor}`,
+                backgroundColor: isSelected ? "#b30000" : bgColor,
+                outline: isSelected ? "2px solid #ffffff" : "none",
               }}
             >
-              {student.name}
+              <div className="text-sm font-medium">{student.name}</div>
+              {isPP && (
+                <div className="text-[10px] text-zinc-400 leading-tight">
+                  Performance Program
+                </div>
+              )}
+              {isR101 && student.instrument && (
+                <div className="text-[10px] text-zinc-200 leading-tight capitalize">
+                  {student.instrument}
+                </div>
+              )}
             </button>
           );
         })}
