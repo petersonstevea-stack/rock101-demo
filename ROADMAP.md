@@ -585,7 +585,96 @@ Performance Program group attendance: TBD.
 - Renders PPPrivateLessonView
 
 ### PP Shell — Student Profile tab
-- Placeholder — schema ready, build pending
+- Fully built — see Student Profile Page below
+
+### ✅ Student Profile Page
+- StudentProfileView component built
+- Circle avatar with blue season badge
+  (count of approved completed shows)
+- Blue glow ring = House Band (management set)
+- Gold glow ring = All-Star (management set)
+- Show History section — student submits show
+  name + season/year → staff approves before
+  appearing publicly. Badge count reflects
+  pending + approved.
+- Personality fields: Favorite Bands, First
+  Concert, Fun Fact, Spotify URL, Apple Music
+  URL — all go through pending review flow
+- Edit Profile form → Submit for Review →
+  pending_changes jsonb awaits staff approval
+- Pending Review block shows submitted changes
+  in view mode while awaiting approval
+- Poster upload: students attach 11x17 show
+  poster JPG/PNG to each show submission
+- Poster collage wallpaper: approved show
+  posters display flush edge-to-edge behind
+  the profile header, building up as a collage
+  over seasons
+- Supabase Storage bucket: student-profiles
+  (10MB limit, image types only, student can
+  only write to their own folder)
+- ALL student content (text, photos, wallpaper,
+  posters) goes through pending review —
+  nothing goes live without staff approval
+
+### ✅ Student Profile — Schema
+- student_profiles table: photo_url,
+  wallpaper_url, wallpaper_preset,
+  favorite_bands, first_concert, fun_fact,
+  spotify_url, apple_music_url,
+  pending_changes (jsonb), pending_status,
+  pending_submitted_at, pending_reviewed_at,
+  pending_reviewed_by, rejection_note,
+  is_published
+- student_show_history table: show_name,
+  season_year, status (pending/approved/
+  rejected), poster_url, pending_poster_url
+- students.is_house_band and students.is_allstar
+  boolean columns (management-set only)
+- feature_student_profiles flag on schools table
+  (schools opt in — default false)
+
+### 🔜 Student Profile — Still To Build
+- Management approval queue: staff review
+  pending profile fields, show history
+  submissions, and poster uploads. Approve
+  or reject with optional note.
+- Profile goes fully live after approval:
+  pending_changes merged into live fields
+- Photo upload: student uploads profile photo
+  to Supabase Storage, goes through pending
+  review before appearing on profile
+- School-wide student directory: any logged-in
+  student can browse other students' profiles
+  at their school
+- Dual-role staff/parent accounts: staff who
+  are also parents (same Pike13 email) get a
+  "Parent View" toggle in the staff shell
+
+### 🔜 Pre-Launch Checklist
+- Set feature_parent_sso = false on del-mar
+  before opening to real parents
+  (currently true for testing)
+- Test SSO with non-owner staff account
+- Capture Encinitas + Scripps Ranch
+  pike13_location_id from Vercel logs on
+  first staff SSO login from those schools
+- Add instruments in Pike13 for 135 students
+  missing instrument data (nightly sync will
+  pick up automatically)
+- Method App exercise CSV import (awaiting
+  data from SOR)
+- Remove test students before pilot launch:
+  "Test PP S." and "Test R101 S." from
+  steve@loudchannel.com parent account
+
+### Test Accounts (do not delete until launch)
+- Parent test: steve@loudchannel.com /
+  TestParent2026!
+  Students: Test PP S. (performance_program)
+            Test R101 S. (rock_101)
+- Staff: speterson@schoolofrock.com (owner)
+- Pike13 SSO: works for all active Del Mar staff
 
 ### Parent SSO via Pike13
 - SSO callback extended to check students.parent_email
