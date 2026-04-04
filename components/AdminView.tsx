@@ -47,7 +47,7 @@ export default function AdminView({ canManageUsers }: AdminViewProps) {
                             Manage Staff
                         </h3>
                         <p className="mt-1 text-sm text-zinc-400">
-                            Add and manage instructors, music directors, general managers, and owners.
+                            Promote instructors to Music Director, General Manager, or Owner. Staff are synced automatically from Pike13.
                         </p>
                     </Link>
                 )}
