@@ -11,7 +11,7 @@ const PIKE13_BASE = "https://delmar-sor.pike13.com";
 // ── Service ID maps (Del Mar) ────────────────────────────────────────────────
 
 const SERVICE_PROGRAM_MAP: Record<number, string> = {
-    230410: "rock_101",
+    230410: "rock101",
     230411: "performance_program",
     230412: "performance_program",
     230413: "performance_program",
