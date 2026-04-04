@@ -39,6 +39,7 @@ import ShowGroupSetupView from "@/components/ShowGroupSetupView";
 import CastingView from "@/components/CastingView";
 import MyCastingView from "@/components/MyCastingView";
 import PerformanceRehearsalView from "@/components/PerformanceRehearsalView";
+import ApprovalsView from "@/components/ApprovalsView";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getThisWeeksSessions } from "@/lib/classes";
@@ -76,7 +77,8 @@ type Tab =
     | "showGroups"
     | "casting"
     | "myCasting"
-    | "performanceRehearsal";
+    | "performanceRehearsal"
+    | "approvals";
 
 type CurriculumState = {
     done: boolean;
@@ -2366,6 +2368,10 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         currentUserEmail={currentUser?.email ?? ""}
                     />
+                )}
+
+                {tab === "approvals" && canSeeManagementTabs && (
+                    <ApprovalsView />
                 )}
 
                 {tab === "myProfile" && currentUser?.staffId && (
