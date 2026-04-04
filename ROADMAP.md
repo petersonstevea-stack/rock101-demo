@@ -243,7 +243,7 @@ Enrollment management (Lesson Setup) and session management (Manage Lessons) ful
 Full Pike 13 anchor (occurrence IDs) remains deferred to Phase 6 as originally planned.
 
 ### 🔜 UI Polish Items
-- Show logged-in user name in the sidebar — currently only role badge shows. Add user's full name below the role badge in AppShell.tsx.
+- ✅ Show logged-in user name in the sidebar — confirmed live. User name displays below the role badge in AppShell.tsx.
 - My Schedule: tapping a lesson card should navigate to that student's Private Lesson page.
 - My Schedule: My Classes section needs to be wired up to show group class sessions for the instructor.
 - Exceptions Dashboard: absent students should be exempted from the waiting status when group_class_absent = true on session_student_signoffs.
