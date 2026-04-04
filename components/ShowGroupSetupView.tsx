@@ -41,7 +41,7 @@ type ShowGroupInstance = {
     end_time: string | null;
     show_date: string | null;
     rock_class_id: string | null;
-    rock_classes: { staff_names: string[] | null } | null;
+    rock_classes: { staff_names: string[] | null; name: string | null } | null;
 };
 
 type RehearsalRoom = {
@@ -85,6 +85,21 @@ type ShowGroupSetupViewProps = {
     users: { id: string; name: string; email: string; role: string }[];
     students: StudentRow[];
     onStartCasting?: (showGroupId: string) => void;
+};
+
+type MemberItem = {
+    id: string;
+    student_id: string;
+    first_name: string;
+    last_initial: string;
+};
+
+type SessionItem = {
+    id: string;
+    session_date: string;
+    status: string;
+    class_instructor_notes: string | null;
+    instructor_override_user_id: string | null;
 };
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -154,7 +169,6 @@ function detectShowType(
 export default function ShowGroupSetupView({
     schoolId,
     schoolName,
-    users,
     students,
     onStartCasting,
 }: ShowGroupSetupViewProps) {
@@ -181,11 +195,24 @@ export default function ShowGroupSetupView({
     const [newRoomName, setNewRoomName] = useState("");
     const [addingRoom, setAddingRoom] = useState(false);
 
-    // Roster tab
+    // Roster tab (existing Edit Details panel)
     const [activeTab, setActiveTab] = useState<"editDetails" | "roster">("editDetails");
     const [memberships, setMemberships] = useState<Membership[]>([]);
     const [loadingRoster, setLoadingRoster] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
+
+    // Member counts for card header (loaded upfront)
+    const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+
+    // Card body ROSTER/SESSIONS panel
+    const [rosterGroupId, setRosterGroupId] = useState<string | null>(null);
+    const [rosterTab, setRosterTab] = useState<"roster" | "sessions">("roster");
+    const [groupMembers, setGroupMembers] = useState<Record<string, MemberItem[]>>({});
+    const [groupSessions, setGroupSessions] = useState<Record<string, SessionItem[]>>({});
+    const [loadingGroupRoster, setLoadingGroupRoster] = useState(false);
+    const [loadingGroupSessions, setLoadingGroupSessions] = useState(false);
+    const [showAllSessions, setShowAllSessions] = useState(false);
+    const [showPastSessions, setShowPastSessions] = useState(false);
 
     // ─── Data loading ────────────────────────────────────────────────────
 
@@ -196,7 +223,7 @@ export default function ShowGroupSetupView({
                 supabase
                     .from("show_group_instances")
                     .select(
-                        "id, school_id, season_id, theme_type_id, show_theme_id, name, venue_name, class_instructor_id, start_date, end_date, status, day_of_week, start_time, end_time, show_date, rock_class_id, rock_classes(staff_names)"
+                        "id, school_id, season_id, theme_type_id, show_theme_id, name, venue_name, class_instructor_id, start_date, end_date, status, day_of_week, start_time, end_time, show_date, rock_class_id, rock_classes(staff_names, name)"
                     )
                     .eq("school_id", schoolId)
                     .order("start_date", { ascending: false }),
@@ -218,13 +245,32 @@ export default function ShowGroupSetupView({
                     .order("order_index"),
             ]);
 
-        setShowGroups((groupsRes.data ?? []) as unknown as ShowGroupInstance[]);
+        const groups = (groupsRes.data ?? []) as unknown as ShowGroupInstance[];
+        setShowGroups(groups);
         setSeasons(
             [...((seasonsRes.data ?? []) as Season[])].sort(sortSeasons)
         );
         setThemeTypes((typesRes.data ?? []) as ShowThemeType[]);
         setThemes((themesRes.data ?? []) as ShowTheme[]);
         setRooms((roomsRes.data ?? []) as RehearsalRoom[]);
+
+        // Load member counts for all groups
+        if (groups.length > 0) {
+            const ids = groups.map((g) => g.id);
+            const { data: countData } = await supabase
+                .from("show_group_student_memberships")
+                .select("show_group_instance_id")
+                .in("show_group_instance_id", ids)
+                .eq("status", "active");
+            if (countData) {
+                const counts: Record<string, number> = {};
+                for (const row of countData as { show_group_instance_id: string }[]) {
+                    counts[row.show_group_instance_id] =
+                        (counts[row.show_group_instance_id] ?? 0) + 1;
+                }
+                setMemberCounts(counts);
+            }
+        }
         setLoading(false);
     }, [schoolId]);
 
@@ -251,14 +297,10 @@ function getSeasonLabel(seasonId: string | null): string {
         return s ? formatSeason(s) : "";
     }
 
-    function getThemeLabel(themeId: string | null): string {
-        if (!themeId) return "";
-        return themes.find((t) => t.id === themeId)?.name ?? "";
-    }
-
-    function getInstructorName(instructorId: string | null): string {
-        if (!instructorId) return "";
-        return users.find((u) => u.id === instructorId)?.name ?? "";
+    function parseDayTime(rockClassName: string | null): string {
+        if (!rockClassName) return "";
+        const idx = rockClassName.indexOf(" — ");
+        return idx !== -1 ? rockClassName.slice(idx + 3) : "";
     }
 
     function buildAutoName(form: FormState): string {
@@ -485,6 +527,93 @@ function getSeasonLabel(seasonId: string | null): string {
             .update({ status: "removed" })
             .eq("id", membershipId);
         if (!error) await loadMemberships(expandedGroupId);
+    }
+
+    // ─── Card body roster/sessions loaders ──────────────────────────────
+
+    const loadRosterForGroup = useCallback(async (groupId: string) => {
+        setLoadingGroupRoster(true);
+        const { data } = await supabase
+            .from("show_group_student_memberships")
+            .select("id, student_id, students(first_name, last_initial)")
+            .eq("show_group_instance_id", groupId)
+            .eq("status", "active");
+        if (data) {
+            const members: MemberItem[] = (
+                data as unknown as Array<{
+                    id: string;
+                    student_id: string;
+                    students: { first_name: string; last_initial: string } | null;
+                }>
+            ).map((row) => ({
+                id: row.id,
+                student_id: row.student_id,
+                first_name: row.students?.first_name ?? "",
+                last_initial: row.students?.last_initial ?? "",
+            }));
+            setGroupMembers((prev) => ({ ...prev, [groupId]: members }));
+        }
+        setLoadingGroupRoster(false);
+    }, []);
+
+    const loadSessionsForGroup = useCallback(async (
+        groupId: string,
+        rockClassId: string | null,
+        past: boolean,
+        all: boolean
+    ) => {
+        if (!rockClassId) {
+            setGroupSessions((prev) => ({ ...prev, [groupId]: [] }));
+            return;
+        }
+        setLoadingGroupSessions(true);
+        const today = new Date().toISOString().slice(0, 10);
+        let data: SessionItem[] = [];
+
+        if (past) {
+            const res = await supabase
+                .from("class_sessions")
+                .select("id, session_date, status, class_instructor_notes, instructor_override_user_id")
+                .eq("class_id", rockClassId)
+                .lt("session_date", today)
+                .order("session_date", { ascending: false })
+                .limit(20);
+            data = (res.data ?? []) as SessionItem[];
+        } else if (all) {
+            const res = await supabase
+                .from("class_sessions")
+                .select("id, session_date, status, class_instructor_notes, instructor_override_user_id")
+                .eq("class_id", rockClassId)
+                .gte("session_date", today)
+                .order("session_date", { ascending: true });
+            data = (res.data ?? []) as SessionItem[];
+        } else {
+            const res = await supabase
+                .from("class_sessions")
+                .select("id, session_date, status, class_instructor_notes, instructor_override_user_id")
+                .eq("class_id", rockClassId)
+                .gte("session_date", today)
+                .order("session_date", { ascending: true })
+                .limit(12);
+            data = (res.data ?? []) as SessionItem[];
+        }
+
+        setGroupSessions((prev) => ({ ...prev, [groupId]: data }));
+        setLoadingGroupSessions(false);
+    }, []);
+
+    function handleCardBodyClick(group: ShowGroupInstance) {
+        if (rosterGroupId === group.id) {
+            setRosterGroupId(null);
+            return;
+        }
+        setRosterGroupId(group.id);
+        setRosterTab("roster");
+        setShowAllSessions(false);
+        setShowPastSessions(false);
+        if (!groupMembers[group.id]) {
+            loadRosterForGroup(group.id);
+        }
     }
 
     function getInstrumentBucket(instrument: string): string {
@@ -954,25 +1083,27 @@ function getSeasonLabel(seasonId: string | null): string {
                     <div className="space-y-2">
                         {showGroups.map((group) => {
                             const isExpanded = expandedGroupId === group.id;
+                            const isRosterOpen = rosterGroupId === group.id;
                             const seasonLabel = getSeasonLabel(group.season_id);
-                            const themeName = getThemeLabel(group.show_theme_id);
-                            const instructorName = getInstructorName(
-                                group.class_instructor_id
-                            );
                             const isActive = group.status === "active";
                             const hasTheme =
                                 group.show_theme_id != null ||
                                 group.theme_type_id != null;
                             const staffNames =
                                 group.rock_classes?.staff_names ?? [];
+                            const dayTime = parseDayTime(group.rock_classes?.name ?? null);
+                            const memberCount = memberCounts[group.id] ?? 0;
 
                             return (
                                 <div
                                     key={group.id}
                                     className="rounded-none bg-[#1a1a1a]"
                                 >
-                                    {/* Tile header */}
-                                    <div className="flex w-full items-center justify-between px-5 py-4">
+                                    {/* Tile header — click to toggle ROSTER/SESSIONS */}
+                                    <div
+                                        className="flex w-full cursor-pointer items-center justify-between px-5 py-4"
+                                        onClick={() => handleCardBodyClick(group)}
+                                    >
                                         <div className="flex min-w-0 flex-1 items-start gap-4">
                                             <div className="min-w-0 flex-1">
                                                 <div
@@ -989,32 +1120,13 @@ function getSeasonLabel(seasonId: string | null): string {
                                                         {staffNames.join(" · ")}
                                                     </div>
                                                 )}
-                                                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-zinc-400">
-                                                    {group.day_of_week && (
-                                                        <span>
-                                                            {group.day_of_week}
-                                                        </span>
-                                                    )}
-                                                    {group.start_time &&
-                                                        group.end_time && (
-                                                            <span>
-                                                                ·{" "}
-                                                                {group.start_time}{" "}
-                                                                –{" "}
-                                                                {group.end_time}
-                                                            </span>
-                                                        )}
-                                                    {themeName && (
-                                                        <span>
-                                                            · {themeName}
-                                                        </span>
-                                                    )}
-                                                    {instructorName && (
-                                                        <span>
-                                                            · {instructorName}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                {(dayTime || memberCount > 0) && (
+                                                    <div className="mt-1 text-sm text-zinc-400">
+                                                        {dayTime}
+                                                        {dayTime && memberCount > 0 && " · "}
+                                                        {memberCount > 0 && `${memberCount} student${memberCount !== 1 ? "s" : ""}`}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex shrink-0 items-center gap-2">
                                                 {seasonLabel && (
@@ -1069,7 +1181,158 @@ function getSeasonLabel(seasonId: string | null): string {
                                         </div>
                                     )}
 
-                                    {/* Expanded panel */}
+                                    {/* ROSTER / SESSIONS panel — card body click */}
+                                    {isRosterOpen && (
+                                        <div className="border-t border-zinc-700">
+                                            {/* Tab buttons */}
+                                            <div className="flex gap-2 px-5 pt-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setRosterTab("roster");
+                                                        if (!groupMembers[group.id]) {
+                                                            loadRosterForGroup(group.id);
+                                                        }
+                                                    }}
+                                                    className={`rounded-none px-4 py-2 text-sm font-semibold ${
+                                                        rosterTab === "roster"
+                                                            ? "bg-[#cc0000] text-white"
+                                                            : "border border-zinc-700 bg-transparent text-zinc-400 hover:text-white"
+                                                    }`}
+                                                >
+                                                    ROSTER
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setRosterTab("sessions");
+                                                        if (!groupSessions[group.id]) {
+                                                            loadSessionsForGroup(group.id, group.rock_class_id, false, false);
+                                                        }
+                                                    }}
+                                                    className={`rounded-none px-4 py-2 text-sm font-semibold ${
+                                                        rosterTab === "sessions"
+                                                            ? "bg-[#cc0000] text-white"
+                                                            : "border border-zinc-700 bg-transparent text-zinc-400 hover:text-white"
+                                                    }`}
+                                                >
+                                                    SESSIONS
+                                                </button>
+                                            </div>
+
+                                            {/* ROSTER tab */}
+                                            {rosterTab === "roster" && (
+                                                <div className="px-5 py-4">
+                                                    {loadingGroupRoster ? (
+                                                        <div className="py-4 text-sm text-zinc-400">
+                                                            Loading roster...
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="mb-3 text-sm text-zinc-400">
+                                                                {(groupMembers[group.id] ?? []).length} students
+                                                            </div>
+                                                            {(groupMembers[group.id] ?? []).length === 0 ? (
+                                                                <div className="text-sm text-zinc-500">
+                                                                    No students enrolled.
+                                                                </div>
+                                                            ) : (
+                                                                (groupMembers[group.id] ?? []).map((member) => (
+                                                                    <div
+                                                                        key={member.id}
+                                                                        className="flex items-center justify-between border-b border-zinc-800 py-2"
+                                                                    >
+                                                                        <span className="text-sm text-white">
+                                                                            {member.first_name} {member.last_initial}.
+                                                                        </span>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* SESSIONS tab */}
+                                            {rosterTab === "sessions" && (
+                                                <div className="px-5 py-4">
+                                                    <div className="mb-3 flex gap-4">
+                                                        <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={showAllSessions}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => {
+                                                                    setShowAllSessions(e.target.checked);
+                                                                    loadSessionsForGroup(group.id, group.rock_class_id, showPastSessions, e.target.checked);
+                                                                }}
+                                                            />
+                                                            Show all upcoming
+                                                        </label>
+                                                        <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={showPastSessions}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => {
+                                                                    setShowPastSessions(e.target.checked);
+                                                                    loadSessionsForGroup(group.id, group.rock_class_id, e.target.checked, showAllSessions);
+                                                                }}
+                                                            />
+                                                            Show past sessions
+                                                        </label>
+                                                    </div>
+                                                    {loadingGroupSessions ? (
+                                                        <div className="py-4 text-sm text-zinc-400">
+                                                            Loading sessions...
+                                                        </div>
+                                                    ) : !group.rock_class_id ? (
+                                                        <div className="text-sm text-zinc-500">
+                                                            No class linked to this show group.
+                                                        </div>
+                                                    ) : (groupSessions[group.id] ?? []).length === 0 ? (
+                                                        <div className="text-sm text-zinc-500">
+                                                            No sessions found.
+                                                        </div>
+                                                    ) : (
+                                                        (groupSessions[group.id] ?? []).map((session) => {
+                                                            const [y, m, d] = session.session_date.split("-").map(Number);
+                                                            const dateLabel = new Date(y, m - 1, d).toLocaleDateString("en-US", {
+                                                                weekday: "short",
+                                                                month: "short",
+                                                                day: "numeric",
+                                                            });
+                                                            const hasNotes = !!session.class_instructor_notes?.trim();
+                                                            return (
+                                                                <div
+                                                                    key={session.id}
+                                                                    className="flex items-center justify-between border-b border-zinc-800 py-2"
+                                                                >
+                                                                    <span className="text-sm text-white">
+                                                                        {dateLabel}
+                                                                    </span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="rounded-none bg-green-900 px-2 py-0.5 text-[10px] font-medium uppercase text-green-300">
+                                                                            {session.status}
+                                                                        </span>
+                                                                        {hasNotes ? (
+                                                                            <span className="text-xs text-green-400">✓</span>
+                                                                        ) : (
+                                                                            <span className="text-xs text-[#cc0000]">No notes</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Edit Details panel — SETUP CASTING / Edit button */}
                                     {isExpanded && (
                                         <div className="border-t border-zinc-700">
                                             {/* Tab buttons */}

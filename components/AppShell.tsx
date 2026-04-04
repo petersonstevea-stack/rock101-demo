@@ -182,7 +182,6 @@ function NavItems({
 
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
-    ...(canSeeClassRoster ? [classRosterNavItem] : []),
     ...(canSeeShowGroups ? [showGroupsNavItem] : []),
     ...(canSeePerformanceRehearsal ? [performanceRehearsalNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
