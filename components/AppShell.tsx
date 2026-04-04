@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Music, Music2, Sliders, Users } from "lucide-react";
+import PendingApprovalsBadge from "@/components/PendingApprovalsBadge";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -16,7 +17,7 @@ function getRoleLabel(role: string): string {
 
 type NavItem = {
   tab: string;
-  label: string;
+  label: ReactNode;
   icon?: ReactNode;
 };
 
@@ -36,16 +37,6 @@ const SCHOOL_NAV_BASE: NavItem[] = [
   { tab: "myProfile", label: "My Profile" },
 ];
 
-// Visible to management only (owner, general_manager, music_director)
-const SCHOOL_NAV_MANAGEMENT: NavItem[] = [
-  { tab: "classSetup", label: "Class Setup" },
-  { tab: "lessonSetup", label: "Lesson Setup" },
-  { tab: "manageLessons", label: "Manage Lessons" },
-  { tab: "bandsDashboard", label: "Bands" },
-  { tab: "pipeline", label: "Pipeline" },
-  { tab: "executionDashboard", label: "Exceptions" },
-  { tab: "admin", label: "Admin" },
-];
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -180,11 +171,32 @@ function NavItems({
     icon: <Music2 size={14} />,
   };
 
+  const managementNavItems: NavItem[] = canSeeManagementTabs
+    ? [
+        { tab: "classSetup", label: "Class Setup" },
+        { tab: "lessonSetup", label: "Lesson Setup" },
+        { tab: "manageLessons", label: "Manage Lessons" },
+        { tab: "bandsDashboard", label: "Bands" },
+        { tab: "pipeline", label: "Pipeline" },
+        { tab: "executionDashboard", label: "Exceptions" },
+        {
+          tab: "approvals",
+          label: (
+            <span className="flex items-center gap-2">
+              Approvals
+              <PendingApprovalsBadge />
+            </span>
+          ),
+        },
+        { tab: "admin", label: "Admin" },
+      ]
+    : [];
+
   const schoolNavItems: NavItem[] = [
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeShowGroups ? [showGroupsNavItem] : []),
     ...(canSeePerformanceRehearsal ? [performanceRehearsalNavItem] : []),
-    ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
+    ...managementNavItems,
   ];
 
   return (
