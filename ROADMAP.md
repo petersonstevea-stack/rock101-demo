@@ -5,9 +5,11 @@
 
 ## Current Status
 - **Phase 1 — Rock 101 Stabilization: ✅ COMPLETE (April 2026)**
-- **Phase 2 — Performance Program: 🔄 In Progress**
+- **Phase 2 — Performance Program: ✅ COMPLETE (April 2026)**
+- **Phase 7 — Pike13 Integration: ✅ COMPLETE (April 2026)**
 - Rock 101 pilot: live and functional with real students and schools — enrollment, progress tracking, parent email flow all operational
-- Performance Program: casting, rehearsal, and My Casting views live — Step 2.8 (Pike13 sync) still 🔜 not started
+- Performance Program: casting, rehearsal, My Casting, PP Private Lesson all live — Pike13 owns rosters and scheduling
+- Pike13 SSO live for staff; nightly sync running; classes and sessions synced
 - Phase 3 (Navigation & Student Experience): 🔜 not started
 - All other programs: future phase only
 
@@ -366,10 +368,12 @@ Once data arrives: bulk match on title+artist, update has_method_lesson = true f
 ### ✅ Step 2.7 — Weekly Rehearsal View (Performance)
 PerformanceRehearsalView: show group selector, date-based session management, attendance tracking (present/late/absent/excused), song priority with auto-suggest (new songs + lowest prior grade), readiness grades 1-4, weekly awards (instructor awards + peer nominations with approval flow), casting lock/unlock for GM/MD/owner with reason tracking and audit trail.
 
-### 🔜 Step 2.8 — Pike13 enrollment sync
-Replace manual student enrollment with Pike13 API.
-Pike13 becomes source of truth for show group membership.
-Stage Ready owns casting/progress/parent comms.
+### ✅ Step 2.8 — Pike13 Enrollment Sync (Complete)
+Nightly sync populates rock_classes.student_ids
+from Pike13 visits endpoint. show_group_instances
+and show_group_student_memberships auto-populated
+from rock_classes. Pike13 is source of truth for
+all show group rosters.
 
 ---
 
@@ -479,35 +483,137 @@ Endpoints:
 
 183 Del Mar students imported across 6 program buckets. Unique constraint on students.pike13_person_id ensures idempotent re-runs.
 
-### 🔜 Step 7.4 — Nightly Sync Job
-Build a Supabase Edge Function on a cron schedule that runs the student and staff sync automatically every night.
-- New students added automatically
-- Departed students flagged inactive
-- Staff changes reflected
-- Sync log written to a new pike13_sync_log table
-- No manual data entry required at any school
+### ✅ Step 7.4 — Nightly Sync Job (Complete)
+Supabase Edge Function `pike13-nightly-sync`
+deployed. pg_cron scheduled at 2:00 AM UTC daily.
+Runs student sync (two-pass) + staff sync.
+Results logged to `pike13_sync_log` table.
+183 students and 15 staff synced on first run.
 
-### 🔜 Step 7.5 — Pike13 OAuth Login (SSO)
-Allow parents and staff to log into Stage Ready using their existing Pike13 credentials. Pike13 is the identity provider — if you have an active Pike13 account at a school, you automatically have access to Stage Ready. This mirrors how Pike13 and the Method App already share SSO today.
+### ✅ Step 7.5 — Pike13 OAuth Login / SSO (Complete)
+Staff SSO live via Pike13 OAuth2.
+- /api/auth/pike13/sso — initiates OAuth flow,
+  reads pike13_subdomain from schools table
+- /api/auth/pike13/callback — exchanges token,
+  reads user email from /api/v2/front/people/me.json,
+  looks up school via pike13_location_id, verifies
+  staff_school_roles, generates Supabase magic link
+- LoginScreen updated: "Sign in with Pike13" is
+  primary button, email/password is fallback
+- Multi-school routing: each school has
+  pike13_subdomain and pike13_location_id in the
+  schools table. Del Mar location_id: 35085.
+  Encinitas and Scripps Ranch location_ids will
+  auto-populate from Vercel logs on first SSO login.
 
-Flow:
-1. User selects their school on the Stage Ready login page
-2. Redirected to that school's Pike13 OAuth authorize URL
-3. Pike13 authenticates and redirects back with auth code
-4. Stage Ready exchanges code for token, reads email
-5. Email matched to staff or parents table
-6. Supabase session created — user is in
+### ✅ Step 7.6 — Class and Session Sync (Complete)
+Three sync endpoints built and deployed:
+- /api/pike13/sync-classes (dry run)
+- /api/pike13/sync-classes/commit (write)
+- /api/pike13/sync-rosters (dry run)
+- /api/pike13/sync-rosters/commit (write)
 
-Build order:
-- Step 7.5a: Staff SSO (small group, emails verified)
-- Step 7.5b: Parent SSO (requires clean parent email data)
-- Step 7.5c: Multi-school OAuth (school selector on login, dynamic subdomain per school)
+11 Del Mar classes imported (5 Rock 101 + 6 PP).
+66 sessions created with pike13_event_occurrence_id.
+107 students enrolled in correct class groups via
+Pike13 visits endpoint.
+Class naming: "{Event Name} — {Day} {Time}" with
+instructor tiebreaker for same-day/time conflicts.
+Staff names from Pike13 occurrence data written to
+rock_classes.staff_names (text array).
 
-### 🔜 Step 7.6 — Service and Session Sync
-Match rock_classes to Pike13 services via pike13_service_id. Match class_sessions to Pike13 event occurrences via pike13_event_occurrence_id. Both columns already exist from Step 1.16.
+### ✅ Step 7.7 — Attendance Write-back (Deferred)
+Pike13 handles attendance tracking well today.
+Deferred indefinitely as a possible future
+enhancement if schools request it.
+Stage Ready tracks attendance internally for:
+- Rock 101 group rehearsals (management exceptions)
+- Private lessons (passive absence recording)
+Performance Program group attendance: TBD.
 
-### 🔜 Step 7.7 — Attendance Write-back
-When Stage Ready marks a student absent, write attendance back to Pike13 via Core API. Pike13 remains attendance source of truth. Stage Ready is the input UI.
+---
+
+---
+
+## ✅ Completed April 4, 2026
+
+### Show Groups — Full Rebuild
+- Show Groups is now the single hub for all
+  Performance Program management
+- Cards show: show group name, staff names (from
+  Pike13), day/time, student count, SETUP CASTING
+  or GO TO CASTING button
+- SETUP CASTING appears when no casting template
+  selected. GO TO CASTING when theme is linked.
+- Edit Details form cleaned: schedule fields removed
+  (Pike13 owns scheduling), class instructor removed
+  (Pike13 owns staff), show date field added
+- Casting auto-imports all 50 theme songs when a
+  show group is opened for the first time
+- 2-column grid layout
+- ROSTER and SESSIONS tabs inline on each card
+- Class Roster removed from nav — redundant
+- Casting Equity section added below cards with
+  lazy-loaded per-group equity panel
+- Casting nav item removed — accessible only via
+  GO TO CASTING button from Show Groups
+
+### Admin — Rebuilt as Staff-Only Page
+- Student and family management sections removed
+- Pike13 owns all student/family data
+- Admin now shows only: info banner + Manage Staff
+- Manage Staff page rebuilt: no enrollment form,
+  role dropdown only (instructor → music_director
+  → general_manager → owner)
+- Role changes write to both staff.role and
+  staff_school_roles.role simultaneously
+- Staff are synced from Pike13, default to instructor
+- Legacy role values fixed: director → instructor,
+  gm → general_manager throughout database
+- Julian Quezada reactivated, Luke Sparrow promoted
+  to music_director
+
+### PP Private Lesson View
+- PPPrivateLessonView component created
+- Shows student casting from current show at top
+- Three text areas: Lesson Notes, Music Theory
+  Assignment, Method App Exercises
+- No Show button releases instructor obligation
+- Submit button locks all fields
+- Auto-routes PP students to this view, R101
+  students continue to existing PrivateLessonView
+
+### Student Selector — Program Color Coding
+- Rock 101 students: red (#cc0000) cards
+- Performance Program students: dark (#1a1a1a) cards
+- Program label shown on each card
+
+---
+
+## 🔜 Pending Tasks — Pre-Rollout
+
+### SSO — Encinitas and Scripps Ranch location_ids
+When a staff member from Encinitas or Scripps Ranch
+first logs in via Pike13 SSO, their location_id
+appears in Vercel function logs
+(SSO: location_id=... email=...).
+Capture and update:
+  UPDATE schools SET pike13_location_id = [value]
+  WHERE id = 'encinitas';
+  UPDATE schools SET pike13_location_id = [value]
+  WHERE id = 'scripps-ranch';
+
+### Instrument data cleanup
+135 of 183 Del Mar students have no instrument in
+Pike13. Add instruments directly in Pike13 — the
+nightly sync will pick them up automatically.
+Do NOT add them in Stage Ready (will be overwritten).
+
+### Method App exercise data import
+Awaiting CSV from SOR:
+  Song Title | Artist | Instrument | Part Label | Exercise ID
+Schema ready: method_app_exercises +
+method_app_exercise_prerequisites tables in place.
 
 ---
 
