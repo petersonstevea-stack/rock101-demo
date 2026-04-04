@@ -94,11 +94,18 @@ async function fetchEventNames(
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) continue;
+        if (!res.ok) {
+            console.error(`fetchEventNames: event ${eventIds[i]} fetch failed (${res.status})`);
+            continue;
+        }
 
         const data = await res.json();
-        const name: string = data.event?.name ?? data.name ?? "";
-        if (name) nameMap.set(eventIds[i], name);
+        const name: string = data.events?.[0]?.name ?? "";
+        if (name) {
+            nameMap.set(eventIds[i], name);
+        } else {
+            console.error(`fetchEventNames: no name found for event ${eventIds[i]}`, JSON.stringify(data).slice(0, 200));
+        }
     }
 
     return nameMap;
