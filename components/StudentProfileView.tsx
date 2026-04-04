@@ -289,7 +289,7 @@ export default function StudentProfileView({
     return (
         <div className="w-full bg-black pb-12">
             {/* Hero block — wallpaper/collage background with avatar floating on top */}
-            <div className="relative w-full min-h-[280px] flex flex-col items-end justify-start">
+            <div className="relative w-full min-h-[280px] flex flex-col items-center justify-end">
 
                 {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
                 <div className="absolute inset-0 overflow-hidden">
@@ -324,8 +324,8 @@ export default function StudentProfileView({
                 </div>
 
                 {/* FOREGROUND LAYER — name + badges only */}
-                <div className="relative z-10 flex flex-col items-center gap-2 pb-6">
-                    <p className="text-white font-bold text-xl">{studentName}</p>
+                <div className="relative z-10 flex flex-col items-center gap-2 pb-6 w-full">
+                    <p className="text-white font-bold text-2xl text-center">{studentName}</p>
                     {/* Badges */}
                     <div className="flex gap-2">
                         {studentMeta?.is_house_band && (
