@@ -45,11 +45,11 @@ function toLATime(utcStr: string): string {
 
 async function fetchOccurrences(token: string): Promise<unknown[]> {
     const today = new Date();
-    const eightWeeksOut = new Date();
-    eightWeeksOut.setDate(today.getDate() + 56);
+    const sixWeeksOut = new Date();
+    sixWeeksOut.setDate(today.getDate() + 42);
 
     const from = today.toISOString().split("T")[0];
-    const to = eightWeeksOut.toISOString().split("T")[0];
+    const to = sixWeeksOut.toISOString().split("T")[0];
 
     const allOccurrences: unknown[] = [];
     let url: string | null =
