@@ -32,6 +32,8 @@ type ShowHistoryEntry = {
     show_name: string;
     season_year: string;
     status: string;
+    poster_url: string | null;
+    pending_poster_url: string | null;
 };
 
 type StudentMeta = {
@@ -65,6 +67,10 @@ export default function StudentProfileView({
     const [newSeasonYear, setNewSeasonYear] = useState("");
     const [saving, setSaving] = useState(false);
     const [pendingMsg, setPendingMsg] = useState("");
+
+    const [posterFile, setPosterFile] = useState<File | null>(null);
+    const [posterPreview, setPosterPreview] = useState<string | null>(null);
+    const [uploadingPoster, setUploadingPoster] = useState(false);
 
     const [editFavBands, setEditFavBands] = useState("");
     const [editFirstConcert, setEditFirstConcert] = useState("");
@@ -100,7 +106,7 @@ export default function StudentProfileView({
 
             const { data: history } = await supabase
                 .from("student_show_history")
-                .select("id, show_name, season_year, status")
+                .select("id, show_name, season_year, status, poster_url, pending_poster_url")
                 .eq("student_id", studentId)
                 .in("status", ["approved", "pending"])
                 .order("season_year", { ascending: false });
@@ -157,17 +163,53 @@ export default function StudentProfileView({
 
     async function handleAddShow() {
         if (!newShowName.trim() || !newSeasonYear.trim()) return;
+
+        setUploadingPoster(true);
+        let pendingPosterUrl: string | null = null;
+
+        if (posterFile) {
+            const ext = posterFile.name.split(".").pop();
+            const path = `${studentId}/posters/${Date.now()}.${ext}`;
+
+            const { data: uploadData, error } = await supabase.storage
+                .from("student-profiles")
+                .upload(path, posterFile, {
+                    contentType: posterFile.type,
+                    upsert: false,
+                });
+
+            if (!error && uploadData) {
+                const { data: urlData } = supabase.storage
+                    .from("student-profiles")
+                    .getPublicUrl(uploadData.path);
+                pendingPosterUrl = urlData.publicUrl;
+            }
+        }
+
         await supabase.from("student_show_history").insert({
             student_id: studentId,
             show_name: newShowName.trim(),
             season_year: newSeasonYear.trim(),
             status: "pending",
             submitted_at: new Date().toISOString(),
+            pending_poster_url: pendingPosterUrl,
         });
+
         setNewShowName("");
         setNewSeasonYear("");
+        setPosterFile(null);
+        setPosterPreview(null);
+        setUploadingPoster(false);
         setAddingShow(false);
         setPendingMsg("Show submitted for staff approval.");
+
+        const { data: history } = await supabase
+            .from("student_show_history")
+            .select("id, show_name, season_year, status, poster_url, pending_poster_url")
+            .eq("student_id", studentId)
+            .in("status", ["approved", "pending"])
+            .order("season_year", { ascending: false });
+        setShowHistory(history ?? []);
     }
 
     if (loading) {
@@ -185,8 +227,31 @@ export default function StudentProfileView({
         profile?.spotify_url ||
         profile?.apple_music_url;
 
+    const approvedPosters = showHistory
+        .filter((s) => s.status === "approved" && s.poster_url)
+        .map((s) => s.poster_url!);
+
     return (
         <div className="w-full bg-black pb-12">
+            {/* Poster collage wallpaper */}
+            {approvedPosters.length > 0 && (
+                <div className="relative h-48 w-full overflow-hidden">
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 z-10 bg-black/60" />
+                    {/* Posters — flush edge to edge */}
+                    <div className="flex h-full w-full">
+                        {approvedPosters.map((url, i) => (
+                            <img
+                                key={i}
+                                src={url}
+                                alt="Show poster"
+                                className="h-full flex-1 object-cover"
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Avatar section */}
             <div className="flex flex-col items-center pt-10">
                 <div className="relative">
@@ -299,13 +364,41 @@ export default function StudentProfileView({
                                     onChange={(e) => setNewSeasonYear(e.target.value)}
                                     className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
                                 />
+                                <div className="space-y-1">
+                                    <label className="block text-xs uppercase tracking-widest text-zinc-500">
+                                        Show Poster (optional)
+                                    </label>
+                                    {posterPreview && (
+                                        <img
+                                            src={posterPreview}
+                                            alt="Poster preview"
+                                            className="h-24 w-auto object-contain"
+                                        />
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setPosterFile(file);
+                                                setPosterPreview(URL.createObjectURL(file));
+                                            }
+                                        }}
+                                        className="w-full text-xs text-zinc-400"
+                                    />
+                                    <p className="text-xs text-zinc-600">
+                                        11×17 portrait format. Max 10MB.
+                                    </p>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={handleAddShow}
-                                        className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000]"
+                                        disabled={uploadingPoster}
+                                        className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
                                     >
-                                        Submit
+                                        {uploadingPoster ? "Uploading..." : "Submit"}
                                     </button>
                                     <button
                                         type="button"
