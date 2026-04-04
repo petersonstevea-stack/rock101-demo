@@ -528,22 +528,14 @@ export default function StudentProfileView({
                     <div className="space-y-3">
                         {/* Photo upload */}
                         <div className="space-y-2">
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                            <p className="text-xs uppercase tracking-widest text-zinc-500">
                                 Upload New Profile Photo
-                            </label>
-                            {/* Current approved photo */}
-                            {profile?.photo_url && (
+                            </p>
+                            {/* Current approved photo or new preview */}
+                            {(profile?.photo_url || photoPreview) && (
                                 <img
-                                    src={photoPreview ?? profile.photo_url}
+                                    src={photoPreview ?? profile?.photo_url ?? ""}
                                     alt="Current photo"
-                                    className="h-24 w-24 rounded-full object-cover"
-                                />
-                            )}
-                            {/* Pending photo preview (new selection) */}
-                            {!profile?.photo_url && photoPreview && (
-                                <img
-                                    src={photoPreview}
-                                    alt="Photo preview"
                                     className="h-24 w-24 rounded-full object-cover"
                                 />
                             )}
@@ -553,30 +545,42 @@ export default function StudentProfileView({
                                     📷 New photo pending review
                                 </div>
                             )}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    if (file.size > 5 * 1024 * 1024) {
-                                        setPhotoSizeError("File must be under 5MB");
-                                        setPhotoFile(null);
-                                        setPhotoPreview(null);
-                                        return;
-                                    }
-                                    setPhotoSizeError("");
-                                    setPhotoFile(file);
-                                    setPhotoPreview(URL.createObjectURL(file));
-                                }}
-                                className="w-full text-sm text-zinc-400"
-                            />
-                            {photoSizeError && (
-                                <p className="text-xs" style={{ color: "#cc0000" }}>{photoSizeError}</p>
-                            )}
-                            <p className="text-sm text-zinc-400">
-                                JPG or PNG, max 5MB. Goes to staff for review before appearing on your profile.
-                            </p>
+                            <div className="flex flex-col gap-2">
+                                <input
+                                    id="photo-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        if (file.size > 5 * 1024 * 1024) {
+                                            setPhotoSizeError("File must be under 5MB");
+                                            setPhotoFile(null);
+                                            setPhotoPreview(null);
+                                            return;
+                                        }
+                                        setPhotoSizeError("");
+                                        setPhotoFile(file);
+                                        setPhotoPreview(URL.createObjectURL(file));
+                                    }}
+                                />
+                                <label
+                                    htmlFor="photo-upload"
+                                    className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
+                                >
+                                    📷 Choose Photo
+                                </label>
+                                {photoFile && (
+                                    <p className="text-zinc-400 text-xs">{photoFile.name}</p>
+                                )}
+                                {photoSizeError && (
+                                    <p className="text-[#cc0000] text-xs">{photoSizeError}</p>
+                                )}
+                                <p className="text-zinc-400 text-xs">
+                                    JPG or PNG, max 5MB. Goes to staff for review before appearing on your profile.
+                                </p>
+                            </div>
                         </div>
 
                         <div>
