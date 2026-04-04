@@ -32,7 +32,8 @@ type Visit = {
 
 type StageReadyStudent = {
     id: string;
-    name: string;
+    first_name: string;
+    last_initial: string;
     pike13_person_id: string;
 };
 
@@ -92,7 +93,7 @@ export async function GET() {
         // Step 3 — Load all Del Mar students with pike13_person_id
         const { data: studentRows, error: studentsError } = await supabase
             .from("students")
-            .select("id, name, pike13_person_id")
+            .select("id, first_name, last_initial, pike13_person_id")
             .eq("school_id", "del-mar")
             .not("pike13_person_id", "is", null);
 
