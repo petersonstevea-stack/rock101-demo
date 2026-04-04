@@ -68,6 +68,17 @@ export default function PerformanceProgramShell({
                 const sgi = membership.show_group_instances as any;
                 const rc = sgi.rock_classes;
 
+                let staffNames: string[] = rc?.staff_names ?? [];
+
+                if (sgi.rock_class_id) {
+                    const { data: rcRow } = await supabase
+                        .from("rock_classes")
+                        .select("staff_names")
+                        .eq("id", sgi.rock_class_id)
+                        .maybeSingle();
+                    staffNames = rcRow?.staff_names ?? [];
+                }
+
                 const today = new Date().toISOString().split("T")[0];
                 const sessions = (rc?.class_sessions ?? [])
                     .filter((s: any) => s.session_date >= today)
@@ -83,7 +94,7 @@ export default function PerformanceProgramShell({
                 setShowGroup({
                     id: sgi.id,
                     name: sgi.name,
-                    staffNames: rc?.staff_names ?? [],
+                    staffNames,
                     className: rc?.name ?? null,
                     showDate: sgi.show_date ?? null,
                     themeType: null,
@@ -215,7 +226,7 @@ export default function PerformanceProgramShell({
                                         <div className="rounded-none bg-[#111111] p-5">
                                             <p className="text-xs uppercase tracking-widest text-zinc-500">Performance Date</p>
                                             <p className="mt-1 text-sm text-white">
-                                                {new Date(showGroup.showDate).toLocaleDateString("en-US", {
+                                                {new Date(showGroup.showDate + "T12:00:00").toLocaleDateString("en-US", {
                                                     weekday: "long",
                                                     year: "numeric",
                                                     month: "long",
