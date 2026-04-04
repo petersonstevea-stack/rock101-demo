@@ -12,7 +12,7 @@ export default function PendingApprovalsBadge() {
                 supabase
                     .from("student_profiles")
                     .select("id", { count: "exact", head: true })
-                    .eq("pending_status", "pending"),
+                    .or("pending_status.eq.pending,pending_photo_url.not.is.null"),
                 supabase
                     .from("student_show_history")
                     .select("id", { count: "exact", head: true })

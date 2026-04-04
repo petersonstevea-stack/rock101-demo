@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 type QueueItem = {
     id: string;
-    type: "profile" | "show";
+    type: "profile" | "show" | "photo";
     studentName: string;
     studentId: string;
     submittedAt: string;
@@ -13,6 +13,7 @@ type QueueItem = {
     showName?: string;
     seasonYear?: string;
     pendingPosterUrl?: string | null;
+    pendingPhotoUrl?: string | null;
 };
 
 type ProfileRow = {
@@ -30,6 +31,14 @@ type ShowRow = {
     season_year: string;
     pending_poster_url: string | null;
     created_at: string;
+    students: { first_name: string; last_initial: string } | null;
+};
+
+type PhotoRow = {
+    id: string;
+    student_id: string;
+    pending_photo_url: string;
+    pending_photo_submitted_at: string | null;
     students: { first_name: string; last_initial: string } | null;
 };
 
@@ -55,7 +64,7 @@ export default function ApprovalsView() {
     async function loadQueue() {
         setLoading(true);
 
-        const [profilesResult, historyResult] = await Promise.all([
+        const [profilesResult, historyResult, photosResult] = await Promise.all([
             supabase
                 .from("student_profiles")
                 .select("id, student_id, pending_changes, pending_submitted_at, students(first_name, last_initial)")
@@ -66,13 +75,22 @@ export default function ApprovalsView() {
                 .select("id, student_id, show_name, season_year, pending_poster_url, created_at, students(first_name, last_initial)")
                 .eq("status", "pending")
                 .returns<ShowRow[]>(),
+            supabase
+                .from("student_profiles")
+                .select("id, student_id, pending_photo_url, pending_photo_submitted_at, students(first_name, last_initial)")
+                .not("pending_photo_url", "is", null)
+                .returns<PhotoRow[]>(),
         ]);
+
+        function studentName(row: { students: { first_name: string; last_initial: string } | null }): string {
+            return `${row.students?.first_name ?? ""} ${row.students?.last_initial ? row.students.last_initial + "." : ""}`.trim();
+        }
 
         const profileItems: QueueItem[] = (profilesResult.data ?? []).map((row) => ({
             id: row.id,
             type: "profile",
             studentId: row.student_id,
-            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_initial ? row.students.last_initial + "." : ""}`.trim(),
+            studentName: studentName(row),
             submittedAt: row.pending_submitted_at ?? "",
             pendingChanges: row.pending_changes,
         }));
@@ -81,14 +99,23 @@ export default function ApprovalsView() {
             id: row.id,
             type: "show",
             studentId: row.student_id,
-            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_initial ? row.students.last_initial + "." : ""}`.trim(),
+            studentName: studentName(row),
             submittedAt: row.created_at,
             showName: row.show_name,
             seasonYear: row.season_year,
             pendingPosterUrl: row.pending_poster_url,
         }));
 
-        const combined = [...profileItems, ...showItems].sort(
+        const photoItems: QueueItem[] = (photosResult.data ?? []).map((row) => ({
+            id: row.id,
+            type: "photo",
+            studentId: row.student_id,
+            studentName: studentName(row),
+            submittedAt: row.pending_photo_submitted_at ?? "",
+            pendingPhotoUrl: row.pending_photo_url,
+        }));
+
+        const combined = [...profileItems, ...showItems, ...photoItems].sort(
             (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
         );
 
@@ -130,6 +157,17 @@ export default function ApprovalsView() {
                     is_published: true,
                 })
                 .eq("id", item.id);
+        } else if (item.type === "photo") {
+            await supabase
+                .from("student_profiles")
+                .update({
+                    photo_url: item.pendingPhotoUrl ?? null,
+                    pending_photo_url: null,
+                    pending_photo_submitted_at: null,
+                    pending_reviewed_at: new Date().toISOString(),
+                    is_published: true,
+                })
+                .eq("id", item.id);
         } else {
             await supabase
                 .from("student_show_history")
@@ -149,6 +187,16 @@ export default function ApprovalsView() {
                 .from("student_profiles")
                 .update({
                     pending_status: "rejected",
+                    rejection_note: rejectNote || null,
+                    pending_reviewed_at: new Date().toISOString(),
+                })
+                .eq("id", item.id);
+        } else if (item.type === "photo") {
+            await supabase
+                .from("student_profiles")
+                .update({
+                    pending_photo_url: null,
+                    pending_photo_submitted_at: null,
                     rejection_note: rejectNote || null,
                     pending_reviewed_at: new Date().toISOString(),
                 })
@@ -210,7 +258,7 @@ export default function ApprovalsView() {
                             <div className="flex items-start justify-between gap-4">
                                 <p className="font-semibold text-white">{item.studentName}</p>
                                 <span className="shrink-0 rounded-none bg-[#1a1a1a] px-2 py-0.5 text-xs text-zinc-400">
-                                    {item.type === "profile" ? "PROFILE UPDATE" : "SHOW HISTORY"}
+                                    {item.type === "profile" ? "PROFILE UPDATE" : item.type === "show" ? "SHOW HISTORY" : "PHOTO"}
                                 </span>
                             </div>
 
@@ -239,6 +287,16 @@ export default function ApprovalsView() {
                                                 className="mt-2 max-h-24 object-contain"
                                             />
                                         )}
+                                    </>
+                                )}
+                                {item.type === "photo" && item.pendingPhotoUrl && (
+                                    <>
+                                        <img
+                                            src={item.pendingPhotoUrl}
+                                            alt="Profile photo"
+                                            className="h-16 w-16 rounded-full object-cover"
+                                        />
+                                        <p className="text-sm text-zinc-400">Profile photo — pending review</p>
                                     </>
                                 )}
                             </div>

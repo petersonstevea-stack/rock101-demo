@@ -24,6 +24,7 @@ type StudentProfile = {
     wallpaper_preset: string | null;
     pending_changes: Record<string, unknown> | null;
     pending_status: string | null;
+    pending_photo_url: string | null;
     is_published: boolean;
 };
 
@@ -71,6 +72,10 @@ export default function StudentProfileView({
     const [posterFile, setPosterFile] = useState<File | null>(null);
     const [posterPreview, setPosterPreview] = useState<string | null>(null);
     const [uploadingPoster, setUploadingPoster] = useState(false);
+
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [photoSizeError, setPhotoSizeError] = useState("");
 
     const [editFavBands, setEditFavBands] = useState("");
     const [editFirstConcert, setEditFirstConcert] = useState("");
@@ -120,6 +125,29 @@ export default function StudentProfileView({
 
     async function handleSaveProfile() {
         setSaving(true);
+
+        // Upload photo if a new file was selected
+        let newPendingPhotoUrl: string | null = null;
+        if (photoFile) {
+            const path = `${studentId}/photo.jpg`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("student-profiles")
+                .upload(path, photoFile, { contentType: photoFile.type, upsert: true });
+            if (!uploadError && uploadData) {
+                const { data: urlData } = supabase.storage
+                    .from("student-profiles")
+                    .getPublicUrl(path);
+                newPendingPhotoUrl = urlData.publicUrl;
+            }
+        }
+
+        const photoFields = newPendingPhotoUrl
+            ? {
+                  pending_photo_url: newPendingPhotoUrl,
+                  pending_photo_submitted_at: new Date().toISOString(),
+              }
+            : {};
+
         const changes = {
             favorite_bands: editFavBands || null,
             first_concert: editFirstConcert || null,
@@ -135,6 +163,7 @@ export default function StudentProfileView({
                 pending_status: "pending",
                 pending_submitted_at: new Date().toISOString(),
                 is_published: false,
+                ...photoFields,
             });
         } else {
             await supabase
@@ -143,10 +172,13 @@ export default function StudentProfileView({
                     pending_changes: changes,
                     pending_status: "pending",
                     pending_submitted_at: new Date().toISOString(),
+                    ...photoFields,
                 })
                 .eq("student_id", studentId);
         }
 
+        setPhotoFile(null);
+        setPhotoPreview(null);
         setPendingMsg("Your profile has been submitted for review.");
         setEditMode(false);
 
@@ -494,6 +526,59 @@ export default function StudentProfileView({
                     </>
                 ) : (
                     <div className="space-y-3">
+                        {/* Photo upload */}
+                        <div className="space-y-2">
+                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                Upload New Profile Photo
+                            </label>
+                            {/* Current approved photo */}
+                            {profile?.photo_url && (
+                                <img
+                                    src={photoPreview ?? profile.photo_url}
+                                    alt="Current photo"
+                                    className="h-24 w-24 rounded-full object-cover"
+                                />
+                            )}
+                            {/* Pending photo preview (new selection) */}
+                            {!profile?.photo_url && photoPreview && (
+                                <img
+                                    src={photoPreview}
+                                    alt="Photo preview"
+                                    className="h-24 w-24 rounded-full object-cover"
+                                />
+                            )}
+                            {/* Pending review pill */}
+                            {profile?.pending_photo_url && !photoFile && (
+                                <div className="inline-block rounded-none bg-[#1a1a1a] px-2 py-1 text-xs text-zinc-400">
+                                    📷 New photo pending review
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    if (file.size > 5 * 1024 * 1024) {
+                                        setPhotoSizeError("File must be under 5MB");
+                                        setPhotoFile(null);
+                                        setPhotoPreview(null);
+                                        return;
+                                    }
+                                    setPhotoSizeError("");
+                                    setPhotoFile(file);
+                                    setPhotoPreview(URL.createObjectURL(file));
+                                }}
+                                className="w-full text-sm text-zinc-400"
+                            />
+                            {photoSizeError && (
+                                <p className="text-xs" style={{ color: "#cc0000" }}>{photoSizeError}</p>
+                            )}
+                            <p className="text-sm text-zinc-400">
+                                JPG or PNG, max 5MB. Goes to staff for review before appearing on your profile.
+                            </p>
+                        </div>
+
                         <div>
                             <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
                                 Favorite Bands
