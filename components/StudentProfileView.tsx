@@ -45,7 +45,7 @@ type StudentMeta = {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center">
+        <div className="rounded-none bg-[#1a1a1a]/90 border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center">
             <p className="text-zinc-500 text-xs uppercase tracking-wide">{label}</p>
             <p className="text-white text-sm mt-0.5">{value}</p>
         </div>
@@ -291,47 +291,45 @@ export default function StudentProfileView({
     const imagePosterUrls = approvedPosters.filter((url) => !isPdf(url));
 
     return (
-        <div className="w-full bg-black pb-12">
-            {/* Hero block — wallpaper/collage background with avatar floating on top */}
-            <div className="relative w-full min-h-[420px] flex flex-col items-center justify-end">
+        <div className="relative min-h-screen">
 
-                {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
-                <div className="absolute inset-0 overflow-hidden">
-                    {imagePosterUrls.length > 0 ? (
-                        <div className="flex w-full h-full">
-                            {imagePosterUrls.map((url, i) => (
-                                <div
-                                    key={i}
-                                    className="flex-1 min-w-0 h-full"
-                                    style={{
-                                        backgroundImage: `url(${url})`,
-                                        backgroundSize: "cover",
-                                        backgroundPosition: "center top",
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    ) : profile?.wallpaper_url ? (
-                        <div
-                            className="w-full h-full"
-                            style={{
-                                backgroundImage: `url(${profile.wallpaper_url})`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                            }}
-                        />
-                    ) : (
-                        <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #1a1a1a 100%)" }} />
-                    )}
-                    {/* Dark overlay — always present */}
-                    <div className="absolute inset-0 bg-black/60" />
+            {/* Full-page background layer */}
+            {imagePosterUrls.length > 0 ? (
+                <div className="fixed inset-0 z-0" style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${imagePosterUrls.length}, 1fr)`,
+                }}>
+                    {imagePosterUrls.map((url, i) => (
+                        <div key={i} className="h-full w-full" style={{
+                            backgroundImage: `url(${url})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                        }} />
+                    ))}
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 bg-black/65" />
                 </div>
+            ) : profile?.wallpaper_url ? (
+                <div className="fixed inset-0 z-0" style={{
+                    backgroundImage: `url(${profile.wallpaper_url})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                }}>
+                    <div className="absolute inset-0 bg-black/65" />
+                </div>
+            ) : (
+                <div className="fixed inset-0 z-0"
+                    style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #1a1a1a 100%)" }}
+                />
+            )}
 
-                {/* FOREGROUND LAYER — name + badges only */}
-                <div className="relative z-10 flex flex-col items-center gap-2 pb-6 w-full">
-                    <p className="text-white font-bold text-2xl text-center">{studentName}</p>
-                    {/* Badges */}
-                    <div className="flex gap-2">
+            {/* All page content sits above background */}
+            <div className="relative z-10">
+
+                {/* Hero — student name only, no background */}
+                <div className="flex flex-col items-center justify-end min-h-[200px] pb-6 pt-8">
+                    <p className="text-white font-bold text-2xl text-center drop-shadow-lg">{studentName}</p>
+                    <div className="flex gap-2 mt-2">
                         {studentMeta?.is_house_band && (
                             <span className="rounded-none bg-blue-900 px-3 py-1 text-xs font-semibold text-blue-300">
                                 House Band
@@ -344,17 +342,16 @@ export default function StudentProfileView({
                         )}
                     </div>
                 </div>
-            </div>
 
-            {/* Pending message banner */}
-            {pendingMsg && (
-                <div className="mx-6 mt-6 rounded-none bg-zinc-800 px-4 py-3 text-center text-sm text-zinc-300">
-                    {pendingMsg}
-                </div>
-            )}
+                {/* Pending message banner */}
+                {pendingMsg && (
+                    <div className="mx-6 mt-6 rounded-none bg-zinc-800 px-4 py-3 text-center text-sm text-zinc-300">
+                        {pendingMsg}
+                    </div>
+                )}
 
-            {/* 2-column grid — show history always visible, right column switches */}
-            <div className="max-w-3xl mx-auto px-6 py-6">
+                {/* 2-column grid — show history always visible, right column switches */}
+                <div className="max-w-3xl mx-auto px-6 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
                     {/* LEFT — always visible */}
@@ -371,7 +368,7 @@ export default function StudentProfileView({
                                 {showHistory.map((entry) => (
                                     <div
                                         key={entry.id}
-                                        className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center"
+                                        className="rounded-none bg-[#1a1a1a]/90 border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center"
                                     >
                                         <div className="flex justify-between items-center">
                                             <span className="text-white text-sm">{entry.show_name}</span>
@@ -672,7 +669,7 @@ export default function StudentProfileView({
                                 )}
 
                                 {profile?.pending_status === "pending" && profile.pending_changes && (
-                                    <div className="rounded-none bg-[#1a1a1a] p-5">
+                                    <div className="rounded-none bg-[#1a1a1a]/90 p-5">
                                         <p className="text-xs uppercase tracking-widest text-zinc-500">
                                             Pending Review
                                         </p>
@@ -718,6 +715,7 @@ export default function StudentProfileView({
                         </button>
                     </div>
                 )}
+                </div>
             </div>
         </div>
     );
