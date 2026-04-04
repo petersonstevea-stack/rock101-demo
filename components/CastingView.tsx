@@ -385,7 +385,38 @@ export default function CastingView({ currentUser, schoolId, schoolName, student
                     .eq("show_group_instance_id", selectedGroupId)
                     .eq("status", "active"),
             ]);
-            const songData = (songsRes.data ?? []) as Song[];
+            let songData = (songsRes.data ?? []) as Song[];
+
+            // Auto-import theme songs when a themed show group has no songs yet
+            if (!songsRes.error && songData.length === 0) {
+                const group = showGroups.find((g) => g.id === selectedGroupId) ?? null;
+                if (group?.show_theme_id) {
+                    const { data: themeSongRows } = await supabase
+                        .from("theme_songs")
+                        .select("title, artist, has_method_lesson, order_index")
+                        .eq("show_theme_id", group.show_theme_id)
+                        .order("order_index", { ascending: true });
+                    if (themeSongRows && themeSongRows.length > 0) {
+                        const { data: inserted } = await supabase
+                            .from("show_group_songs")
+                            .insert(
+                                (themeSongRows as any[]).map((ts, i) => ({
+                                    show_group_instance_id: selectedGroupId,
+                                    title: ts.title,
+                                    artist: ts.artist,
+                                    has_method_lesson: ts.has_method_lesson ?? false,
+                                    order_index: ts.order_index ?? i + 1,
+                                    casting_status: "draft",
+                                }))
+                            )
+                            .select(SONG_SELECT_COLS);
+                        if (inserted && (inserted as Song[]).length > 0) {
+                            songData = inserted as Song[];
+                        }
+                    }
+                }
+            }
+
             if (!songsRes.error) setSongs(songData);
             if (!roomsRes.error && roomsRes.data) setRooms(roomsRes.data as RehearsalRoom[]);
             if (!membershipsRes.error && membershipsRes.data)
