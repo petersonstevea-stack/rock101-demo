@@ -71,6 +71,7 @@ export default function StudentProfileView({
 
     const [posterFile, setPosterFile] = useState<File | null>(null);
     const [posterPreview, setPosterPreview] = useState<string | null>(null);
+    const [posterSizeError, setPosterSizeError] = useState("");
     const [uploadingPoster, setUploadingPoster] = useState(false);
 
     const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -197,40 +198,52 @@ export default function StudentProfileView({
         if (!newShowName.trim() || !newSeasonYear.trim()) return;
 
         setUploadingPoster(true);
-        let pendingPosterUrl: string | null = null;
 
-        if (posterFile) {
-            const ext = posterFile.name.split(".").pop();
-            const path = `${studentId}/posters/${Date.now()}.${ext}`;
+        // Step 1: Insert row first to capture the row ID
+        const { data: insertData, error: insertError } = await supabase
+            .from("student_show_history")
+            .insert({
+                student_id: studentId,
+                show_name: newShowName.trim(),
+                season_year: newSeasonYear.trim(),
+                status: "pending",
+                submitted_at: new Date().toISOString(),
+            })
+            .select("id")
+            .single();
 
-            const { data: uploadData, error } = await supabase.storage
-                .from("student-profiles")
-                .upload(path, posterFile, {
-                    contentType: posterFile.type,
-                    upsert: false,
-                });
-
-            if (!error && uploadData) {
-                const { data: urlData } = supabase.storage
-                    .from("student-profiles")
-                    .getPublicUrl(uploadData.path);
-                pendingPosterUrl = urlData.publicUrl;
-            }
+        if (insertError || !insertData) {
+            setUploadingPoster(false);
+            return;
         }
 
-        await supabase.from("student_show_history").insert({
-            student_id: studentId,
-            show_name: newShowName.trim(),
-            season_year: newSeasonYear.trim(),
-            status: "pending",
-            submitted_at: new Date().toISOString(),
-            pending_poster_url: pendingPosterUrl,
-        });
+        const newRowId = insertData.id;
+
+        // Step 2: Upload poster using row ID as filename
+        if (posterFile) {
+            const path = `${studentId}/posters/${newRowId}.jpg`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from("student-profiles")
+                .upload(path, posterFile, { contentType: posterFile.type, upsert: true });
+
+            if (!uploadError && uploadData) {
+                const { data: urlData } = supabase.storage
+                    .from("student-profiles")
+                    .getPublicUrl(path);
+
+                // Step 3: Update row with poster URL
+                await supabase
+                    .from("student_show_history")
+                    .update({ pending_poster_url: urlData.publicUrl })
+                    .eq("id", newRowId);
+            }
+        }
 
         setNewShowName("");
         setNewSeasonYear("");
         setPosterFile(null);
         setPosterPreview(null);
+        setPosterSizeError("");
         setUploadingPoster(false);
         setAddingShow(false);
         setPendingMsg("Show submitted for staff approval.");
@@ -268,18 +281,20 @@ export default function StudentProfileView({
             {/* Poster collage wallpaper */}
             {approvedPosters.length > 0 && (
                 <div className="relative h-48 w-full overflow-hidden">
-                    {/* Dark overlay */}
-                    <div className="absolute inset-0 z-10 bg-black/60" />
-                    {/* Posters — flush edge to edge */}
-                    <div className="flex h-full w-full">
+                    <div className="absolute inset-0 flex overflow-hidden">
                         {approvedPosters.map((url, i) => (
-                            <img
+                            <div
                                 key={i}
-                                src={url}
-                                alt="Show poster"
-                                className="h-full flex-1 object-cover"
+                                className="flex-1 min-w-0 h-full"
+                                style={{
+                                    backgroundImage: `url(${url})`,
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center top",
+                                }}
                             />
                         ))}
+                        {/* Dark overlay so text stays readable */}
+                        <div className="absolute inset-0 bg-black/60" />
                     </div>
                 </div>
             )}
@@ -396,31 +411,43 @@ export default function StudentProfileView({
                                     onChange={(e) => setNewSeasonYear(e.target.value)}
                                     className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
                                 />
-                                <div className="space-y-1">
-                                    <label className="block text-xs uppercase tracking-widest text-zinc-500">
+                                <div className="flex flex-col gap-2 mt-2">
+                                    <label className="text-zinc-400 text-xs uppercase tracking-wide">
                                         Show Poster (optional)
                                     </label>
-                                    {posterPreview && (
-                                        <img
-                                            src={posterPreview}
-                                            alt="Poster preview"
-                                            className="h-24 w-auto object-contain"
-                                        />
-                                    )}
                                     <input
+                                        id="poster-upload"
                                         type="file"
                                         accept="image/*"
+                                        className="hidden"
                                         onChange={(e) => {
                                             const file = e.target.files?.[0];
-                                            if (file) {
-                                                setPosterFile(file);
-                                                setPosterPreview(URL.createObjectURL(file));
+                                            if (!file) return;
+                                            if (file.size > 10 * 1024 * 1024) {
+                                                setPosterSizeError("File must be under 10MB");
+                                                setPosterFile(null);
+                                                setPosterPreview(null);
+                                                return;
                                             }
+                                            setPosterSizeError("");
+                                            setPosterFile(file);
+                                            setPosterPreview(URL.createObjectURL(file));
                                         }}
-                                        className="w-full text-xs text-zinc-400"
                                     />
-                                    <p className="text-xs text-zinc-600">
-                                        11×17 portrait format. Max 10MB.
+                                    <label
+                                        htmlFor="poster-upload"
+                                        className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
+                                    >
+                                        📄 Attach Show Poster
+                                    </label>
+                                    {posterFile && (
+                                        <p className="text-zinc-400 text-xs">{posterFile.name}</p>
+                                    )}
+                                    {posterSizeError && (
+                                        <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
+                                    )}
+                                    <p className="text-zinc-500 text-xs">
+                                        11×17 JPG or PNG, max 10MB. Staff will review before it appears on your profile.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">

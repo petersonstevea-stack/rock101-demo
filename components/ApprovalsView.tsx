@@ -170,10 +170,15 @@ export default function ApprovalsView() {
                 .eq("id", item.id);
             if (error) console.error("photo approve error:", error);
         } else {
-            await supabase
+            const { error } = await supabase
                 .from("student_show_history")
-                .update({ status: "approved" })
+                .update({
+                    status: "approved",
+                    poster_url: item.pendingPosterUrl ?? null,
+                    pending_poster_url: null,
+                })
                 .eq("id", item.id);
+            if (error) console.error("show approve error:", error);
         }
 
         removeItem(item.id);
