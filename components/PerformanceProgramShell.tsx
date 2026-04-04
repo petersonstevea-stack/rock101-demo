@@ -43,6 +43,7 @@ export default function PerformanceProgramShell({
     const [showGroup, setShowGroup] = useState<ShowGroupInfo | null>(null);
     const [showGroupLoading, setShowGroupLoading] = useState(false);
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+    const [seasonCount, setSeasonCount] = useState(0);
 
     useEffect(() => {
         supabase
@@ -51,6 +52,15 @@ export default function PerformanceProgramShell({
             .eq("student_id", studentId)
             .maybeSingle()
             .then(({ data }) => setPhotoUrl(data?.photo_url ?? null));
+    }, [studentId]);
+
+    useEffect(() => {
+        supabase
+            .from("student_show_history")
+            .select("id", { count: "exact" })
+            .eq("student_id", studentId)
+            .eq("status", "approved")
+            .then(({ count }) => setSeasonCount(count ?? 0));
     }, [studentId]);
 
     useEffect(() => {
@@ -129,19 +139,27 @@ export default function PerformanceProgramShell({
 
                 {/* Student avatar + name */}
                 <div className="flex flex-col items-center px-4 py-4 border-b border-zinc-800">
-                    {photoUrl ? (
-                        <img
-                            src={photoUrl}
-                            alt={studentName}
-                            className="w-16 h-16 rounded-full object-cover ring-2 ring-white ring-offset-2 ring-offset-black mb-2"
-                        />
-                    ) : (
-                        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
-                            <span className="text-white text-xl font-bold">
-                                {studentName?.charAt(0) ?? "?"}
-                            </span>
-                        </div>
-                    )}
+                    <div className="relative inline-block mb-2">
+                        {photoUrl ? (
+                            <img
+                                src={photoUrl}
+                                alt={studentName}
+                                className="w-16 h-16 rounded-full object-cover ring-2 ring-white ring-offset-2 ring-offset-black"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center">
+                                <span className="text-white text-xl font-bold">
+                                    {studentName?.charAt(0) ?? "?"}
+                                </span>
+                            </div>
+                        )}
+                        {seasonCount > 0 && (
+                            <div className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full w-7 h-7 flex flex-col items-center justify-center">
+                                <span className="font-bold leading-none" style={{ fontSize: "10px" }}>{seasonCount}</span>
+                                <span className="uppercase leading-none tracking-wider" style={{ fontSize: "6px" }}>SEASONS</span>
+                            </div>
+                        )}
+                    </div>
                     <p className="text-white text-sm font-semibold text-center">{studentName}</p>
                     <p className="text-zinc-500 text-xs mt-0.5">Student</p>
                 </div>
