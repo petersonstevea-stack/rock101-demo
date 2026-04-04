@@ -1539,6 +1539,7 @@ export default function Rock101App() {
             schoolName={currentSchoolName}
             userName={currentUser?.name ?? ""}
             studentName={selectedStudentName || undefined}
+            studentId={selectedStudentName ? selectedStudent?.id ?? undefined : undefined}
             instrument={selectedStudentName ? selectedStudent?.instrument ?? undefined : undefined}
             programName="Rock 101"
             currentTab={tab}

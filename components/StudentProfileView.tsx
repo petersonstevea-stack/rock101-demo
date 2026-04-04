@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+
 import { supabase } from "@/lib/supabaseClient";
 
 type StudentProfileViewProps = {
@@ -323,44 +323,9 @@ export default function StudentProfileView({
                     <div className="absolute inset-0 bg-black/60" />
                 </div>
 
-                {/* FOREGROUND LAYER — avatar + name on top */}
-                <div className="relative z-10 flex flex-col items-start gap-3 pl-8 pb-6">
-                    <div className="relative">
-                        <div
-                            className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-800 ${
-                                studentMeta?.is_house_band
-                                    ? "ring-4 ring-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]"
-                                    : studentMeta?.is_allstar
-                                    ? "ring-4 ring-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"
-                                    : "ring-2 ring-white ring-offset-2 ring-offset-black"
-                            }`}
-                        >
-                            {profile?.photo_url ? (
-                                <img
-                                    src={profile.photo_url}
-                                    alt={studentName}
-                                    className="h-full w-full object-cover"
-                                />
-                            ) : (
-                                <User size={36} className="text-zinc-500" />
-                            )}
-                        </div>
-
-                        {/* Season badge */}
-                        <div className="absolute -right-2 -top-2 flex h-10 w-10 flex-col items-center justify-center rounded-full bg-blue-500 font-bold text-white">
-                            <span className="text-xs leading-none">{showHistory.length}</span>
-                            <span className="text-[9px] leading-none tracking-wider uppercase">SEASONS</span>
-                        </div>
-                    </div>
-
-                    <p className="text-lg font-semibold text-white">{studentName}</p>
-
-                    {studentMeta?.instrument && (
-                        <p className="text-xs uppercase tracking-widest text-zinc-500">
-                            {studentMeta.instrument}
-                        </p>
-                    )}
-
+                {/* FOREGROUND LAYER — name + badges only */}
+                <div className="relative z-10 flex flex-col items-center gap-2 pb-6">
+                    <p className="text-white font-bold text-xl">{studentName}</p>
                     {/* Badges */}
                     <div className="flex gap-2">
                         {studentMeta?.is_house_band && (

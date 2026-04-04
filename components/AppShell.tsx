@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Music, Music2, Sliders, Users } from "lucide-react";
 import PendingApprovalsBadge from "@/components/PendingApprovalsBadge";
+import { supabase } from "@/lib/supabaseClient";
 
 function getRoleLabel(role: string): string {
   switch (role) {
@@ -61,6 +62,7 @@ type AppShellProps = {
   canSeeShowGroups?: boolean;
   canSeeCasting?: boolean;
   canSeePerformanceRehearsal?: boolean;
+  studentId?: string;
 };
 
 function NavButton({
@@ -254,7 +256,20 @@ function SidebarContent({
   canSeeCasting,
   canSeePerformanceRehearsal,
   selectedSchoolId,
+  studentId,
 }: Omit<AppShellProps, "children">) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!studentId) return;
+    supabase
+      .from("student_profiles")
+      .select("photo_url")
+      .eq("student_id", studentId)
+      .maybeSingle()
+      .then(({ data }) => setPhotoUrl(data?.photo_url ?? null));
+  }, [studentId]);
+
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: "#000000" }}>
       {/* Logo */}
@@ -303,14 +318,23 @@ function SidebarContent({
 
       {/* Student context */}
       {studentName && (
-        <div className="border-b border-zinc-800 px-4 py-4">
-          <div style={{ color: "#666666", fontSize: "10px" }}>
-            Viewing
-          </div>
-          <div className="mt-1 leading-snug text-white" style={{ fontSize: "13px", fontWeight: 500 }}>
-            {studentName}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1">
+        <div className="flex flex-col items-center px-4 py-4 border-b border-zinc-800">
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={studentName}
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-white ring-offset-2 ring-offset-black mb-2"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+              <span className="text-white text-xl font-bold">
+                {studentName?.charAt(0) ?? "?"}
+              </span>
+            </div>
+          )}
+          <p className="text-white text-sm font-semibold text-center">{studentName}</p>
+          <p className="text-zinc-500 text-xs mt-0.5">Student</p>
+          <div className="mt-2 flex flex-wrap gap-1 justify-center">
             {instrument && (
               <span className="bg-zinc-800 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-zinc-300">
                 {instrument}
