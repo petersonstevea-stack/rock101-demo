@@ -1413,10 +1413,18 @@ export default function Rock101App() {
     if (programShell === "select") {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black px-6 py-10">
-                <img src="/sor-logo.png" alt="School of Rock" className="w-32 object-contain" />
-                <p className="text-sm font-semibold uppercase tracking-widest text-white">
-                    Select a Student
-                </p>
+                <img src="/Icons-Red-11.png" alt="Stage Ready" className="w-32 object-contain" />
+                <div className="text-center">
+                    <h1
+                        className="text-4xl font-bold uppercase text-white"
+                        style={{ fontFamily: "var(--font-oswald)" }}
+                    >
+                        Stage Ready
+                    </h1>
+                    <p className="mt-1 text-sm text-zinc-400">
+                        Select a Student
+                    </p>
+                </div>
                 <div className="flex w-full max-w-sm flex-col gap-3">
                     {ppStudents.map((s) => (
                         <button
