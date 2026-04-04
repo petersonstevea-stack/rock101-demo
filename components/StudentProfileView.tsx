@@ -282,32 +282,20 @@ export default function StudentProfileView({
         .filter((s) => s.status === "approved" && s.poster_url)
         .map((s) => s.poster_url!);
 
+    const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
+
+    const imagePosterUrls = approvedPosters.filter((url) => !isPdf(url));
+
     return (
         <div className="w-full bg-black pb-12">
-            {/* Poster collage wallpaper */}
-            {approvedPosters.length > 0 && (
-                <div className="relative h-48 w-full overflow-hidden">
-                    <div className="absolute inset-0 flex overflow-hidden">
-                        {approvedPosters.map((url, i) => {
-                            const isPdf = url.toLowerCase().endsWith(".pdf");
-                            return isPdf ? (
-                                <div
-                                    key={i}
-                                    className="flex-1 min-w-0 h-full bg-[#1a1a1a] flex flex-col items-center justify-center gap-1 p-2"
-                                >
-                                    <span className="text-white text-xs font-bold text-center leading-tight">
-                                        🎸
-                                    </span>
-                                    <a
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[#cc0000] text-xs underline"
-                                    >
-                                        View Poster
-                                    </a>
-                                </div>
-                            ) : (
+            {/* Hero block — wallpaper/collage background with avatar floating on top */}
+            <div className="relative w-full min-h-[200px] flex flex-col items-center justify-end pb-6">
+
+                {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
+                <div className="absolute inset-0 overflow-hidden">
+                    {imagePosterUrls.length > 0 ? (
+                        <div className="flex w-full h-full">
+                            {imagePosterUrls.map((url, i) => (
                                 <div
                                     key={i}
                                     className="flex-1 min-w-0 h-full"
@@ -317,63 +305,74 @@ export default function StudentProfileView({
                                         backgroundPosition: "center top",
                                     }}
                                 />
-                            );
-                        })}
-                        {/* Dark overlay so text stays readable */}
-                        <div className="absolute inset-0 bg-black/60" />
-                    </div>
+                            ))}
+                        </div>
+                    ) : profile?.wallpaper_url ? (
+                        <div
+                            className="w-full h-full"
+                            style={{
+                                backgroundImage: `url(${profile.wallpaper_url})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                            }}
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-[#111111]" />
+                    )}
+                    {/* Dark overlay — always present */}
+                    <div className="absolute inset-0 bg-black/60" />
                 </div>
-            )}
 
-            {/* Avatar section */}
-            <div className="flex flex-col items-center pt-10">
-                <div className="relative">
-                    <div
-                        className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-800 ${
-                            studentMeta?.is_house_band
-                                ? "ring-4 ring-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]"
-                                : studentMeta?.is_allstar
-                                ? "ring-4 ring-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"
-                                : "ring-2 ring-zinc-700"
-                        }`}
-                    >
-                        {profile?.photo_url ? (
-                            <img
-                                src={profile.photo_url}
-                                alt={studentName}
-                                className="h-full w-full object-cover"
-                            />
-                        ) : (
-                            <User size={36} className="text-zinc-500" />
+                {/* FOREGROUND LAYER — avatar + name on top */}
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                    <div className="relative">
+                        <div
+                            className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-800 ${
+                                studentMeta?.is_house_band
+                                    ? "ring-4 ring-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]"
+                                    : studentMeta?.is_allstar
+                                    ? "ring-4 ring-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"
+                                    : "ring-2 ring-zinc-700"
+                            }`}
+                        >
+                            {profile?.photo_url ? (
+                                <img
+                                    src={profile.photo_url}
+                                    alt={studentName}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <User size={36} className="text-zinc-500" />
+                            )}
+                        </div>
+
+                        {/* Season badge */}
+                        <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                            {showHistory.length}
+                        </div>
+                    </div>
+
+                    <p className="text-lg font-semibold text-white">{studentName}</p>
+
+                    {studentMeta?.instrument && (
+                        <p className="text-xs uppercase tracking-widest text-zinc-500">
+                            {studentMeta.instrument}
+                        </p>
+                    )}
+
+                    {/* Badges */}
+                    <div className="flex gap-2">
+                        {studentMeta?.is_house_band && (
+                            <span className="rounded-none bg-blue-900 px-3 py-1 text-xs font-semibold text-blue-300">
+                                House Band
+                            </span>
+                        )}
+                        {studentMeta?.is_allstar && (
+                            <span className="rounded-none bg-yellow-900 px-3 py-1 text-xs font-semibold text-yellow-300">
+                                All-Star
+                            </span>
                         )}
                     </div>
-
-                    {/* Season badge */}
-                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                        {showHistory.length}
-                    </div>
-                </div>
-
-                <p className="mt-4 text-lg font-semibold text-white">{studentName}</p>
-
-                {studentMeta?.instrument && (
-                    <p className="mt-1 text-xs uppercase tracking-widest text-zinc-500">
-                        {studentMeta.instrument}
-                    </p>
-                )}
-
-                {/* Badges */}
-                <div className="mt-3 flex gap-2">
-                    {studentMeta?.is_house_band && (
-                        <span className="rounded-none bg-blue-900 px-3 py-1 text-xs font-semibold text-blue-300">
-                            House Band
-                        </span>
-                    )}
-                    {studentMeta?.is_allstar && (
-                        <span className="rounded-none bg-yellow-900 px-3 py-1 text-xs font-semibold text-yellow-300">
-                            All-Star
-                        </span>
-                    )}
                 </div>
             </div>
 
