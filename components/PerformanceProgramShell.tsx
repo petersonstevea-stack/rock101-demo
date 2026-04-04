@@ -206,11 +206,6 @@ export default function PerformanceProgramShell({
 
             {/* Main content */}
             <div className="flex-1 overflow-y-auto bg-black">
-                {/* Hero */}
-                <div className="px-6 py-12 text-center">
-                    <p className="text-white font-bold text-2xl text-center drop-shadow-lg">{studentName}</p>
-                </div>
-
                 {/* Tab content */}
                 <div className="pb-12">
                     {activeTab === "casting" && (
