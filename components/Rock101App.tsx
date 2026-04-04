@@ -162,10 +162,6 @@ export default function Rock101App() {
         const checkUser = async () => {
             const { data } = await supabase.auth.getUser();
 
-            console.log('checkUser metadata:', JSON.stringify(data?.user?.user_metadata ?? 'none'));
-            console.log('checkUser metaRole:', data?.user?.user_metadata?.role);
-            console.log('checkUser metaStudents:', data?.user?.user_metadata?.students);
-
             if (data?.user) {
                 const authEmail = data.user.email?.trim().toLowerCase();
 
@@ -194,39 +190,26 @@ export default function Rock101App() {
                     };
                     setCurrentUser(sessionUser);
                 } else {
-                    // No staff row — check if this is a parent SSO login via user_metadata
+                    // No staff row — SSO parent login. Build SessionUser with raw metadata
+                    // so the currentUser useEffect below can route to the correct shell.
                     const metaRole = data.user.user_metadata?.role;
-                    const metaStudents = data.user.user_metadata?.students as
-                        Array<{ student_id: string; student_name: string; program: string }> | undefined;
-
-                    if (metaRole === "parent" && metaStudents) {
-                        const parentName = metaStudents[0]?.student_name
+                    if (metaRole === "parent") {
+                        const metaStudents = data.user.user_metadata?.students as
+                            Array<{ student_id: string; student_name: string; program: string }> | undefined;
+                        const parentName = metaStudents?.[0]?.student_name
                             ? `Parent of ${metaStudents[0].student_name}`
                             : data.user.email?.trim().toLowerCase() ?? "";
                         const parentEmail = data.user.email?.trim().toLowerCase() ?? "";
-                        const metaSchoolId = data.user.user_metadata?.school_id ?? "del-mar";
+                        const metaSchoolId = (data.user.user_metadata?.school_id as string) ?? "del-mar";
 
                         setCurrentUser({
                             email: parentEmail,
                             name: parentName,
                             role: "parent",
                             schoolId: metaSchoolId,
+                            userMetadata: data.user.user_metadata ?? {},
                         });
-
-                        if (metaStudents.length === 1) {
-                            const s = metaStudents[0];
-                            setPpStudentId(s.student_id);
-                            setPpStudentName(s.student_name);
-                            if (s.program === "performance_program") {
-                                setProgramShell("performance");
-                            } else {
-                                setProgramShell("rock101");
-                            }
-                        } else {
-                            setProgramShell("select");
-                            setPpStudents(metaStudents);
-                        }
-                    } else if (!metaRole || metaRole !== "parent") {
+                    } else {
                         setProgramShell("rock101");
                     }
                 }
@@ -235,6 +218,53 @@ export default function Rock101App() {
 
         checkUser();
     }, []);
+
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const meta = currentUser.userMetadata ?? {};
+        const metaRole = (meta.role as string) ?? currentUser.role;
+
+        console.log('programShell detection:', metaRole, meta.students);
+
+        if (metaRole === "parent") {
+            let students: Array<{ student_id: string; student_name: string; program: string }> = [];
+
+            if (Array.isArray(meta.students) && meta.students.length > 0) {
+                students = meta.students as Array<{ student_id: string; student_name: string; program: string }>;
+            } else if (meta.student_id) {
+                students = [{
+                    student_id: meta.student_id as string,
+                    student_name: (meta.student_name as string) ?? "",
+                    program: (meta.program as string) ?? "rock_101",
+                }];
+            }
+
+            if (students.length === 0) {
+                setProgramShell("rock101");
+            } else if (students.length === 1) {
+                const s = students[0];
+                setPpStudentId(s.student_id);
+                setPpStudentName(s.student_name);
+                setPpStudents(students);
+                if (s.program === "performance_program") {
+                    setProgramShell("performance");
+                } else {
+                    setProgramShell("rock101");
+                    setSelectedStudentName(s.student_name);
+                }
+            } else {
+                setPpStudents(students);
+                setProgramShell("select");
+            }
+        } else {
+            if (programShell === null) {
+                setProgramShell("rock101");
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentUser]);
+
     useEffect(() => {
         const savedTab = getSavedTab();
 

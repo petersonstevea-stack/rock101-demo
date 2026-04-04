@@ -9,6 +9,7 @@ export type SessionUser = {
     role: AppUser["role"];
     schoolId: string;
     staffId?: string;
+    userMetadata?: Record<string, unknown>;
 };
 
 type StaffRow = {
