@@ -63,16 +63,11 @@ export default function StudentProfileView({
     const [studentMeta, setStudentMeta] = useState<StudentMeta | null>(null);
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
-    const [addingShow, setAddingShow] = useState(false);
-    const [newShowName, setNewShowName] = useState("");
-    const [newSeasonYear, setNewSeasonYear] = useState("");
     const [saving, setSaving] = useState(false);
     const [pendingMsg, setPendingMsg] = useState("");
 
-    const [posterFile, setPosterFile] = useState<File | null>(null);
-    const [posterPreview, setPosterPreview] = useState<string | null>(null);
-    const [posterSizeError, setPosterSizeError] = useState("");
-    const [uploadingPoster, setUploadingPoster] = useState(false);
+    const [showBatchForm, setShowBatchForm] = useState(false);
+    const [batchEntries, setBatchEntries] = useState<Array<{ showName: string; seasonYear: string }>>([{ showName: "", seasonYear: "" }]);
 
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -198,65 +193,31 @@ export default function StudentProfileView({
         setSaving(false);
     }
 
-    async function handleAddShow() {
-        if (!newShowName.trim() || !newSeasonYear.trim()) return;
+    async function handleBatchSubmit() {
+        const valid = batchEntries.filter(
+            (e) => e.showName.trim() && e.seasonYear.trim()
+        );
+        if (valid.length === 0) return;
 
-        setUploadingPoster(true);
-
-        // Step 1: Insert row first to capture the row ID
-        const { data: insertData, error: insertError } = await supabase
+        const { error } = await supabase
             .from("student_show_history")
-            .insert({
-                student_id: studentId,
-                show_name: newShowName.trim(),
-                season_year: newSeasonYear.trim(),
-                status: "pending",
-                submitted_at: new Date().toISOString(),
-            })
-            .select("id")
-            .single();
+            .insert(
+                valid.map((e) => ({
+                    student_id: studentId,
+                    show_name: e.showName.trim(),
+                    season_year: e.seasonYear.trim(),
+                    status: "pending",
+                }))
+            );
 
-        if (insertError || !insertData) {
-            setUploadingPoster(false);
+        if (error) {
+            console.error("Batch submit error:", error);
             return;
         }
 
-        const newRowId = insertData.id;
-
-        // Step 2: Upload poster using row ID as filename, preserving extension
-        if (posterFile) {
-            const ext = posterFile.name.split(".").pop() ?? "jpg";
-            const path = `${studentId}/posters/${newRowId}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-                .from("student-profiles")
-                .upload(path, posterFile, { contentType: posterFile.type, upsert: true });
-
-            if (uploadError) {
-                console.error("Poster upload error:", uploadError);
-                setPosterSizeError("Upload failed: " + uploadError.message);
-                setUploadingPoster(false);
-                return;
-            }
-
-            const { data: urlData } = supabase.storage
-                .from("student-profiles")
-                .getPublicUrl(path);
-
-            // Step 3: Update row with poster URL
-            await supabase
-                .from("student_show_history")
-                .update({ pending_poster_url: urlData.publicUrl })
-                .eq("id", newRowId);
-        }
-
-        setNewShowName("");
-        setNewSeasonYear("");
-        setPosterFile(null);
-        setPosterPreview(null);
-        setPosterSizeError("");
-        setUploadingPoster(false);
-        setAddingShow(false);
-        setPendingMsg("Show submitted for staff approval.");
+        setShowBatchForm(false);
+        setBatchEntries([{ showName: "", seasonYear: "" }]);
+        setPendingMsg("Shows submitted for staff approval.");
 
         const { data: history } = await supabase
             .from("student_show_history")
@@ -388,87 +349,95 @@ export default function StudentProfileView({
 
                         {isOwnProfile && (
                             <>
-                                {!addingShow ? (
+                                {!showBatchForm && (
                                     <button
                                         type="button"
-                                        onClick={() => setAddingShow(true)}
-                                        className="text-xs text-zinc-600 transition hover:text-white w-fit"
+                                        onClick={() => setShowBatchForm(true)}
+                                        className="text-zinc-400 text-xs hover:text-white mt-2 text-left"
                                     >
-                                        + Add a completed show
+                                        + Add completed shows
                                     </button>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Show name"
-                                            value={newShowName}
-                                            onChange={(e) => setNewShowName(e.target.value)}
-                                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Season / Year (e.g. Spring 2025)"
-                                            value={newSeasonYear}
-                                            onChange={(e) => setNewSeasonYear(e.target.value)}
-                                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                        />
-                                        <div className="flex flex-col gap-2 mt-2">
-                                            <label className="text-zinc-400 text-xs uppercase tracking-wide">
-                                                Show Poster (optional)
-                                            </label>
-                                            <input
-                                                id="poster-upload"
-                                                type="file"
-                                                accept="image/*,application/pdf"
-                                                className="hidden"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (!file) return;
-                                                    if (file.size > 10 * 1024 * 1024) {
-                                                        setPosterSizeError("File must be under 10MB");
-                                                        setPosterFile(null);
-                                                        setPosterPreview(null);
-                                                        return;
-                                                    }
-                                                    setPosterSizeError("");
-                                                    setPosterFile(file);
-                                                    setPosterPreview(URL.createObjectURL(file));
-                                                }}
-                                            />
-                                            <label
-                                                htmlFor="poster-upload"
-                                                className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
-                                            >
-                                                📄 Attach Show Poster
-                                            </label>
-                                            {posterFile && (
-                                                <p className="text-zinc-400 text-xs">{posterFile.name}</p>
-                                            )}
-                                            {posterSizeError && (
-                                                <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
-                                            )}
-                                            <p className="text-zinc-500 text-xs">
-                                                JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
-                                            </p>
+                                )}
+
+                                {showBatchForm && (
+                                    <div className="flex flex-col gap-3 mt-3">
+                                        {/* Header row */}
+                                        <div className="flex gap-2 text-zinc-500 text-xs uppercase tracking-wide px-1">
+                                            <span className="flex-1">Show Name</span>
+                                            <span className="w-32">Season / Year</span>
+                                            <span className="w-6" />
                                         </div>
-                                        <div className="flex items-center gap-2">
+
+                                        {/* Entry rows */}
+                                        {batchEntries.map((entry, index) => (
+                                            <div key={index} className="flex gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Led Zeppelin"
+                                                    value={entry.showName}
+                                                    onChange={(e) => {
+                                                        const updated = [...batchEntries];
+                                                        updated[index] = { ...updated[index], showName: e.target.value };
+                                                        setBatchEntries(updated);
+                                                    }}
+                                                    className="flex-1 bg-[#1a1a1a] text-white text-sm px-3 py-2 rounded-none border border-zinc-600 focus:border-zinc-400 outline-none"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Spring 2024"
+                                                    value={entry.seasonYear}
+                                                    onChange={(e) => {
+                                                        const updated = [...batchEntries];
+                                                        updated[index] = { ...updated[index], seasonYear: e.target.value };
+                                                        setBatchEntries(updated);
+                                                    }}
+                                                    className="w-32 bg-[#1a1a1a] text-white text-sm px-3 py-2 rounded-none border border-zinc-600 focus:border-zinc-400 outline-none"
+                                                />
+                                                {batchEntries.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setBatchEntries(batchEntries.filter((_, i) => i !== index))}
+                                                        className="w-6 text-zinc-500 hover:text-white text-lg leading-none"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* Add row button */}
+                                        {batchEntries.length < 25 && (
                                             <button
                                                 type="button"
-                                                onClick={handleAddShow}
-                                                disabled={uploadingPoster}
-                                                className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
+                                                onClick={() => setBatchEntries([...batchEntries, { showName: "", seasonYear: "" }])}
+                                                className="text-zinc-400 text-xs hover:text-white text-left"
                                             >
-                                                {uploadingPoster ? "Uploading..." : "Submit"}
+                                                + Add another show
+                                            </button>
+                                        )}
+
+                                        {/* Action buttons */}
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleBatchSubmit}
+                                                className="bg-[#cc0000] text-white text-sm px-4 py-2 rounded-none hover:bg-[#b30000] font-semibold"
+                                            >
+                                                Submit All for Review
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setAddingShow(false)}
-                                                className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
+                                                onClick={() => {
+                                                    setShowBatchForm(false);
+                                                    setBatchEntries([{ showName: "", seasonYear: "" }]);
+                                                }}
+                                                className="bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-none border border-zinc-600"
                                             >
                                                 Cancel
                                             </button>
                                         </div>
-                                        <p className="text-xs text-zinc-600">
+
+                                        <p className="text-zinc-500 text-xs">
                                             Show submissions are reviewed by staff before appearing on your profile.
                                         </p>
                                     </div>
