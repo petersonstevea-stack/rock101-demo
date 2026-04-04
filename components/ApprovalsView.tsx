@@ -20,7 +20,7 @@ type ProfileRow = {
     student_id: string;
     pending_changes: Record<string, string> | null;
     pending_submitted_at: string | null;
-    students: { first_name: string; last_name: string } | null;
+    students: { first_name: string; last_initial: string } | null;
 };
 
 type ShowRow = {
@@ -30,7 +30,7 @@ type ShowRow = {
     season_year: string;
     pending_poster_url: string | null;
     created_at: string;
-    students: { first_name: string; last_name: string } | null;
+    students: { first_name: string; last_initial: string } | null;
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -58,12 +58,12 @@ export default function ApprovalsView() {
         const [profilesResult, historyResult] = await Promise.all([
             supabase
                 .from("student_profiles")
-                .select("id, student_id, pending_changes, pending_submitted_at, students(first_name, last_name)")
+                .select("id, student_id, pending_changes, pending_submitted_at, students(first_name, last_initial)")
                 .eq("pending_status", "pending")
                 .returns<ProfileRow[]>(),
             supabase
                 .from("student_show_history")
-                .select("id, student_id, show_name, season_year, pending_poster_url, created_at, students(first_name, last_name)")
+                .select("id, student_id, show_name, season_year, pending_poster_url, created_at, students(first_name, last_initial)")
                 .eq("status", "pending")
                 .returns<ShowRow[]>(),
         ]);
@@ -72,7 +72,7 @@ export default function ApprovalsView() {
             id: row.id,
             type: "profile",
             studentId: row.student_id,
-            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_name ?? ""}`.trim(),
+            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_initial ? row.students.last_initial + "." : ""}`.trim(),
             submittedAt: row.pending_submitted_at ?? "",
             pendingChanges: row.pending_changes,
         }));
@@ -81,7 +81,7 @@ export default function ApprovalsView() {
             id: row.id,
             type: "show",
             studentId: row.student_id,
-            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_name ?? ""}`.trim(),
+            studentName: `${row.students?.first_name ?? ""} ${row.students?.last_initial ? row.students.last_initial + "." : ""}`.trim(),
             submittedAt: row.created_at,
             showName: row.show_name,
             seasonYear: row.season_year,
