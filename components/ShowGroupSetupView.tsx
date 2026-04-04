@@ -72,12 +72,7 @@ type FormState = {
     showType: ShowTypeKey | null;
     themeId: string;
     name: string;
-    dayOfWeek: string;
-    startTime: string;
-    endTime: string;
     venueName: string;
-    startDate: string;
-    endDate: string;
     instructorId: string;
 };
 
@@ -91,33 +86,7 @@ type ShowGroupSetupViewProps = {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const DAYS_OF_WEEK = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-];
-
 const SEASON_ORDER: Record<string, number> = { spring: 1, summer: 2, fall: 3 };
-
-function generateTimeOptions(): string[] {
-    const options: string[] = [];
-    for (let hour = 8; hour <= 22; hour++) {
-        for (let min = 0; min < 60; min += 15) {
-            if (hour === 22 && min > 0) break;
-            const h12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-            const ampm = hour >= 12 ? "PM" : "AM";
-            const minStr = min === 0 ? "00" : String(min);
-            options.push(`${h12}:${minStr} ${ampm}`);
-        }
-    }
-    return options;
-}
-
-const TIME_OPTIONS = generateTimeOptions();
 
 const INSTRUMENT_ORDER = ["vocals", "guitar", "bass", "drums", "keys"];
 
@@ -126,12 +95,7 @@ const DEFAULT_FORM: FormState = {
     showType: null,
     themeId: "",
     name: "",
-    dayOfWeek: "Monday",
-    startTime: "",
-    endTime: "",
     venueName: "",
-    startDate: "",
-    endDate: "",
     instructorId: "",
 };
 
@@ -383,12 +347,7 @@ export default function ShowGroupSetupView({
             name: createForm.name.trim(),
             venue_name: createForm.venueName.trim() || null,
             class_instructor_id: createForm.instructorId || null,
-            start_date: createForm.startDate || null,
-            end_date: createForm.endDate || null,
             status: "active",
-            day_of_week: createForm.dayOfWeek || null,
-            start_time: createForm.startTime || null,
-            end_time: createForm.endTime || null,
         });
         setCreating(false);
         if (error) {
@@ -418,12 +377,7 @@ export default function ShowGroupSetupView({
             showType,
             themeId: group.show_theme_id ?? "",
             name: group.name,
-            dayOfWeek: group.day_of_week ?? "Monday",
-            startTime: group.start_time ?? "",
-            endTime: group.end_time ?? "",
             venueName: group.venue_name ?? "",
-            startDate: group.start_date ?? "",
-            endDate: group.end_date ?? "",
             instructorId: group.class_instructor_id ?? "",
         });
     }
@@ -451,11 +405,6 @@ export default function ShowGroupSetupView({
                 name: editForm.name.trim(),
                 venue_name: editForm.venueName.trim() || null,
                 class_instructor_id: editForm.instructorId || null,
-                start_date: editForm.startDate || null,
-                end_date: editForm.endDate || null,
-                day_of_week: editForm.dayOfWeek || null,
-                start_time: editForm.startTime || null,
-                end_time: editForm.endTime || null,
             })
             .eq("id", groupId);
         setSaving(false);
@@ -882,78 +831,6 @@ export default function ShowGroupSetupView({
                     />
                 </div>
 
-                {/* Day + Times */}
-                <div className="grid grid-cols-3 gap-3">
-                    <div>
-                        <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                            Day of Week
-                        </label>
-                        <select
-                            value={form.dayOfWeek}
-                            onChange={(e) =>
-                                onChange({ dayOfWeek: e.target.value })
-                            }
-                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        >
-                            {DAYS_OF_WEEK.map((d) => (
-                                <option
-                                    key={d}
-                                    value={d}
-                                    style={{ backgroundColor: "#000" }}
-                                >
-                                    {d}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                            Start Time
-                        </label>
-                        <select
-                            value={form.startTime}
-                            onChange={(e) =>
-                                onChange({ startTime: e.target.value })
-                            }
-                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        >
-                            <option value="">—</option>
-                            {TIME_OPTIONS.map((t) => (
-                                <option
-                                    key={t}
-                                    value={t}
-                                    style={{ backgroundColor: "#000" }}
-                                >
-                                    {t}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                            End Time
-                        </label>
-                        <select
-                            value={form.endTime}
-                            onChange={(e) =>
-                                onChange({ endTime: e.target.value })
-                            }
-                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        >
-                            <option value="">—</option>
-                            {TIME_OPTIONS.map((t) => (
-                                <option
-                                    key={t}
-                                    value={t}
-                                    style={{ backgroundColor: "#000" }}
-                                >
-                                    {t}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
                 {/* Venue */}
                 <div>
                     <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
@@ -971,36 +848,6 @@ export default function ShowGroupSetupView({
                         placeholder="Performance venue"
                         className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600"
                     />
-                </div>
-
-                {/* Date range */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div>
-                        <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                            Start Date
-                        </label>
-                        <input
-                            type="date"
-                            value={form.startDate}
-                            onChange={(e) =>
-                                onChange({ startDate: e.target.value })
-                            }
-                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="mb-1 block text-xs uppercase tracking-wide text-zinc-400">
-                            End Date
-                        </label>
-                        <input
-                            type="date"
-                            value={form.endDate}
-                            onChange={(e) =>
-                                onChange({ endDate: e.target.value })
-                            }
-                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
-                        />
-                    </div>
                 </div>
 
                 {/* Class Instructor */}
