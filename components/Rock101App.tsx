@@ -1715,26 +1715,44 @@ export default function Rock101App() {
                                             student.name?.toLowerCase().includes(q) ||
                                             student.instrument?.toLowerCase().includes(q)
                                         );
-                                    }).map((student) => (
-                                        <button
-                                            key={student.name}
-                                            type="button"
-                                            onClick={() => handleSelectStudent(student.name)}
-                                            className="rounded-none border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-zinc-700 hover:bg-zinc-900"
-                                        >
-                                            <div className="font-semibold text-white">
-                                                {student.name}
-                                            </div>
-                                            <div className="mt-1 text-sm text-zinc-400">
-                                                {student.instrument}
-                                            </div>
-                                            <div className="mt-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
-                                                {schoolList.find(
-                                                    (school) => school.id === student.schoolId
-                                                )?.name ?? "School of Rock"}
-                                            </div>
-                                        </button>
-                                    ))}
+                                    }).map((student) => {
+                                        const isR101 = (student as any).program === "rock101"
+                                            || (student as any).program === "rock_101";
+                                        const isPP = (student as any).program === "performance_program";
+                                        return (
+                                            <button
+                                                key={student.name}
+                                                type="button"
+                                                onClick={() => handleSelectStudent(student.name)}
+                                                className="rounded-none p-4 text-left transition"
+                                                style={{
+                                                    backgroundColor: isR101 ? "#cc0000" : "#1a1a1a",
+                                                    border: isR101
+                                                        ? "1px solid #b30000"
+                                                        : "1px solid #3f3f46",
+                                                }}
+                                            >
+                                                <div className="font-semibold text-white">
+                                                    {student.name}
+                                                </div>
+                                                {(student as any).instrument && (
+                                                    <div className="mt-1 text-sm text-zinc-200">
+                                                        {(student as any).instrument}
+                                                    </div>
+                                                )}
+                                                {isPP && (
+                                                    <div className="mt-1 text-xs text-zinc-400">
+                                                        Performance Program
+                                                    </div>
+                                                )}
+                                                <div className="mt-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
+                                                    {schoolList.find(
+                                                        (school) => school.id === student.schoolId
+                                                    )?.name ?? "School of Rock"}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="mt-6 rounded-none border border-zinc-800 bg-zinc-950 p-4 text-zinc-300">
