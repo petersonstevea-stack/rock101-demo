@@ -289,7 +289,7 @@ export default function StudentProfileView({
     return (
         <div className="w-full bg-black pb-12">
             {/* Hero block — wallpaper/collage background with avatar floating on top */}
-            <div className="relative w-full min-h-[200px] flex flex-col items-center justify-end pb-6">
+            <div className="relative w-full min-h-[280px] flex flex-col items-center justify-end pb-6">
 
                 {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
                 <div className="absolute inset-0 overflow-hidden">
@@ -384,7 +384,7 @@ export default function StudentProfileView({
             )}
 
             {/* Show history section */}
-            <div className="mt-8 px-6">
+            <div className="mt-8 px-6 max-w-sm">
                 <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
 
                 {showHistory.length === 0 ? (
