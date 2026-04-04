@@ -8,6 +8,7 @@ type PerformanceProgramShellProps = {
     studentId: string;
     schoolId: string;
     onSignOut: () => void;
+    onSwitchStudent?: () => void;
 };
 
 type ActiveTab = "casting" | "show" | "lesson" | "profile";
@@ -17,6 +18,7 @@ export default function PerformanceProgramShell({
     studentId,
     schoolId,
     onSignOut,
+    onSwitchStudent,
 }: PerformanceProgramShellProps) {
     const [activeTab, setActiveTab] = useState<ActiveTab>("casting");
 
@@ -61,8 +63,17 @@ export default function PerformanceProgramShell({
                     ))}
                 </nav>
 
-                {/* Spacer + Sign Out */}
+                {/* Spacer + Switch Student + Sign Out */}
                 <div className="flex flex-1 flex-col justify-end pb-4">
+                    {onSwitchStudent && (
+                        <button
+                            type="button"
+                            onClick={onSwitchStudent}
+                            className="w-full rounded-none px-4 py-3 text-left text-xs text-zinc-400 transition hover:text-white"
+                        >
+                            ← Switch Student
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={onSignOut}

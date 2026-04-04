@@ -133,9 +133,12 @@ export default function Rock101App() {
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [castingShowGroupId, setCastingShowGroupId] = useState<string | null>(null);
-    const [programShell, setProgramShell] = useState<"rock101" | "performance" | null>(null);
+    const [programShell, setProgramShell] = useState<"rock101" | "performance" | "select" | null>(null);
     const [ppStudentId, setPpStudentId] = useState("");
     const [ppStudentName, setPpStudentName] = useState("");
+    const [ppStudents, setPpStudents] = useState<
+        Array<{ student_id: string; student_name: string; program: string }>
+    >([]);
 
     useEffect(() => {
         supabase
@@ -189,23 +192,25 @@ export default function Rock101App() {
                 } else {
                     // No staff row — check if this is a parent SSO login via user_metadata
                     const metaRole = data.user.user_metadata?.role;
-                    const metaProgram = data.user.user_metadata?.program;
-                    const metaStudentId = data.user.user_metadata?.student_id;
-                    const metaStudentName = data.user.user_metadata?.student_name;
+                    const metaStudents = data.user.user_metadata?.students as
+                        Array<{ student_id: string; student_name: string; program: string }> | undefined;
 
-                    if (metaRole === "parent" && metaProgram === "performance_program") {
-                        setProgramShell("performance");
-                        setPpStudentId(metaStudentId ?? "");
-                        setPpStudentName(metaStudentName ?? "");
-                    } else if (metaRole === "parent") {
+                    if (metaRole === "parent" && metaStudents) {
+                        if (metaStudents.length === 1) {
+                            const s = metaStudents[0];
+                            setPpStudentId(s.student_id);
+                            setPpStudentName(s.student_name);
+                            if (s.program === "performance_program") {
+                                setProgramShell("performance");
+                            } else {
+                                setProgramShell("rock101");
+                            }
+                        } else {
+                            setProgramShell("select");
+                            setPpStudents(metaStudents);
+                        }
+                    } else if (!metaRole || metaRole !== "parent") {
                         setProgramShell("rock101");
-                        const parentEmail = data.user.email?.trim().toLowerCase() ?? "";
-                        setCurrentUser({
-                            email: parentEmail,
-                            name: metaStudentName ?? parentEmail,
-                            role: "parent",
-                            schoolId: data.user.user_metadata?.school_id ?? "del-mar",
-                        });
                     }
                 }
             }
@@ -1351,12 +1356,58 @@ export default function Rock101App() {
         );
     }
 
+    if (programShell === "select") {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black px-6 py-10">
+                <img src="/sor-logo.png" alt="School of Rock" className="w-32 object-contain" />
+                <p className="text-sm font-semibold uppercase tracking-widest text-white">
+                    Select a Student
+                </p>
+                <div className="flex w-full max-w-sm flex-col gap-3">
+                    {ppStudents.map((s) => (
+                        <button
+                            key={s.student_id}
+                            type="button"
+                            onClick={() => {
+                                setPpStudentId(s.student_id);
+                                setPpStudentName(s.student_name);
+                                if (s.program === "performance_program") {
+                                    setProgramShell("performance");
+                                } else {
+                                    setProgramShell("rock101");
+                                }
+                            }}
+                            className="w-full rounded-none bg-zinc-800 px-6 py-4 text-left transition hover:bg-[#cc0000]"
+                        >
+                            <p className="font-semibold text-white">{s.student_name}</p>
+                            <p className="text-xs text-zinc-400">
+                                {s.program === "performance_program" ? "Performance Program" : "Rock 101"}
+                            </p>
+                        </button>
+                    ))}
+                </div>
+                <button
+                    type="button"
+                    onClick={async () => {
+                        await supabase.auth.signOut();
+                        setCurrentUser(null);
+                        setProgramShell(null);
+                    }}
+                    className="mt-4 text-xs text-zinc-600 transition hover:text-white"
+                >
+                    Sign out
+                </button>
+            </div>
+        );
+    }
+
     if (programShell === "performance") {
         return (
             <PerformanceProgramShell
                 studentName={ppStudentName}
                 studentId={ppStudentId}
                 schoolId={currentUser?.schoolId ?? ""}
+                onSwitchStudent={ppStudents.length > 1 ? () => setProgramShell("select") : undefined}
                 onSignOut={async () => {
                     await supabase.auth.signOut();
                     setCurrentUser(null);

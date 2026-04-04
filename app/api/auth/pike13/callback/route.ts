@@ -119,7 +119,11 @@ export async function GET(request: NextRequest) {
                 );
             }
 
-            const student = studentRows[0];
+            const studentsArray = studentRows.map((s) => ({
+                student_id: s.id,
+                student_name: `${s.first_name} ${s.last_initial}.`,
+                program: s.program,
+            }));
 
             const { error: createError } = await supabaseAdmin.auth.admin.createUser({
                 email: normalizedEmail,
@@ -141,10 +145,8 @@ export async function GET(request: NextRequest) {
                         redirectTo: SITE_URL,
                         data: {
                             role: "parent",
-                            program: student.program,
-                            student_id: student.id,
-                            school_id: student.school_id,
-                            student_name: `${student.first_name} ${student.last_initial}.`,
+                            school_id: schoolRow.id,
+                            students: studentsArray,
                         },
                     },
                 });
