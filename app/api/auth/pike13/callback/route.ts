@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
         const pike13Email = profileData?.people?.[0]?.email ?? null;
         const pike13LocationId = profileData?.people?.[0]?.location_id ?? null;
 
+        console.log(`SSO: location_id=${pike13LocationId} email=${pike13Email?.trim().toLowerCase()}`);
+
         if (!pike13Email) {
             return NextResponse.redirect(`${SITE_URL}/?sso_error=no_email`);
         }

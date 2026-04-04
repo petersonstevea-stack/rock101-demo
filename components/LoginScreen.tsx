@@ -37,6 +37,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             const messages: Record<string, string> = {
                 not_authorized: "Your account is not authorized for Stage Ready.",
                 school_not_found: "Your school is not yet connected to Stage Ready.",
+                school_not_configured: "This school is not yet set up for Stage Ready login.",
                 pike13_denied: "Pike13 login was cancelled.",
                 profile_fetch_failed: "Could not retrieve your Pike13 profile.",
                 token_exchange_failed: "Pike13 authentication failed.",
