@@ -282,11 +282,6 @@ export default function StudentProfileView({
         .filter((s) => s.status === "approved" && s.poster_url)
         .map((s) => s.poster_url!);
 
-    console.log("approvedPosters:", approvedPosters,
-                "showHistory approved rows:",
-                showHistory.filter(s => s.status === "approved")
-                    .map(s => ({ show: s.show_name, poster_url: s.poster_url })));
-
     const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
 
     const imagePosterUrls = approvedPosters.filter((url) => !isPdf(url));
