@@ -383,200 +383,209 @@ export default function StudentProfileView({
                 </div>
             )}
 
-            {/* Show history section */}
-            <div className="mt-8 px-6 max-w-sm">
-                <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
+            {/* 2-column grid — show history left, personal info right */}
+            {!editMode ? (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
 
-                {showHistory.length === 0 ? (
-                    <p className="mt-3 text-sm text-zinc-500">No completed shows yet.</p>
-                ) : (
-                    <div className="mt-3 space-y-2">
-                        {showHistory.map((entry) => (
-                            <div
-                                key={entry.id}
-                                className="flex items-center justify-between rounded-none bg-[#111111] px-4 py-3"
-                            >
-                                <p className="text-sm text-white">{entry.show_name}</p>
-                                <div className="flex items-center gap-2">
-                                    {entry.status === "pending" && (
-                                        <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
-                                            Pending review
-                                        </span>
-                                    )}
-                                    <span className="text-xs text-zinc-500">{entry.season_year}</span>
+                        {/* LEFT — show history */}
+                        <div className="flex flex-col gap-3">
+                            <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
+
+                            {showHistory.length === 0 ? (
+                                <p className="text-sm text-zinc-500">No completed shows yet.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {showHistory.map((entry) => (
+                                        <div
+                                            key={entry.id}
+                                            className="flex items-center justify-between rounded-none bg-[#111111] px-4 py-3"
+                                        >
+                                            <p className="text-sm text-white">{entry.show_name}</p>
+                                            <div className="flex items-center gap-2">
+                                                {entry.status === "pending" && (
+                                                    <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
+                                                        Pending review
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-zinc-500">{entry.season_year}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            )}
 
-                {isOwnProfile && (
-                    <>
-                        {!addingShow ? (
-                            <button
-                                type="button"
-                                onClick={() => setAddingShow(true)}
-                                className="mt-3 text-xs text-zinc-600 transition hover:text-white"
-                            >
-                                + Add a completed show
-                            </button>
-                        ) : (
-                            <div className="mt-4 space-y-2">
-                                <input
-                                    type="text"
-                                    placeholder="Show name"
-                                    value={newShowName}
-                                    onChange={(e) => setNewShowName(e.target.value)}
-                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Season / Year (e.g. Spring 2025)"
-                                    value={newSeasonYear}
-                                    onChange={(e) => setNewSeasonYear(e.target.value)}
-                                    className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                />
-                                <div className="flex flex-col gap-2 mt-2">
-                                    <label className="text-zinc-400 text-xs uppercase tracking-wide">
-                                        Show Poster (optional)
-                                    </label>
-                                    <input
-                                        id="poster-upload"
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            if (file.size > 10 * 1024 * 1024) {
-                                                setPosterSizeError("File must be under 10MB");
-                                                setPosterFile(null);
-                                                setPosterPreview(null);
-                                                return;
-                                            }
-                                            setPosterSizeError("");
-                                            setPosterFile(file);
-                                            setPosterPreview(URL.createObjectURL(file));
-                                        }}
-                                    />
-                                    <label
-                                        htmlFor="poster-upload"
-                                        className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
-                                    >
-                                        📄 Attach Show Poster
-                                    </label>
-                                    {posterFile && (
-                                        <p className="text-zinc-400 text-xs">{posterFile.name}</p>
+                            {isOwnProfile && (
+                                <>
+                                    {!addingShow ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setAddingShow(true)}
+                                            className="text-xs text-zinc-600 transition hover:text-white w-fit"
+                                        >
+                                            + Add a completed show
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Show name"
+                                                value={newShowName}
+                                                onChange={(e) => setNewShowName(e.target.value)}
+                                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Season / Year (e.g. Spring 2025)"
+                                                value={newSeasonYear}
+                                                onChange={(e) => setNewSeasonYear(e.target.value)}
+                                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                            />
+                                            <div className="flex flex-col gap-2 mt-2">
+                                                <label className="text-zinc-400 text-xs uppercase tracking-wide">
+                                                    Show Poster (optional)
+                                                </label>
+                                                <input
+                                                    id="poster-upload"
+                                                    type="file"
+                                                    accept="image/*,application/pdf"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        if (file.size > 10 * 1024 * 1024) {
+                                                            setPosterSizeError("File must be under 10MB");
+                                                            setPosterFile(null);
+                                                            setPosterPreview(null);
+                                                            return;
+                                                        }
+                                                        setPosterSizeError("");
+                                                        setPosterFile(file);
+                                                        setPosterPreview(URL.createObjectURL(file));
+                                                    }}
+                                                />
+                                                <label
+                                                    htmlFor="poster-upload"
+                                                    className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
+                                                >
+                                                    📄 Attach Show Poster
+                                                </label>
+                                                {posterFile && (
+                                                    <p className="text-zinc-400 text-xs">{posterFile.name}</p>
+                                                )}
+                                                {posterSizeError && (
+                                                    <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
+                                                )}
+                                                <p className="text-zinc-500 text-xs">
+                                                    JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddShow}
+                                                    disabled={uploadingPoster}
+                                                    className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
+                                                >
+                                                    {uploadingPoster ? "Uploading..." : "Submit"}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddingShow(false)}
+                                                    className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-zinc-600">
+                                                Show submissions are reviewed by staff before appearing on your profile.
+                                            </p>
+                                        </div>
                                     )}
-                                    {posterSizeError && (
-                                        <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
-                                    )}
-                                    <p className="text-zinc-500 text-xs">
-                                        JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
+                                </>
+                            )}
+                        </div>
+
+                        {/* RIGHT — personal info */}
+                        <div className="flex flex-col gap-3">
+                            {profile?.favorite_bands && (
+                                <ProfileField label="Favorite Bands" value={profile.favorite_bands} />
+                            )}
+                            {profile?.first_concert && (
+                                <ProfileField label="First Concert" value={profile.first_concert} />
+                            )}
+                            {profile?.fun_fact && (
+                                <ProfileField label="Fun Fact" value={profile.fun_fact} />
+                            )}
+                            {profile?.spotify_url && (
+                                <a
+                                    href={profile.spotify_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
+                                >
+                                    🎵 Open Spotify Playlist
+                                </a>
+                            )}
+                            {profile?.apple_music_url && (
+                                <a
+                                    href={profile.apple_music_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
+                                >
+                                    🎵 Open Apple Music Playlist
+                                </a>
+                            )}
+
+                            {profile?.pending_status === "pending" && profile.pending_changes && (
+                                <div className="rounded-none bg-[#1a1a1a] p-5">
+                                    <p className="text-xs uppercase tracking-widest text-zinc-500">
+                                        Pending Review
+                                    </p>
+                                    <div className="mt-3 space-y-2">
+                                        {Object.entries(
+                                            profile.pending_changes as Record<string, string>
+                                        )
+                                            .filter(([, v]) => v)
+                                            .map(([k, v]) => (
+                                                <div key={k}>
+                                                    <p className="text-xs capitalize text-zinc-500">
+                                                        {k.replace(/_/g, " ")}
+                                                    </p>
+                                                    <p className="mt-0.5 text-sm text-zinc-300">{v}</p>
+                                                </div>
+                                            ))}
+                                    </div>
+                                    <p className="mt-3 text-xs text-zinc-600">
+                                        These changes are awaiting staff approval.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleAddShow}
-                                        disabled={uploadingPoster}
-                                        className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
-                                    >
-                                        {uploadingPoster ? "Uploading..." : "Submit"}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAddingShow(false)}
-                                        className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                                <p className="text-xs text-zinc-600">
-                                    Show submissions are reviewed by staff before appearing on your profile.
+                            )}
+
+                            {!hasPublishedContent && !profile?.pending_status && isOwnProfile && (
+                                <p className="text-sm text-zinc-500">
+                                    Your profile is empty. Click Edit Profile to add your info.
                                 </p>
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
+                            )}
+                        </div>
+                    </div>
 
-            {/* Profile content */}
-            <div className="mt-10 space-y-3 px-6">
-                {!editMode ? (
-                    <>
-                        {profile?.favorite_bands && (
-                            <ProfileField label="Favorite Bands" value={profile.favorite_bands} />
-                        )}
-                        {profile?.first_concert && (
-                            <ProfileField label="First Concert" value={profile.first_concert} />
-                        )}
-                        {profile?.fun_fact && (
-                            <ProfileField label="Fun Fact" value={profile.fun_fact} />
-                        )}
-                        {profile?.spotify_url && (
-                            <a
-                                href={profile.spotify_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
-                            >
-                                🎵 Open Spotify Playlist
-                            </a>
-                        )}
-                        {profile?.apple_music_url && (
-                            <a
-                                href={profile.apple_music_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
-                            >
-                                🎵 Open Apple Music Playlist
-                            </a>
-                        )}
-
-                        {profile?.pending_status === "pending" && profile.pending_changes && (
-                            <div className="rounded-none bg-[#1a1a1a] p-5">
-                                <p className="text-xs uppercase tracking-widest text-zinc-500">
-                                    Pending Review
-                                </p>
-                                <div className="mt-3 space-y-2">
-                                    {Object.entries(
-                                        profile.pending_changes as Record<string, string>
-                                    )
-                                        .filter(([, v]) => v)
-                                        .map(([k, v]) => (
-                                            <div key={k}>
-                                                <p className="text-xs capitalize text-zinc-500">
-                                                    {k.replace(/_/g, " ")}
-                                                </p>
-                                                <p className="mt-0.5 text-sm text-zinc-300">{v}</p>
-                                            </div>
-                                        ))}
-                                </div>
-                                <p className="mt-3 text-xs text-zinc-600">
-                                    These changes are awaiting staff approval.
-                                </p>
-                            </div>
-                        )}
-
-                        {!hasPublishedContent && !profile?.pending_status && isOwnProfile && (
-                            <p className="text-center text-sm text-zinc-500">
-                                Your profile is empty. Click Edit Profile to add your info.
-                            </p>
-                        )}
-
-                        {isOwnProfile && (
+                    {/* Edit Profile button — below grid, full width left-aligned */}
+                    {isOwnProfile && (
+                        <div className="px-6 pb-4">
                             <button
                                 type="button"
                                 onClick={() => setEditMode(true)}
-                                className="mt-6 rounded-none bg-zinc-800 px-4 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                className="rounded-none bg-zinc-800 px-4 py-2 text-sm text-white transition hover:bg-zinc-700"
                             >
                                 Edit Profile
                             </button>
-                        )}
-                    </>
-                ) : (
+                        </div>
+                    )}
+                </>
+            ) : (
+                <div className="mt-10 space-y-3 px-6">
                     <div className="space-y-3">
                         {/* Photo upload */}
                         <div className="space-y-2">
@@ -714,8 +723,8 @@ export default function StudentProfileView({
                             Profile changes are reviewed by staff before appearing publicly.
                         </p>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }
