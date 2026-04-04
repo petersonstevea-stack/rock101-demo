@@ -123,7 +123,7 @@ export default function PerformanceProgramShell({
             {/* Sidebar */}
             <div className="flex w-48 shrink-0 flex-col bg-black" style={{ minHeight: "100vh" }}>
                 {/* Logo */}
-                <div className="px-4 pt-6 pb-4">
+                <div className="flex justify-center px-4 pt-6 pb-4">
                     <img src="/Icons-Red-11.png" alt="Stage Ready" className="w-32 object-contain" />
                 </div>
 
@@ -198,7 +198,6 @@ export default function PerformanceProgramShell({
                         STAGE READY
                     </h1>
                     <p className="mt-1 text-sm text-zinc-400">Performance Program</p>
-                    <p className="mt-3 text-lg font-semibold text-white">{studentName}</p>
                 </div>
 
                 {/* Tab content */}
