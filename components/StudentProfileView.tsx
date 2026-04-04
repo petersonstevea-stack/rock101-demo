@@ -211,7 +211,7 @@ export default function StudentProfileView({
                     </div>
 
                     {/* Season badge */}
-                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#cc0000] text-xs font-bold text-white">
+                    <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                         {showHistory.length}
                     </div>
                 </div>
