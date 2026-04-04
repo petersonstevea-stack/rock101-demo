@@ -42,6 +42,16 @@ export default function PerformanceProgramShell({
     const [activeTab, setActiveTab] = useState<ActiveTab>("casting");
     const [showGroup, setShowGroup] = useState<ShowGroupInfo | null>(null);
     const [showGroupLoading, setShowGroupLoading] = useState(false);
+    const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        supabase
+            .from("student_profiles")
+            .select("photo_url")
+            .eq("student_id", studentId)
+            .maybeSingle()
+            .then(({ data }) => setPhotoUrl(data?.photo_url ?? null));
+    }, [studentId]);
 
     useEffect(() => {
         async function loadShowGroup() {
@@ -117,10 +127,23 @@ export default function PerformanceProgramShell({
                     <img src="/Icons-Red-11.png" alt="Stage Ready" className="w-32 object-contain" />
                 </div>
 
-                {/* Student name */}
-                <div className="px-4 pb-4">
-                    <p className="text-xs text-zinc-500">Student</p>
-                    <p className="text-sm font-semibold text-white">{studentName}</p>
+                {/* Student avatar + name */}
+                <div className="flex flex-col items-center px-4 py-4 border-b border-zinc-800">
+                    {photoUrl ? (
+                        <img
+                            src={photoUrl}
+                            alt={studentName}
+                            className="w-16 h-16 rounded-full object-cover ring-2 ring-white ring-offset-2 ring-offset-black mb-2"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+                            <span className="text-white text-xl font-bold">
+                                {studentName?.charAt(0) ?? "?"}
+                            </span>
+                        </div>
+                    )}
+                    <p className="text-white text-sm font-semibold text-center">{studentName}</p>
+                    <p className="text-zinc-500 text-xs mt-0.5">Student</p>
                 </div>
 
                 {/* Nav */}
