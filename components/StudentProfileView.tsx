@@ -293,7 +293,7 @@ export default function StudentProfileView({
     return (
         <div className="w-full bg-black pb-12">
             {/* Hero block — wallpaper/collage background with avatar floating on top */}
-            <div className="relative w-full min-h-[280px] flex flex-col items-center justify-end">
+            <div className="relative w-full min-h-[420px] flex flex-col items-center justify-end">
 
                 {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
                 <div className="absolute inset-0 overflow-hidden">
