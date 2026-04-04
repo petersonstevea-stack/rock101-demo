@@ -45,8 +45,8 @@ type StudentMeta = {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-none bg-[#111111] p-5">
-            <p className="text-xs uppercase tracking-widest text-zinc-500">{label}</p>
+        <div className="rounded-none bg-[#111111] px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
             <p className="mt-1 text-sm text-white">{value}</p>
         </div>
     );
@@ -317,7 +317,7 @@ export default function StudentProfileView({
                             }}
                         />
                     ) : (
-                        <div className="w-full h-full bg-[#111111]" />
+                        <div className="w-full h-full" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #1a1a1a 100%)" }} />
                     )}
                     {/* Dark overlay — always present */}
                     <div className="absolute inset-0 bg-black/60" />
@@ -332,7 +332,7 @@ export default function StudentProfileView({
                                     ? "ring-4 ring-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]"
                                     : studentMeta?.is_allstar
                                     ? "ring-4 ring-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]"
-                                    : "ring-2 ring-zinc-700"
+                                    : "ring-2 ring-white ring-offset-2 ring-offset-black"
                             }`}
                         >
                             {profile?.photo_url ? (
@@ -347,8 +347,9 @@ export default function StudentProfileView({
                         </div>
 
                         {/* Season badge */}
-                        <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                            {showHistory.length}
+                        <div className="absolute -right-2 -top-2 flex h-10 w-10 flex-col items-center justify-center rounded-full bg-blue-500 font-bold text-white">
+                            <span className="text-xs leading-none">{showHistory.length}</span>
+                            <span className="text-[9px] leading-none tracking-wider uppercase">SEASONS</span>
                         </div>
                     </div>
 
@@ -386,11 +387,15 @@ export default function StudentProfileView({
             {/* 2-column grid — show history left, personal info right */}
             {!editMode ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                    <div className="max-w-3xl mx-auto px-6 py-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* LEFT — show history */}
                         <div className="flex flex-col gap-3">
-                            <p className="text-xs uppercase tracking-widest text-zinc-500">Show History</p>
+                            <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
+                                <span style={{ color: "#cc0000" }}>SHOW </span>
+                                <span className="text-white">HISTORY</span>
+                            </h2>
 
                             {showHistory.length === 0 ? (
                                 <p className="text-sm text-zinc-500">No completed shows yet.</p>
@@ -399,9 +404,9 @@ export default function StudentProfileView({
                                     {showHistory.map((entry) => (
                                         <div
                                             key={entry.id}
-                                            className="flex items-center justify-between rounded-none bg-[#111111] px-4 py-3"
+                                            className="flex items-center justify-between rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3"
                                         >
-                                            <p className="text-sm text-white">{entry.show_name}</p>
+                                            <span className="text-sm text-white">{entry.show_name}</span>
                                             <div className="flex items-center gap-2">
                                                 {entry.status === "pending" && (
                                                     <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
@@ -571,18 +576,19 @@ export default function StudentProfileView({
                         </div>
                     </div>
 
-                    {/* Edit Profile button — below grid, full width left-aligned */}
+                    {/* Edit Profile button — below grid */}
                     {isOwnProfile && (
-                        <div className="px-6 pb-4">
+                        <div className="pt-4">
                             <button
                                 type="button"
                                 onClick={() => setEditMode(true)}
-                                className="rounded-none bg-zinc-800 px-4 py-2 text-sm text-white transition hover:bg-zinc-700"
+                                className="bg-[#cc0000] text-white rounded-none px-6 py-2 text-sm font-semibold hover:bg-[#b30000] mt-2"
                             >
                                 Edit Profile
                             </button>
                         </div>
                     )}
+                    </div>
                 </>
             ) : (
                 <div className="mt-10 space-y-3 px-6">
