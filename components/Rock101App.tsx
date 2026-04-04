@@ -353,20 +353,26 @@ export default function Rock101App() {
         return "del-mar";
     }, [isOwner, selectedSchoolId, currentUser]);
 
-    const rock101Students = useMemo(
-        () => students.filter((s) => s.program === "rock101"),
-        [students]
-    );
-
     const performanceStudents = useMemo(
         () => students.filter((s) => s.program === "performance_program"),
         [students]
     );
 
+    const visibleProgramStudents = useMemo(
+        () => students.filter(
+            (s) => s.program === "rock101" ||
+                   s.program === "rock_101" ||
+                   s.program === "performance_program"
+        ),
+        [students]
+    );
+
     const filteredStudentsBySchool = useMemo(() => {
-        if (effectiveSchoolFilter === "all") return rock101Students;
-        return rock101Students.filter((student) => student.schoolId === effectiveSchoolFilter);
-    }, [rock101Students, effectiveSchoolFilter]);
+        if (effectiveSchoolFilter === "all") return visibleProgramStudents;
+        return visibleProgramStudents.filter(
+            (student) => student.schoolId === effectiveSchoolFilter
+        );
+    }, [visibleProgramStudents, effectiveSchoolFilter]);
 
     const filteredUsersBySchool = useMemo(() => {
         if (effectiveSchoolFilter === "all") return allUsers;

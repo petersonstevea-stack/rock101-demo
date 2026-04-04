@@ -4,6 +4,7 @@ type SelectorStudent = {
   name: string;
   instrument: string;
   band: string;
+  program?: string;
   curriculum: Record<
     string,
     {
@@ -72,20 +73,29 @@ export default function StudentSelector({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {filtered.map((student) => (
-          <button
-            key={student.name}
-            type="button"
-            onClick={() => onSelect(student)}
-            className={`rounded-none px-4 py-2 ${
-              selected.name === student.name
-                ? "bg-[#cc0000]"
-                : "bg-zinc-800 hover:bg-zinc-700 text-white"
-            }`}
-          >
-            {student.name}
-          </button>
-        ))}
+        {filtered.map((student) => {
+          const isPP = student.program === "performance_program";
+          const isSelected = selected.name === student.name;
+          const borderColor = isPP ? "#ffffff" : "#cc0000";
+
+          return (
+            <button
+              key={student.name}
+              type="button"
+              onClick={() => onSelect(student)}
+              className={`rounded-none px-4 py-2 ${
+                isSelected
+                  ? "bg-[#cc0000] text-white"
+                  : "bg-zinc-800 hover:bg-zinc-700 text-white"
+              }`}
+              style={{
+                borderLeft: `3px solid ${borderColor}`,
+              }}
+            >
+              {student.name}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
