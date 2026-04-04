@@ -126,12 +126,15 @@ export async function GET() {
         // Pass 1 — fetch and filter occurrences
         const allOccurrences = await fetchOccurrences(token);
 
+        type StaffMember = { name?: string };
+
         type Occurrence = {
             id: number;
             event_id: number;
             service_id: number;
             start_at: string;
             end_at: string;
+            staff_members?: StaffMember[];
         };
 
         const filtered = allOccurrences.filter((occ) => {
@@ -144,11 +147,53 @@ export async function GET() {
         const uniqueEventIds = [...new Set(filtered.map((o) => o.event_id))];
         const nameMap = await fetchEventNames(token, uniqueEventIds);
 
-        // Pass 3 — group by event_id and upsert
+        // Pass 3 — group by event_id
         const eventGroups = new Map<number, Occurrence[]>();
         for (const occ of filtered) {
             if (!eventGroups.has(occ.event_id)) eventGroups.set(occ.event_id, []);
             eventGroups.get(occ.event_id)!.push(occ);
+        }
+
+        // Pass 4 — build base names, detect conflicts, resolve with instructor suffix
+        function toLocalDayTime(utcStr: string): { day: string; time: string } {
+            const dt = new Date(utcStr);
+            const day = dt.toLocaleDateString("en-US", {
+                timeZone: "America/Los_Angeles",
+                weekday: "long",
+            });
+            const time = dt.toLocaleTimeString("en-US", {
+                timeZone: "America/Los_Angeles",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+            return { day, time };
+        }
+
+        const baseNames = new Map<number, string>();
+        for (const [eventId, occs] of eventGroups.entries()) {
+            const rawName = nameMap.get(eventId) ?? `(event ${eventId})`;
+            const { day, time } = toLocalDayTime(occs[0].start_at);
+            baseNames.set(eventId, `${rawName} — ${day} ${time}`);
+        }
+
+        const baseNameCount = new Map<string, number>();
+        for (const baseName of baseNames.values()) {
+            baseNameCount.set(baseName, (baseNameCount.get(baseName) ?? 0) + 1);
+        }
+
+        const resolvedNames = new Map<number, string>();
+        for (const [eventId, baseName] of baseNames.entries()) {
+            if ((baseNameCount.get(baseName) ?? 1) <= 1) {
+                resolvedNames.set(eventId, baseName);
+            } else {
+                const occs = eventGroups.get(eventId)!;
+                const staffName = occs[0].staff_members?.[0]?.name ?? "";
+                const suffix = staffName
+                    ? staffName.trim().split(/\s+/).pop()!
+                    : `ev-${eventId}`;
+                resolvedNames.set(eventId, `${baseName} (${suffix})`);
+            }
         }
 
         let classesCreated = 0;
@@ -158,7 +203,7 @@ export async function GET() {
         for (const [eventId, occs] of eventGroups.entries()) {
             const serviceId = occs[0].service_id;
             const program = SERVICE_PROGRAM_MAP[serviceId] ?? "unknown";
-            const name = nameMap.get(eventId) ?? `(event ${eventId})`;
+            const name = resolvedNames.get(eventId)!;
 
             // Upsert rock_classes
             const classRecord = {
