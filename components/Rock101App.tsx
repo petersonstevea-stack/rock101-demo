@@ -336,7 +336,7 @@ export default function Rock101App() {
                 );
             setStudents(safeStudents);
 
-            if (currentUser?.role === "parent") {
+            if (currentUser?.role === "parent" && programShell === "rock101") {
                 const matchedStudent = formatted.find(
                     (student: any) =>
                         student.parentEmail?.toLowerCase() === currentUser.email.toLowerCase()

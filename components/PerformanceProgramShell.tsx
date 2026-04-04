@@ -39,7 +39,7 @@ export default function PerformanceProgramShell({
             <div className="flex w-48 shrink-0 flex-col bg-black" style={{ minHeight: "100vh" }}>
                 {/* Logo */}
                 <div className="px-4 pt-6 pb-4">
-                    <img src="/guitar-swirl.png" alt="Stage Ready" className="w-32 object-contain" />
+                    <img src="/Icons-Red-11.png" alt="Stage Ready" className="w-32 object-contain" />
                 </div>
 
                 {/* Student name */}
