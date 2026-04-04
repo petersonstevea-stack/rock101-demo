@@ -430,6 +430,24 @@ Students currently see the same nav as staff. Build a dedicated student-facing e
 - Broader program visibility
 - Student login (future — do not block in data model)
 
+### 🔜 Dual-Role Staff/Parent Accounts
+Some owners and staff are also parents of
+enrolled students and may use the same Pike13
+login for both roles. When a staff member's
+email matches a students.parent_email, surface
+a "Parent View" option in the staff shell sidebar
+that switches context to the student selector
+and student-facing shell. A "Back to Staff"
+button returns to the staff shell.
+
+Implementation notes:
+- Check parent_email match on staff login
+- parentMode state in Rock101App toggles shell
+- No separate login required — same session
+- Currently not needed: Steve Peterson uses
+  separate emails for staff (speterson@schoolofrock.com)
+  and parent (steve@loudchannel.com) roles
+
 ---
 
 ## PHASE 7 — Pike13 Integration
@@ -532,6 +550,49 @@ Stage Ready tracks attendance internally for:
 Performance Program group attendance: TBD.
 
 ---
+
+---
+
+## ✅ Completed — PP Parent/Student Shell
+(April 4, 2026 continued)
+
+### Student Selector
+- Guitar swirl logo, STAGE READY branding
+- Two cards per enrolled student with program label
+- Routes to correct shell per program
+- Sign out at bottom
+
+### Performance Program Shell
+- Separate visual shell for PP parents/students
+- Black sidebar: guitar swirl logo, student name,
+  4 nav tabs (My Casting, My Show, Private Lesson,
+  Student Profile)
+- Hero: STAGE READY white Oswald, Performance
+  Program subtitle, student name
+- ← Switch Student in sidebar (multi-child families)
+
+### PP Shell — My Casting tab
+- Renders MyCastingView with real cast assignments
+- Parents can read students table via new RLS policy
+
+### PP Shell — My Show tab
+- Show group name, instructors, performance date
+- Reads staff_names from show_group_instances
+  (copied from rock_classes — avoids RLS conflict)
+- Timezone-safe date rendering (T12:00:00)
+
+### PP Shell — Private Lesson tab
+- Renders PPPrivateLessonView
+
+### PP Shell — Student Profile tab
+- Placeholder — schema ready, build pending
+
+### Parent SSO via Pike13
+- SSO callback extended to check students.parent_email
+  after staff check fails
+- feature_parent_sso flag on schools table gates access
+- Currently disabled (false) for all schools
+- Metadata passes students array for multi-child routing
 
 ---
 
