@@ -51,7 +51,7 @@ export default function PerformanceProgramShell({
                 .select(`
                     show_group_instance_id,
                     show_group_instances (
-                        id, name, show_date,
+                        id, name, show_date, rock_class_id,
                         rock_classes (
                             name, staff_names,
                             class_sessions (
@@ -76,7 +76,7 @@ export default function PerformanceProgramShell({
                         .select("staff_names")
                         .eq("id", sgi.rock_class_id)
                         .maybeSingle();
-                    staffNames = rcRow?.staff_names ?? [];
+                    staffNames = (rcRow?.staff_names ?? []) as string[];
                 }
 
                 const today = new Date().toISOString().split("T")[0];
