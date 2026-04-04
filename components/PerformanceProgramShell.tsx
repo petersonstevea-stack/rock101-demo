@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { Star, Music, Headphones, User } from "lucide-react";
+import MyCastingView from "@/components/MyCastingView";
+import PPPrivateLessonView from "@/components/PPPrivateLessonView";
 
 type PerformanceProgramShellProps = {
     studentName: string;
     studentId: string;
     schoolId: string;
+    schoolName: string;
     onSignOut: () => void;
     onSwitchStudent?: () => void;
 };
@@ -17,6 +20,7 @@ export default function PerformanceProgramShell({
     studentName,
     studentId,
     schoolId,
+    schoolName,
     onSignOut,
     onSwitchStudent,
 }: PerformanceProgramShellProps) {
@@ -35,7 +39,7 @@ export default function PerformanceProgramShell({
             <div className="flex w-48 shrink-0 flex-col bg-black" style={{ minHeight: "100vh" }}>
                 {/* Logo */}
                 <div className="px-4 pt-6 pb-4">
-                    <img src="/sor-logo.png" alt="School of Rock" className="w-32 object-contain" />
+                    <img src="/guitar-swirl.png" alt="Stage Ready" className="w-32 object-contain" />
                 </div>
 
                 {/* Student name */}
@@ -90,8 +94,8 @@ export default function PerformanceProgramShell({
                 <div className="px-6 py-12 text-center">
                     <p className="text-xs uppercase tracking-widest text-zinc-500">Stage Ready</p>
                     <h1
-                        className="mt-2 text-4xl font-bold uppercase"
-                        style={{ fontFamily: "var(--font-oswald)", color: "#cc0000" }}
+                        className="mt-2 text-4xl font-bold uppercase text-white"
+                        style={{ fontFamily: "var(--font-oswald)" }}
                     >
                         STAGE READY
                     </h1>
@@ -100,26 +104,36 @@ export default function PerformanceProgramShell({
                 </div>
 
                 {/* Tab content */}
-                <div className="px-6 pb-12">
+                <div className="pb-12">
                     {activeTab === "casting" && (
-                        <p className="text-sm text-zinc-500">
-                            Casting assignments will appear here once your instructor completes casting.
-                        </p>
+                        <MyCastingView
+                            currentUser={null}
+                            schoolId={schoolId}
+                            schoolName={schoolName}
+                        />
                     )}
                     {activeTab === "show" && (
-                        <p className="text-sm text-zinc-500">
-                            Your show group details will appear here.
-                        </p>
+                        <div className="px-6">
+                            <p className="text-sm text-zinc-500">
+                                Your show group details will appear here.
+                            </p>
+                        </div>
                     )}
                     {activeTab === "lesson" && (
-                        <p className="text-sm text-zinc-500">
-                            Your private lesson notes will appear here.
-                        </p>
+                        <PPPrivateLessonView
+                            studentId={studentId}
+                            studentName={studentName}
+                            instrument=""
+                            schoolId={schoolId}
+                            instructorName=""
+                        />
                     )}
                     {activeTab === "profile" && (
-                        <p className="text-sm text-zinc-500">
-                            Student profile coming soon.
-                        </p>
+                        <div className="px-6">
+                            <p className="text-sm text-zinc-500">
+                                Student profile coming soon.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>

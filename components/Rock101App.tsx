@@ -196,6 +196,19 @@ export default function Rock101App() {
                         Array<{ student_id: string; student_name: string; program: string }> | undefined;
 
                     if (metaRole === "parent" && metaStudents) {
+                        const parentName = metaStudents[0]?.student_name
+                            ? `Parent of ${metaStudents[0].student_name}`
+                            : data.user.email?.trim().toLowerCase() ?? "";
+                        const parentEmail = data.user.email?.trim().toLowerCase() ?? "";
+                        const metaSchoolId = data.user.user_metadata?.school_id ?? "del-mar";
+
+                        setCurrentUser({
+                            email: parentEmail,
+                            name: parentName,
+                            role: "parent",
+                            schoolId: metaSchoolId,
+                        });
+
                         if (metaStudents.length === 1) {
                             const s = metaStudents[0];
                             setPpStudentId(s.student_id);
@@ -1375,6 +1388,7 @@ export default function Rock101App() {
                                     setProgramShell("performance");
                                 } else {
                                     setProgramShell("rock101");
+                                    setSelectedStudentName(s.student_name);
                                 }
                             }}
                             className="w-full rounded-none bg-zinc-800 px-6 py-4 text-left transition hover:bg-[#cc0000]"
@@ -1407,6 +1421,7 @@ export default function Rock101App() {
                 studentName={ppStudentName}
                 studentId={ppStudentId}
                 schoolId={currentUser?.schoolId ?? ""}
+                schoolName={schoolList.find((s) => s.id === (currentUser?.schoolId ?? ""))?.name ?? ""}
                 onSwitchStudent={ppStudents.length > 1 ? () => setProgramShell("select") : undefined}
                 onSignOut={async () => {
                     await supabase.auth.signOut();
@@ -1467,6 +1482,7 @@ export default function Rock101App() {
     }
 
     return (
+        <>
         <AppShell
             schoolName={currentSchoolName}
             userName={currentUser?.name ?? ""}
@@ -2370,5 +2386,27 @@ export default function Rock101App() {
                 )}
             </div>
         </AppShell>
+
+        {role === "parent" && ppStudents.length > 1 && (
+            <button
+                type="button"
+                onClick={() => setProgramShell("select")}
+                style={{
+                    position: "fixed",
+                    bottom: "16px",
+                    left: "16px",
+                    background: "#1a1a1a",
+                    color: "#a1a1aa",
+                    border: "1px solid #3f3f46",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    zIndex: 50,
+                }}
+            >
+                ← Switch Student
+            </button>
+        )}
+        </>
     );
 }
