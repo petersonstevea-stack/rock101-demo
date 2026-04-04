@@ -358,7 +358,32 @@ export default function StudentProfileView({
                             </a>
                         )}
 
-                        {!hasPublishedContent && isOwnProfile && (
+                        {profile?.pending_status === "pending" && profile.pending_changes && (
+                            <div className="rounded-none bg-[#1a1a1a] p-5">
+                                <p className="text-xs uppercase tracking-widest text-zinc-500">
+                                    Pending Review
+                                </p>
+                                <div className="mt-3 space-y-2">
+                                    {Object.entries(
+                                        profile.pending_changes as Record<string, string>
+                                    )
+                                        .filter(([, v]) => v)
+                                        .map(([k, v]) => (
+                                            <div key={k}>
+                                                <p className="text-xs capitalize text-zinc-500">
+                                                    {k.replace(/_/g, " ")}
+                                                </p>
+                                                <p className="mt-0.5 text-sm text-zinc-300">{v}</p>
+                                            </div>
+                                        ))}
+                                </div>
+                                <p className="mt-3 text-xs text-zinc-600">
+                                    These changes are awaiting staff approval.
+                                </p>
+                            </div>
+                        )}
+
+                        {!hasPublishedContent && !profile?.pending_status && isOwnProfile && (
                             <p className="text-center text-sm text-zinc-500">
                                 Your profile is empty. Click Edit Profile to add your info.
                             </p>
