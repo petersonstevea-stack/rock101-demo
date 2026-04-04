@@ -109,6 +109,7 @@ type CastingViewProps = {
     schoolId: string;
     schoolName: string;
     students: StudentRow[];
+    initialShowGroupId?: string | null;
 };
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -183,14 +184,18 @@ function matchesInstrumentForColumn(instrument: string, col: string): boolean {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export default function CastingView({ currentUser, schoolId, schoolName, students }: CastingViewProps) {
+export default function CastingView({ currentUser, schoolId, schoolName, students, initialShowGroupId }: CastingViewProps) {
     const role = currentUser?.role ?? "";
     const canApprove = role === "music_director" || role === "general_manager" || role === "owner";
 
     // Show groups
     const [showGroups, setShowGroups] = useState<ShowGroup[]>([]);
     const [loadingGroups, setLoadingGroups] = useState(true);
-    const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+    const [selectedGroupId, setSelectedGroupId] = useState<string | null>(initialShowGroupId ?? null);
+
+    useEffect(() => {
+        if (initialShowGroupId) setSelectedGroupId(initialShowGroupId);
+    }, [initialShowGroupId]);
 
     // Song / room / type data
     const [songs, setSongs] = useState<Song[]>([]);

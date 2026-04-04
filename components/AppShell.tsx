@@ -184,7 +184,6 @@ function NavItems({
     ...(isStaff ? SCHOOL_NAV_BASE : []),
     ...(canSeeClassRoster ? [classRosterNavItem] : []),
     ...(canSeeShowGroups ? [showGroupsNavItem] : []),
-    ...(canSeeCasting ? [castingNavItem] : []),
     ...(canSeePerformanceRehearsal ? [performanceRehearsalNavItem] : []),
     ...(canSeeManagementTabs ? SCHOOL_NAV_MANAGEMENT : []),
   ];

@@ -86,6 +86,7 @@ type ShowGroupSetupViewProps = {
     schoolName: string;
     users: { id: string; name: string; email: string; role: string }[];
     students: StudentRow[];
+    onStartCasting?: (showGroupId: string) => void;
 };
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -188,6 +189,7 @@ export default function ShowGroupSetupView({
     schoolName,
     users,
     students,
+    onStartCasting,
 }: ShowGroupSetupViewProps) {
     const [showGroups, setShowGroups] = useState<ShowGroupInstance[]>([]);
     const [seasons, setSeasons] = useState<Season[]>([]);
@@ -1198,6 +1200,19 @@ export default function ShowGroupSetupView({
                                             {isExpanded ? "▲" : "▼"}
                                         </div>
                                     </button>
+
+                                    {/* Casting shortcut */}
+                                    {onStartCasting && isActive && (
+                                        <div className="flex justify-end border-t border-zinc-800 px-5 py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => onStartCasting(group.id)}
+                                                className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs font-bold uppercase text-white hover:bg-[#b30000]"
+                                            >
+                                                Go to Casting
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* Expanded panel */}
                                     {isExpanded && (

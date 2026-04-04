@@ -131,6 +131,7 @@ export default function Rock101App() {
     const [curriculumItems, setCurriculumItems] = useState<CurriculumItem[]>([]);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [castingShowGroupId, setCastingShowGroupId] = useState<string | null>(null);
 
     useEffect(() => {
         supabase
@@ -2284,6 +2285,10 @@ export default function Rock101App() {
                         schoolName={currentSchoolName}
                         users={filteredUsersBySchool}
                         students={filteredPerfStudentsBySchool}
+                        onStartCasting={(showGroupId: string) => {
+                            setCastingShowGroupId(showGroupId);
+                            handleSetTab("casting");
+                        }}
                     />
                 )}
 
@@ -2293,6 +2298,7 @@ export default function Rock101App() {
                         schoolId={effectiveSchoolFilter === "all" ? (schoolList[0]?.id ?? "") : effectiveSchoolFilter}
                         schoolName={currentSchoolName}
                         students={filteredPerfStudentsBySchool}
+                        initialShowGroupId={castingShowGroupId}
                     />
                 )}
 
