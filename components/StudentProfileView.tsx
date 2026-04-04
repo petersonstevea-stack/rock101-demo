@@ -83,6 +83,7 @@ export default function StudentProfileView({
     const [editSpotify, setEditSpotify] = useState("");
     const [editApple, setEditApple] = useState("");
     const [editFunFact, setEditFunFact] = useState("");
+    const [wallpaperUrl, setWallpaperUrl] = useState("");
 
     useEffect(() => {
         async function loadData() {
@@ -108,6 +109,7 @@ export default function StudentProfileView({
                 setEditSpotify(prof.spotify_url ?? "");
                 setEditApple(prof.apple_music_url ?? "");
                 setEditFunFact(prof.fun_fact ?? "");
+                setWallpaperUrl(prof.wallpaper_url ?? "");
             }
 
             const { data: history } = await supabase
@@ -164,6 +166,7 @@ export default function StudentProfileView({
                 pending_status: "pending",
                 pending_submitted_at: new Date().toISOString(),
                 is_published: false,
+                wallpaper_url: wallpaperUrl || null,
                 ...photoFields,
             });
         } else {
@@ -173,6 +176,7 @@ export default function StudentProfileView({
                     pending_changes: changes,
                     pending_status: "pending",
                     pending_submitted_at: new Date().toISOString(),
+                    wallpaper_url: wallpaperUrl || null,
                     ...photoFields,
                 })
                 .eq("student_id", studentId);
@@ -349,359 +353,372 @@ export default function StudentProfileView({
                 </div>
             )}
 
-            {/* 2-column grid — show history left, personal info right */}
-            {!editMode ? (
-                <>
-                    <div className="max-w-3xl mx-auto px-6 py-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* 2-column grid — show history always visible, right column switches */}
+            <div className="max-w-3xl mx-auto px-6 py-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
-                        {/* LEFT — show history */}
-                        <div className="flex flex-col gap-3">
-                            <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
-                                <span style={{ color: "#cc0000" }}>SHOW </span>
-                                <span className="text-white">HISTORY</span>
-                            </h2>
+                    {/* LEFT — always visible */}
+                    <div className="flex flex-col gap-3">
+                        <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
+                            <span style={{ color: "#cc0000" }}>SHOW </span>
+                            <span className="text-white">HISTORY</span>
+                        </h2>
 
-                            {showHistory.length === 0 ? (
-                                <p className="text-sm text-zinc-500">No completed shows yet.</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {showHistory.map((entry) => (
-                                        <div
-                                            key={entry.id}
-                                            className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center"
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-white text-sm">{entry.show_name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    {entry.status === "pending" && (
-                                                        <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
-                                                            Pending review
-                                                        </span>
-                                                    )}
-                                                    <span className="text-xs text-zinc-500">{entry.season_year}</span>
-                                                </div>
+                        {showHistory.length === 0 ? (
+                            <p className="text-sm text-zinc-500">No completed shows yet.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {showHistory.map((entry) => (
+                                    <div
+                                        key={entry.id}
+                                        className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-white text-sm">{entry.show_name}</span>
+                                            <div className="flex items-center gap-2">
+                                                {entry.status === "pending" && (
+                                                    <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
+                                                        Pending review
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-zinc-500">{entry.season_year}</span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
-                            {isOwnProfile && (
-                                <>
-                                    {!addingShow ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => setAddingShow(true)}
-                                            className="text-xs text-zinc-600 transition hover:text-white w-fit"
-                                        >
-                                            + Add a completed show
-                                        </button>
-                                    ) : (
-                                        <div className="space-y-2">
+                        {isOwnProfile && (
+                            <>
+                                {!addingShow ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddingShow(true)}
+                                        className="text-xs text-zinc-600 transition hover:text-white w-fit"
+                                    >
+                                        + Add a completed show
+                                    </button>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Show name"
+                                            value={newShowName}
+                                            onChange={(e) => setNewShowName(e.target.value)}
+                                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Season / Year (e.g. Spring 2025)"
+                                            value={newSeasonYear}
+                                            onChange={(e) => setNewSeasonYear(e.target.value)}
+                                            className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                        />
+                                        <div className="flex flex-col gap-2 mt-2">
+                                            <label className="text-zinc-400 text-xs uppercase tracking-wide">
+                                                Show Poster (optional)
+                                            </label>
                                             <input
-                                                type="text"
-                                                placeholder="Show name"
-                                                value={newShowName}
-                                                onChange={(e) => setNewShowName(e.target.value)}
-                                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                                id="poster-upload"
+                                                type="file"
+                                                accept="image/*,application/pdf"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    if (file.size > 10 * 1024 * 1024) {
+                                                        setPosterSizeError("File must be under 10MB");
+                                                        setPosterFile(null);
+                                                        setPosterPreview(null);
+                                                        return;
+                                                    }
+                                                    setPosterSizeError("");
+                                                    setPosterFile(file);
+                                                    setPosterPreview(URL.createObjectURL(file));
+                                                }}
                                             />
-                                            <input
-                                                type="text"
-                                                placeholder="Season / Year (e.g. Spring 2025)"
-                                                value={newSeasonYear}
-                                                onChange={(e) => setNewSeasonYear(e.target.value)}
-                                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                                            />
-                                            <div className="flex flex-col gap-2 mt-2">
-                                                <label className="text-zinc-400 text-xs uppercase tracking-wide">
-                                                    Show Poster (optional)
-                                                </label>
-                                                <input
-                                                    id="poster-upload"
-                                                    type="file"
-                                                    accept="image/*,application/pdf"
-                                                    className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (!file) return;
-                                                        if (file.size > 10 * 1024 * 1024) {
-                                                            setPosterSizeError("File must be under 10MB");
-                                                            setPosterFile(null);
-                                                            setPosterPreview(null);
-                                                            return;
-                                                        }
-                                                        setPosterSizeError("");
-                                                        setPosterFile(file);
-                                                        setPosterPreview(URL.createObjectURL(file));
-                                                    }}
-                                                />
-                                                <label
-                                                    htmlFor="poster-upload"
-                                                    className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
-                                                >
-                                                    📄 Attach Show Poster
-                                                </label>
-                                                {posterFile && (
-                                                    <p className="text-zinc-400 text-xs">{posterFile.name}</p>
-                                                )}
-                                                {posterSizeError && (
-                                                    <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
-                                                )}
-                                                <p className="text-zinc-500 text-xs">
-                                                    JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={handleAddShow}
-                                                    disabled={uploadingPoster}
-                                                    className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
-                                                >
-                                                    {uploadingPoster ? "Uploading..." : "Submit"}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAddingShow(false)}
-                                                    className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                            <p className="text-xs text-zinc-600">
-                                                Show submissions are reviewed by staff before appearing on your profile.
+                                            <label
+                                                htmlFor="poster-upload"
+                                                className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-xs px-3 py-1.5 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
+                                            >
+                                                📄 Attach Show Poster
+                                            </label>
+                                            {posterFile && (
+                                                <p className="text-zinc-400 text-xs">{posterFile.name}</p>
+                                            )}
+                                            {posterSizeError && (
+                                                <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
+                                            )}
+                                            <p className="text-zinc-500 text-xs">
+                                                JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
                                             </p>
                                         </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        {/* RIGHT — personal info */}
-                        <div className="flex flex-col gap-3">
-                            <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
-                                <span style={{ color: "#cc0000" }}>ABOUT </span>
-                                <span className="text-white">ME</span>
-                            </h2>
-                            {profile?.favorite_bands && (
-                                <ProfileField label="Favorite Bands" value={profile.favorite_bands} />
-                            )}
-                            {profile?.first_concert && (
-                                <ProfileField label="First Concert" value={profile.first_concert} />
-                            )}
-                            {profile?.fun_fact && (
-                                <ProfileField label="Fun Fact" value={profile.fun_fact} />
-                            )}
-                            {profile?.spotify_url && (
-                                <a
-                                    href={profile.spotify_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
-                                >
-                                    🎵 Open Spotify Playlist
-                                </a>
-                            )}
-                            {profile?.apple_music_url && (
-                                <a
-                                    href={profile.apple_music_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
-                                >
-                                    🎵 Open Apple Music Playlist
-                                </a>
-                            )}
-
-                            {profile?.pending_status === "pending" && profile.pending_changes && (
-                                <div className="rounded-none bg-[#1a1a1a] p-5">
-                                    <p className="text-xs uppercase tracking-widest text-zinc-500">
-                                        Pending Review
-                                    </p>
-                                    <div className="mt-3 space-y-2">
-                                        {Object.entries(
-                                            profile.pending_changes as Record<string, string>
-                                        )
-                                            .filter(([, v]) => v)
-                                            .map(([k, v]) => (
-                                                <div key={k}>
-                                                    <p className="text-xs capitalize text-zinc-500">
-                                                        {k.replace(/_/g, " ")}
-                                                    </p>
-                                                    <p className="mt-0.5 text-sm text-zinc-300">{v}</p>
-                                                </div>
-                                            ))}
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleAddShow}
+                                                disabled={uploadingPoster}
+                                                className="rounded-none bg-[#cc0000] px-4 py-1.5 text-xs text-white transition hover:bg-[#b30000] disabled:opacity-50"
+                                            >
+                                                {uploadingPoster ? "Uploading..." : "Submit"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setAddingShow(false)}
+                                                className="rounded-none bg-zinc-800 px-4 py-1.5 text-xs text-zinc-400"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-zinc-600">
+                                            Show submissions are reviewed by staff before appearing on your profile.
+                                        </p>
                                     </div>
-                                    <p className="mt-3 text-xs text-zinc-600">
-                                        These changes are awaiting staff approval.
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* RIGHT — switches between view and edit */}
+                    <div className="flex flex-col gap-3">
+                        {editMode ? (
+                            <>
+                                {/* Banner URL */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-zinc-400 text-xs uppercase tracking-wide">
+                                        Hero Banner Image URL (optional)
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={wallpaperUrl}
+                                        onChange={(e) => setWallpaperUrl(e.target.value)}
+                                        placeholder="https://..."
+                                        className="bg-[#1a1a1a] text-white text-sm px-3 py-2 rounded-none border border-zinc-600 focus:border-zinc-400 outline-none w-full"
+                                    />
+                                    <p className="text-zinc-500 text-xs">
+                                        Paste a direct image URL to use as your profile banner. Appears behind your name when no show posters are approved yet.
                                     </p>
                                 </div>
-                            )}
 
-                            {!hasPublishedContent && !profile?.pending_status && isOwnProfile && (
-                                <p className="text-sm text-zinc-500">
-                                    Your profile is empty. Click Edit Profile to add your info.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Edit Profile button — below grid */}
-                    {isOwnProfile && (
-                        <div className="pt-4">
-                            <button
-                                type="button"
-                                onClick={() => setEditMode(true)}
-                                className="bg-[#cc0000] text-white rounded-none px-6 py-2 text-sm font-semibold hover:bg-[#b30000] mt-2"
-                            >
-                                Edit Profile
-                            </button>
-                        </div>
-                    )}
-                    </div>
-                </>
-            ) : (
-                <div className="mt-10 space-y-3 px-6">
-                    <div className="space-y-3">
-                        {/* Photo upload */}
-                        <div className="space-y-2">
-                            <p className="text-xs uppercase tracking-widest text-zinc-500">
-                                Upload New Profile Photo
-                            </p>
-                            {/* Current approved photo or new preview */}
-                            {(profile?.photo_url || photoPreview) && (
-                                <img
-                                    src={photoPreview ?? profile?.photo_url ?? ""}
-                                    alt="Current photo"
-                                    className="h-24 w-24 rounded-full object-cover"
-                                />
-                            )}
-                            {/* Pending review pill */}
-                            {profile?.pending_photo_url && !photoFile && (
-                                <div className="inline-block rounded-none bg-[#1a1a1a] px-2 py-1 text-xs text-zinc-400">
-                                    📷 New photo pending review
+                                {/* Photo upload */}
+                                <div className="space-y-2">
+                                    <p className="text-xs uppercase tracking-widest text-zinc-500">
+                                        Upload New Profile Photo
+                                    </p>
+                                    {(profile?.photo_url || photoPreview) && (
+                                        <img
+                                            src={photoPreview ?? profile?.photo_url ?? ""}
+                                            alt="Current photo"
+                                            className="h-24 w-24 rounded-full object-cover"
+                                        />
+                                    )}
+                                    {profile?.pending_photo_url && !photoFile && (
+                                        <div className="inline-block rounded-none bg-[#1a1a1a] px-2 py-1 text-xs text-zinc-400">
+                                            📷 New photo pending review
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col gap-2">
+                                        <input
+                                            id="photo-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                if (file.size > 5 * 1024 * 1024) {
+                                                    setPhotoSizeError("File must be under 5MB");
+                                                    setPhotoFile(null);
+                                                    setPhotoPreview(null);
+                                                    return;
+                                                }
+                                                setPhotoSizeError("");
+                                                setPhotoFile(file);
+                                                setPhotoPreview(URL.createObjectURL(file));
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor="photo-upload"
+                                            className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
+                                        >
+                                            📷 Choose Photo
+                                        </label>
+                                        {photoFile && (
+                                            <p className="text-zinc-400 text-xs">{photoFile.name}</p>
+                                        )}
+                                        {photoSizeError && (
+                                            <p className="text-[#cc0000] text-xs">{photoSizeError}</p>
+                                        )}
+                                        <p className="text-zinc-400 text-xs">
+                                            JPG or PNG, max 5MB. Goes to staff for review before appearing on your profile.
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
-                            <div className="flex flex-col gap-2">
-                                <input
-                                    id="photo-upload"
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        if (file.size > 5 * 1024 * 1024) {
-                                            setPhotoSizeError("File must be under 5MB");
-                                            setPhotoFile(null);
-                                            setPhotoPreview(null);
-                                            return;
-                                        }
-                                        setPhotoSizeError("");
-                                        setPhotoFile(file);
-                                        setPhotoPreview(URL.createObjectURL(file));
-                                    }}
-                                />
-                                <label
-                                    htmlFor="photo-upload"
-                                    className="cursor-pointer inline-flex items-center gap-2 bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-none border border-zinc-600 hover:border-zinc-400 w-fit"
-                                >
-                                    📷 Choose Photo
-                                </label>
-                                {photoFile && (
-                                    <p className="text-zinc-400 text-xs">{photoFile.name}</p>
-                                )}
-                                {photoSizeError && (
-                                    <p className="text-[#cc0000] text-xs">{photoSizeError}</p>
-                                )}
-                                <p className="text-zinc-400 text-xs">
-                                    JPG or PNG, max 5MB. Goes to staff for review before appearing on your profile.
+
+                                <div>
+                                    <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                        Favorite Bands
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editFavBands}
+                                        onChange={(e) => setEditFavBands(e.target.value)}
+                                        className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                        First Concert
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editFirstConcert}
+                                        onChange={(e) => setEditFirstConcert(e.target.value)}
+                                        className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                        Fun Fact
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        value={editFunFact}
+                                        onChange={(e) => setEditFunFact(e.target.value)}
+                                        className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                        Spotify URL
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editSpotify}
+                                        onChange={(e) => setEditSpotify(e.target.value)}
+                                        placeholder="https://open.spotify.com/..."
+                                        className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
+                                        Apple Music URL
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editApple}
+                                        onChange={(e) => setEditApple(e.target.value)}
+                                        className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
+                                    />
+                                </div>
+
+                                <div className="flex items-center pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveProfile}
+                                        disabled={saving}
+                                        className="rounded-none bg-[#cc0000] px-4 py-2 text-sm text-white transition hover:bg-[#b30000] disabled:opacity-50"
+                                    >
+                                        {saving ? "Submitting..." : "Submit for Review"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditMode(false)}
+                                        className="ml-3 rounded-none bg-zinc-800 px-4 py-2 text-sm text-zinc-400"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+
+                                <p className="text-xs text-zinc-600">
+                                    Profile changes are reviewed by staff before appearing publicly.
                                 </p>
-                            </div>
-                        </div>
+                            </>
+                        ) : (
+                            <>
+                                <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
+                                    <span style={{ color: "#cc0000" }}>ABOUT </span>
+                                    <span className="text-white">ME</span>
+                                </h2>
+                                {profile?.favorite_bands && (
+                                    <ProfileField label="Favorite Bands" value={profile.favorite_bands} />
+                                )}
+                                {profile?.first_concert && (
+                                    <ProfileField label="First Concert" value={profile.first_concert} />
+                                )}
+                                {profile?.fun_fact && (
+                                    <ProfileField label="Fun Fact" value={profile.fun_fact} />
+                                )}
+                                {profile?.spotify_url && (
+                                    <a
+                                        href={profile.spotify_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
+                                    >
+                                        🎵 Open Spotify Playlist
+                                    </a>
+                                )}
+                                {profile?.apple_music_url && (
+                                    <a
+                                        href={profile.apple_music_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex w-full items-center justify-center rounded-none bg-[#111111] py-4 text-sm text-white transition hover:bg-[#1a1a1a]"
+                                    >
+                                        🎵 Open Apple Music Playlist
+                                    </a>
+                                )}
 
-                        <div>
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
-                                Favorite Bands
-                            </label>
-                            <input
-                                type="text"
-                                value={editFavBands}
-                                onChange={(e) => setEditFavBands(e.target.value)}
-                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
-                                First Concert
-                            </label>
-                            <input
-                                type="text"
-                                value={editFirstConcert}
-                                onChange={(e) => setEditFirstConcert(e.target.value)}
-                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
-                                Fun Fact
-                            </label>
-                            <textarea
-                                rows={3}
-                                value={editFunFact}
-                                onChange={(e) => setEditFunFact(e.target.value)}
-                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
-                                Spotify URL
-                            </label>
-                            <input
-                                type="text"
-                                value={editSpotify}
-                                onChange={(e) => setEditSpotify(e.target.value)}
-                                placeholder="https://open.spotify.com/..."
-                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-xs uppercase tracking-widest text-zinc-500">
-                                Apple Music URL
-                            </label>
-                            <input
-                                type="text"
-                                value={editApple}
-                                onChange={(e) => setEditApple(e.target.value)}
-                                className="w-full rounded-none border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                            />
-                        </div>
+                                {profile?.pending_status === "pending" && profile.pending_changes && (
+                                    <div className="rounded-none bg-[#1a1a1a] p-5">
+                                        <p className="text-xs uppercase tracking-widest text-zinc-500">
+                                            Pending Review
+                                        </p>
+                                        <div className="mt-3 space-y-2">
+                                            {Object.entries(
+                                                profile.pending_changes as Record<string, string>
+                                            )
+                                                .filter(([, v]) => v)
+                                                .map(([k, v]) => (
+                                                    <div key={k}>
+                                                        <p className="text-xs capitalize text-zinc-500">
+                                                            {k.replace(/_/g, " ")}
+                                                        </p>
+                                                        <p className="mt-0.5 text-sm text-zinc-300">{v}</p>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                        <p className="mt-3 text-xs text-zinc-600">
+                                            These changes are awaiting staff approval.
+                                        </p>
+                                    </div>
+                                )}
 
-                        <div className="flex items-center pt-2">
-                            <button
-                                type="button"
-                                onClick={handleSaveProfile}
-                                disabled={saving}
-                                className="rounded-none bg-[#cc0000] px-4 py-2 text-sm text-white transition hover:bg-[#b30000] disabled:opacity-50"
-                            >
-                                {saving ? "Submitting..." : "Submit for Review"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setEditMode(false)}
-                                className="ml-3 rounded-none bg-zinc-800 px-4 py-2 text-sm text-zinc-400"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-
-                        <p className="text-xs text-zinc-600">
-                            Profile changes are reviewed by staff before appearing publicly.
-                        </p>
+                                {!hasPublishedContent && !profile?.pending_status && isOwnProfile && (
+                                    <p className="text-sm text-zinc-500">
+                                        Your profile is empty. Click Edit Profile to add your info.
+                                    </p>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
-            )}
+
+                {/* Edit Profile button — below grid, view mode only */}
+                {!editMode && isOwnProfile && (
+                    <div className="pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setEditMode(true)}
+                            className="bg-[#cc0000] text-white rounded-none px-6 py-2 text-sm font-semibold hover:bg-[#b30000] mt-2"
+                        >
+                            Edit Profile
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
