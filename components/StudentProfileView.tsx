@@ -223,21 +223,26 @@ export default function StudentProfileView({
         if (posterFile) {
             const ext = posterFile.name.split(".").pop() ?? "jpg";
             const path = `${studentId}/posters/${newRowId}.${ext}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from("student-profiles")
                 .upload(path, posterFile, { contentType: posterFile.type, upsert: true });
 
-            if (!uploadError && uploadData) {
-                const { data: urlData } = supabase.storage
-                    .from("student-profiles")
-                    .getPublicUrl(path);
-
-                // Step 3: Update row with poster URL
-                await supabase
-                    .from("student_show_history")
-                    .update({ pending_poster_url: urlData.publicUrl })
-                    .eq("id", newRowId);
+            if (uploadError) {
+                console.error("Poster upload error:", uploadError);
+                setPosterSizeError("Upload failed: " + uploadError.message);
+                setUploadingPoster(false);
+                return;
             }
+
+            const { data: urlData } = supabase.storage
+                .from("student-profiles")
+                .getPublicUrl(path);
+
+            // Step 3: Update row with poster URL
+            await supabase
+                .from("student_show_history")
+                .update({ pending_poster_url: urlData.publicUrl })
+                .eq("id", newRowId);
         }
 
         setNewShowName("");

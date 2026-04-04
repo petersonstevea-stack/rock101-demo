@@ -174,7 +174,7 @@ export default function ApprovalsView() {
                 .from("student_show_history")
                 .update({
                     status: "approved",
-                    poster_url: item.pendingPosterUrl ?? null,
+                    poster_url: item.pendingPosterUrl,
                     pending_poster_url: null,
                 })
                 .eq("id", item.id);
