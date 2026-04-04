@@ -68,6 +68,8 @@ export default function PerformanceProgramShell({
                 const sgi = membership.show_group_instances as any;
                 const rc = sgi.rock_classes;
 
+                console.log('staffNames result:', rc?.staff_names, 'rock_class_id:', sgi.rock_class_id);
+
                 let staffNames: string[] = rc?.staff_names ?? [];
 
                 if (sgi.rock_class_id) {
