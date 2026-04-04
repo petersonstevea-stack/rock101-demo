@@ -287,11 +287,22 @@ export default function ApprovalsView() {
                                         <p className="text-sm text-white">{item.showName}</p>
                                         <p className="text-xs text-zinc-500">{item.seasonYear}</p>
                                         {item.pendingPosterUrl && (
-                                            <img
-                                                src={item.pendingPosterUrl}
-                                                alt="Show poster"
-                                                className="mt-2 max-h-24 object-contain"
-                                            />
+                                            item.pendingPosterUrl.toLowerCase().endsWith(".pdf") ? (
+                                                <a
+                                                    href={item.pendingPosterUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[#cc0000] text-xs underline mt-2"
+                                                >
+                                                    📄 View PDF Poster
+                                                </a>
+                                            ) : (
+                                                <img
+                                                    src={item.pendingPosterUrl}
+                                                    alt="Show poster"
+                                                    className="mt-2 max-h-20 object-contain"
+                                                />
+                                            )
                                         )}
                                     </>
                                 )}

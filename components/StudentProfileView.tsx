@@ -219,9 +219,10 @@ export default function StudentProfileView({
 
         const newRowId = insertData.id;
 
-        // Step 2: Upload poster using row ID as filename
+        // Step 2: Upload poster using row ID as filename, preserving extension
         if (posterFile) {
-            const path = `${studentId}/posters/${newRowId}.jpg`;
+            const ext = posterFile.name.split(".").pop() ?? "jpg";
+            const path = `${studentId}/posters/${newRowId}.${ext}`;
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from("student-profiles")
                 .upload(path, posterFile, { contentType: posterFile.type, upsert: true });
@@ -282,17 +283,37 @@ export default function StudentProfileView({
             {approvedPosters.length > 0 && (
                 <div className="relative h-48 w-full overflow-hidden">
                     <div className="absolute inset-0 flex overflow-hidden">
-                        {approvedPosters.map((url, i) => (
-                            <div
-                                key={i}
-                                className="flex-1 min-w-0 h-full"
-                                style={{
-                                    backgroundImage: `url(${url})`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center top",
-                                }}
-                            />
-                        ))}
+                        {approvedPosters.map((url, i) => {
+                            const isPdf = url.toLowerCase().endsWith(".pdf");
+                            return isPdf ? (
+                                <div
+                                    key={i}
+                                    className="flex-1 min-w-0 h-full bg-[#1a1a1a] flex flex-col items-center justify-center gap-1 p-2"
+                                >
+                                    <span className="text-white text-xs font-bold text-center leading-tight">
+                                        🎸
+                                    </span>
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[#cc0000] text-xs underline"
+                                    >
+                                        View Poster
+                                    </a>
+                                </div>
+                            ) : (
+                                <div
+                                    key={i}
+                                    className="flex-1 min-w-0 h-full"
+                                    style={{
+                                        backgroundImage: `url(${url})`,
+                                        backgroundSize: "cover",
+                                        backgroundPosition: "center top",
+                                    }}
+                                />
+                            );
+                        })}
                         {/* Dark overlay so text stays readable */}
                         <div className="absolute inset-0 bg-black/60" />
                     </div>
@@ -418,7 +439,7 @@ export default function StudentProfileView({
                                     <input
                                         id="poster-upload"
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/*,application/pdf"
                                         className="hidden"
                                         onChange={(e) => {
                                             const file = e.target.files?.[0];
@@ -447,7 +468,7 @@ export default function StudentProfileView({
                                         <p className="text-[#cc0000] text-xs">{posterSizeError}</p>
                                     )}
                                     <p className="text-zinc-500 text-xs">
-                                        11×17 JPG or PNG, max 10MB. Staff will review before it appears on your profile.
+                                        JPG, PNG, or PDF, max 10MB. Staff will review before it appears on your profile.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
