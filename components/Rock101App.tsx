@@ -221,11 +221,10 @@ export default function Rock101App() {
 
     useEffect(() => {
         if (!currentUser) return;
+        if (programShell !== null) return;
 
         const meta = currentUser.userMetadata ?? {};
         const metaRole = (meta.role as string) ?? currentUser.role;
-
-        console.log('programShell detection:', metaRole, meta.students);
 
         if (metaRole === "parent") {
             let students: Array<{ student_id: string; student_name: string; program: string }> = [];
@@ -1426,6 +1425,7 @@ export default function Rock101App() {
                             onClick={() => {
                                 setPpStudentId(s.student_id);
                                 setPpStudentName(s.student_name);
+                                setCurrentUser((prev) => prev ? { ...prev, name: `Parent of ${s.student_name}` } : prev);
                                 if (s.program === "performance_program") {
                                     setProgramShell("performance");
                                 } else {
