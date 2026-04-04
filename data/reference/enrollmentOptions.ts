@@ -2,12 +2,15 @@ export type SchoolType = "franchise" | "corporate";
 
 export type ProgramId =
   | "rock101"
+  | "rock_101"
   | "performance_program"
   | "rookies"
   | "little_wing"
-  | "camps";
+  | "camps"
+  | "adult_band"
+  | "lessons_only";
 
-export type InstrumentId = "guitar" | "bass" | "drums" | "keys" | "vocals";
+export type InstrumentId = "guitar" | "bass" | "drums" | "keys" | "vocals" | "other";
 
 export type StaffRole = "owner" | "general_manager" | "music_director" | "instructor";
 
@@ -22,11 +25,14 @@ export const SCHOOL_TYPE_OPTIONS: Option<SchoolType>[] = [
 ];
 
 export const PROGRAM_OPTIONS: Option<ProgramId>[] = [
-  { value: "rock101", label: "Rock 101" },
+  { value: "rock_101", label: "Rock 101" },
+  { value: "rock101", label: "Rock 101 (legacy)" },
   { value: "performance_program", label: "Performance Program" },
   { value: "rookies", label: "Rookies" },
   { value: "little_wing", label: "Little Wing" },
   { value: "camps", label: "Camps" },
+  { value: "adult_band", label: "Adult Band" },
+  { value: "lessons_only", label: "Lessons Only" },
 ];
 
 export const INSTRUMENT_OPTIONS: Option<InstrumentId>[] = [
@@ -35,6 +41,7 @@ export const INSTRUMENT_OPTIONS: Option<InstrumentId>[] = [
   { value: "drums", label: "Drums" },
   { value: "keys", label: "Keys" },
   { value: "vocals", label: "Vocals" },
+  { value: "other", label: "Other" },
 ];
 
 export const STAFF_ROLE_OPTIONS: Option<StaffRole>[] = [

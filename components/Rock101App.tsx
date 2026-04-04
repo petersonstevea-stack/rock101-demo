@@ -1740,6 +1740,11 @@ export default function Rock101App() {
                                                         {(student as any).instrument}
                                                     </div>
                                                 )}
+                                                {isR101 && (
+                                                    <div className="mt-1 text-xs text-zinc-200">
+                                                        Rock 101
+                                                    </div>
+                                                )}
                                                 {isPP && (
                                                     <div className="mt-1 text-xs text-zinc-400">
                                                         Performance Program
