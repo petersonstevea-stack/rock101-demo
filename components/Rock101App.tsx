@@ -52,6 +52,7 @@ import {
 } from "@/lib/session";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import PerformanceProgramShell from "@/components/PerformanceProgramShell";
 type Tab =
     | "privateLesson"
     | "graduationRequirements"
@@ -132,6 +133,9 @@ export default function Rock101App() {
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [parentEmailStatus, setParentEmailStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [castingShowGroupId, setCastingShowGroupId] = useState<string | null>(null);
+    const [programShell, setProgramShell] = useState<"rock101" | "performance" | null>(null);
+    const [ppStudentId, setPpStudentId] = useState("");
+    const [ppStudentName, setPpStudentName] = useState("");
 
     useEffect(() => {
         supabase
@@ -182,6 +186,27 @@ export default function Rock101App() {
                         staffId: dbUser.id,
                     };
                     setCurrentUser(sessionUser);
+                } else {
+                    // No staff row — check if this is a parent SSO login via user_metadata
+                    const metaRole = data.user.user_metadata?.role;
+                    const metaProgram = data.user.user_metadata?.program;
+                    const metaStudentId = data.user.user_metadata?.student_id;
+                    const metaStudentName = data.user.user_metadata?.student_name;
+
+                    if (metaRole === "parent" && metaProgram === "performance_program") {
+                        setProgramShell("performance");
+                        setPpStudentId(metaStudentId ?? "");
+                        setPpStudentName(metaStudentName ?? "");
+                    } else if (metaRole === "parent") {
+                        setProgramShell("rock101");
+                        const parentEmail = data.user.email?.trim().toLowerCase() ?? "";
+                        setCurrentUser({
+                            email: parentEmail,
+                            name: metaStudentName ?? parentEmail,
+                            role: "parent",
+                            schoolId: data.user.user_metadata?.school_id ?? "del-mar",
+                        });
+                    }
                 }
             }
         };
@@ -1321,6 +1346,21 @@ export default function Rock101App() {
                     } else {
                         setSelectedStudentName("");
                     }
+                }}
+            />
+        );
+    }
+
+    if (programShell === "performance") {
+        return (
+            <PerformanceProgramShell
+                studentName={ppStudentName}
+                studentId={ppStudentId}
+                schoolId={currentUser?.schoolId ?? ""}
+                onSignOut={async () => {
+                    await supabase.auth.signOut();
+                    setCurrentUser(null);
+                    setProgramShell(null);
                 }}
             />
         );

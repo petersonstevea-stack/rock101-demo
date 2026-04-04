@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         client_id: process.env.PIKE13_CLIENT_ID!,
         redirect_uri: `${SITE_URL}/api/auth/pike13/callback`,
         response_type: "code",
+        state: schoolSlug,
     });
 
     const authorizeUrl = `https://${school.pike13_subdomain}.pike13.com/oauth/authorize?${params}`;

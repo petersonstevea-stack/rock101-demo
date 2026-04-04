@@ -2,21 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const SITE_URL = "https://rock101stageready.com";
-const PIKE13_SUBDOMAIN = "delmar-sor";
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const error = searchParams.get("error");
+    const state = searchParams.get("state") ?? "del-mar";
 
     if (error || !code) {
         return NextResponse.redirect(`${SITE_URL}/?sso_error=pike13_denied`);
     }
 
     try {
-        // Step 1: Exchange code for Pike13 access token
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        // Step 1: Resolve school from state param (slug) before token exchange
+        const { data: schoolRow } = await supabaseAdmin
+            .from("schools")
+            .select("id, name, pike13_subdomain, pike13_location_id, feature_parent_sso")
+            .eq("id", state)
+            .maybeSingle();
+
+        if (!schoolRow?.pike13_subdomain) {
+            return NextResponse.redirect(
+                `${SITE_URL}/?sso_error=school_not_configured`
+            );
+        }
+
+        // Step 2: Exchange code for Pike13 access token
         const tokenRes = await fetch(
-            `https://${PIKE13_SUBDOMAIN}.pike13.com/oauth/token`,
+            `https://${schoolRow.pike13_subdomain}.pike13.com/oauth/token`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -44,9 +63,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${SITE_URL}/?sso_error=no_token`);
         }
 
-        // Step 2: Get the logged-in user's profile from Pike13
+        // Step 3: Get the logged-in user's profile from Pike13
         const profileRes = await fetch(
-            `https://${PIKE13_SUBDOMAIN}.pike13.com/api/v2/front/people/me.json`,
+            `https://${schoolRow.pike13_subdomain}.pike13.com/api/v2/front/people/me.json`,
             {
                 headers: { Authorization: `Bearer ${pike13Token}` },
             }
@@ -60,11 +79,9 @@ export async function GET(request: NextRequest) {
         }
 
         const profileData = await profileRes.json();
-        // Pike13 returns { people: [{ email, location_id, ... }] }
         const pike13Email = profileData?.people?.[0]?.email ?? null;
-        const pike13LocationId = profileData?.people?.[0]?.location_id ?? null;
 
-        console.log(`SSO: location_id=${pike13LocationId} email=${pike13Email?.trim().toLowerCase()}`);
+        console.log(`SSO: school=${schoolRow.id} email=${pike13Email?.trim().toLowerCase()}`);
 
         if (!pike13Email) {
             return NextResponse.redirect(`${SITE_URL}/?sso_error=no_email`);
@@ -72,26 +89,7 @@ export async function GET(request: NextRequest) {
 
         const normalizedEmail = pike13Email.trim().toLowerCase();
 
-        // Step 3: Resolve school from location_id, then verify staff
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            { auth: { autoRefreshToken: false, persistSession: false } }
-        );
-
-        const { data: schoolRow } = await supabaseAdmin
-            .from("schools")
-            .select("id, name, pike13_subdomain")
-            .eq("pike13_location_id", pike13LocationId)
-            .maybeSingle();
-
-        if (!schoolRow) {
-            console.error("SSO: no school found for location_id", pike13LocationId);
-            return NextResponse.redirect(
-                `${SITE_URL}/?sso_error=school_not_found`
-            );
-        }
-
+        // Step 4: Check for active staff record
         const { data: staffRow } = await supabaseAdmin
             .from("staff")
             .select("id, email, active")
@@ -99,13 +97,69 @@ export async function GET(request: NextRequest) {
             .eq("active", true)
             .maybeSingle();
 
+        // Step 5: If no staff — check parent SSO
         if (!staffRow) {
-            console.error("SSO: no active staff found for", normalizedEmail);
-            return NextResponse.redirect(
-                `${SITE_URL}/?sso_error=not_authorized`
-            );
+            if (!schoolRow.feature_parent_sso) {
+                console.error("SSO: no active staff and parent SSO disabled for", normalizedEmail);
+                return NextResponse.redirect(
+                    `${SITE_URL}/?sso_error=not_authorized`
+                );
+            }
+
+            const { data: studentRows } = await supabaseAdmin
+                .from("students")
+                .select("id, first_name, last_initial, program, school_id")
+                .ilike("parent_email", normalizedEmail)
+                .eq("school_id", schoolRow.id);
+
+            if (!studentRows || studentRows.length === 0) {
+                console.error("SSO: no students found for parent", normalizedEmail);
+                return NextResponse.redirect(
+                    `${SITE_URL}/?sso_error=not_authorized`
+                );
+            }
+
+            const student = studentRows[0];
+
+            const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email: normalizedEmail,
+                email_confirm: true,
+            });
+
+            if (createError && !createError.message.includes("already")) {
+                console.error("SSO: createUser error:", createError.message);
+                return NextResponse.redirect(
+                    `${SITE_URL}/?sso_error=create_user_failed`
+                );
+            }
+
+            const { data: linkData, error: linkError } =
+                await supabaseAdmin.auth.admin.generateLink({
+                    type: "magiclink",
+                    email: normalizedEmail,
+                    options: {
+                        redirectTo: SITE_URL,
+                        data: {
+                            role: "parent",
+                            program: student.program,
+                            student_id: student.id,
+                            school_id: student.school_id,
+                            student_name: `${student.first_name} ${student.last_initial}.`,
+                        },
+                    },
+                });
+
+            if (linkError || !linkData?.properties?.action_link) {
+                console.error("SSO: generateLink error:", linkError?.message);
+                return NextResponse.redirect(
+                    `${SITE_URL}/?sso_error=link_generation_failed`
+                );
+            }
+
+            return NextResponse.redirect(linkData.properties.action_link);
         }
 
+        // Step 6: Verify staff has an active role at this school
         const { data: roleRow } = await supabaseAdmin
             .from("staff_school_roles")
             .select("school_slug, role")
@@ -121,16 +175,12 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Step 4: Ensure user exists in Supabase Auth
-        // createUser with email_confirm:true is safe to call even if the user
-        // already exists — it returns an error we can ignore
-        const { error: createError } =
-            await supabaseAdmin.auth.admin.createUser({
-                email: normalizedEmail,
-                email_confirm: true,
-            });
+        // Step 7: Ensure user exists in Supabase Auth
+        const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: normalizedEmail,
+            email_confirm: true,
+        });
 
-        // Ignore "User already registered" error
         if (createError && !createError.message.includes("already")) {
             console.error("SSO: createUser error:", createError.message);
             return NextResponse.redirect(
@@ -138,7 +188,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Step 5: Generate one-time Supabase magic link
+        // Step 8: Generate one-time Supabase magic link
         const { data: linkData, error: linkError } =
             await supabaseAdmin.auth.admin.generateLink({
                 type: "magiclink",
@@ -153,9 +203,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Step 6: Redirect user to Supabase magic link
-        // This sets the Supabase session, then redirects to SITE_URL
-        // Rock101App.tsx getUser() on mount picks up the session
         return NextResponse.redirect(linkData.properties.action_link);
     } catch (err) {
         console.error("SSO callback error:", err);

@@ -35,7 +35,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         const ssoError = params.get("sso_error");
         if (ssoError) {
             const messages: Record<string, string> = {
-                not_authorized: "Your account is not authorized for Stage Ready.",
+                not_authorized: "Your account is not yet authorized for Stage Ready.",
                 school_not_found: "Your school is not yet connected to Stage Ready.",
                 school_not_configured: "This school is not yet set up for Stage Ready login.",
                 pike13_denied: "Pike13 login was cancelled.",
@@ -190,6 +190,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <h1 className="text-center text-3xl font-bold uppercase md:text-5xl">
                     STAGE READY
                 </h1>
+                <p className="text-center text-sm text-white/60">
+                    Staff &amp; Family Portal
+                </p>
 
                 <div className="w-full max-w-sm rounded-none bg-zinc-800 px-6 py-8">
                     {pendingUser && schoolChoices.length > 0 ? (
@@ -284,7 +287,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                         href="/api/auth/pike13/sso"
                                         className="mt-2 flex w-full items-center justify-center rounded-none bg-zinc-700 py-4 text-white transition hover:bg-zinc-600"
                                     >
-                                        Sign in with School of Rock
+                                        Sign in with Pike13
                                     </a>
                                 </>
                             )}
