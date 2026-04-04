@@ -11,6 +11,7 @@ import { buildParentDashboardData } from "@/lib/parentDashboard";
 import LoginScreen from "@/components/LoginScreen";
 import StudentSelector from "@/components/StudentSelector";
 import PrivateLessonView from "@/components/PrivateLessonView";
+import PPPrivateLessonView from "@/components/PPPrivateLessonView";
 import GroupRehearsalView from "@/components/GroupRehearsalView";
 import BadgeGrid from "@/components/BadgeGrid";
 import NotesPanel from "@/components/NotesPanel";
@@ -1987,55 +1988,67 @@ export default function Rock101App() {
 
                 {canSeeStudentContent && tab === "privateLesson" && selectedStudent && (
                     <>
-                        <PrivateLessonView
-                            student={selectedStudent}
-                            onToggleDone={handleToggleDone}
-                            onToggleSigned={handleToggleSigned}
-                            canEdit={
-                                role === "owner" ||
-                                role === "general_manager" ||
-                                (role === "instructor" &&
-                                    currentUser?.email === selectedStudent.primaryInstructorEmail)
-                            }
-                            canSign={
-                                role === "instructor" ||
-                                role === "music_director" ||
-                                role === "general_manager" ||
-                                role === "owner"
-                            }
-                            enrolledClassName={activeClassForSelectedStudent?.name ?? undefined}
-                            classInstructorName={
-                                (() => {
-                                    const email = activeClassForSelectedStudent?.classInstructorEmail;
-                                    if (!email) return undefined;
-                                    return filteredUsersBySchool.find(
-                                        (u) => u.email?.toLowerCase() === email.toLowerCase()
-                                    )?.name ?? email;
-                                })()
-                            }
-                        />
-
-                        {(role === "owner" ||
-                            role === "general_manager" ||
-                            (role === "instructor" &&
-                                currentUser?.email === selectedStudent.primaryInstructorEmail)) && (
-                                <NotesPanel
-                                    role="instructor"
-                                    authorName={currentUser?.name}
-                                    studentName={selectedStudent.name}
-                                    context="lesson"
-                                    value={selectedStudent.notes.instructor}
-                                    saved={selectedStudent.workflow.instructorSubmitted}
-                                    onChange={(v) => handleNoteChange("instructor", v)}
-                                    onSave={() => handleSaveFeedback("instructor")}
+                        {(selectedStudent as any).program === "performance_program" ? (
+                            <PPPrivateLessonView
+                                studentId={selectedStudent.id}
+                                studentName={selectedStudent.name}
+                                instrument={selectedStudent.instrument}
+                                schoolId={selectedStudent.schoolId}
+                                instructorName={currentUser?.name ?? ""}
+                            />
+                        ) : (
+                            <>
+                                <PrivateLessonView
+                                    student={selectedStudent}
+                                    onToggleDone={handleToggleDone}
+                                    onToggleSigned={handleToggleSigned}
                                     canEdit={
                                         role === "owner" ||
                                         role === "general_manager" ||
                                         (role === "instructor" &&
                                             currentUser?.email === selectedStudent.primaryInstructorEmail)
                                     }
+                                    canSign={
+                                        role === "instructor" ||
+                                        role === "music_director" ||
+                                        role === "general_manager" ||
+                                        role === "owner"
+                                    }
+                                    enrolledClassName={activeClassForSelectedStudent?.name ?? undefined}
+                                    classInstructorName={
+                                        (() => {
+                                            const email = activeClassForSelectedStudent?.classInstructorEmail;
+                                            if (!email) return undefined;
+                                            return filteredUsersBySchool.find(
+                                                (u) => u.email?.toLowerCase() === email.toLowerCase()
+                                            )?.name ?? email;
+                                        })()
+                                    }
                                 />
-                            )}
+
+                                {(role === "owner" ||
+                                    role === "general_manager" ||
+                                    (role === "instructor" &&
+                                        currentUser?.email === selectedStudent.primaryInstructorEmail)) && (
+                                        <NotesPanel
+                                            role="instructor"
+                                            authorName={currentUser?.name}
+                                            studentName={selectedStudent.name}
+                                            context="lesson"
+                                            value={selectedStudent.notes.instructor}
+                                            saved={selectedStudent.workflow.instructorSubmitted}
+                                            onChange={(v) => handleNoteChange("instructor", v)}
+                                            onSave={() => handleSaveFeedback("instructor")}
+                                            canEdit={
+                                                role === "owner" ||
+                                                role === "general_manager" ||
+                                                (role === "instructor" &&
+                                                    currentUser?.email === selectedStudent.primaryInstructorEmail)
+                                            }
+                                        />
+                                    )}
+                            </>
+                        )}
                     </>
                 )}
 
