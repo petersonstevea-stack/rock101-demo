@@ -52,8 +52,9 @@ export default function PerformanceProgramShell({
                     show_group_instance_id,
                     show_group_instances (
                         id, name, show_date, rock_class_id,
+                        staff_names,
                         rock_classes (
-                            name, staff_names,
+                            name,
                             class_sessions (
                                 session_date, status
                             )
@@ -68,18 +69,7 @@ export default function PerformanceProgramShell({
                 const sgi = membership.show_group_instances as any;
                 const rc = sgi.rock_classes;
 
-                console.log('staffNames result:', rc?.staff_names, 'rock_class_id:', sgi.rock_class_id);
-
-                let staffNames: string[] = rc?.staff_names ?? [];
-
-                if (sgi.rock_class_id) {
-                    const { data: rcRow } = await supabase
-                        .from("rock_classes")
-                        .select("staff_names")
-                        .eq("id", sgi.rock_class_id)
-                        .maybeSingle();
-                    staffNames = (rcRow?.staff_names ?? []) as string[];
-                }
+                const staffNames = (sgi.staff_names ?? []) as string[];
 
                 const today = new Date().toISOString().split("T")[0];
                 const sessions = (rc?.class_sessions ?? [])
