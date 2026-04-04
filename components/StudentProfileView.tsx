@@ -295,7 +295,7 @@ export default function StudentProfileView({
 
             {/* Full-page background layer */}
             {imagePosterUrls.length > 0 ? (
-                <div className="fixed inset-0 z-0" style={{
+                <div className="absolute inset-0 z-0" style={{
                     display: "grid",
                     gridTemplateColumns: `repeat(${imagePosterUrls.length}, 1fr)`,
                 }}>
@@ -310,7 +310,7 @@ export default function StudentProfileView({
                     <div className="absolute inset-0 bg-black/65" />
                 </div>
             ) : profile?.wallpaper_url ? (
-                <div className="fixed inset-0 z-0" style={{
+                <div className="absolute inset-0 z-0" style={{
                     backgroundImage: `url(${profile.wallpaper_url})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
@@ -318,7 +318,7 @@ export default function StudentProfileView({
                     <div className="absolute inset-0 bg-black/65" />
                 </div>
             ) : (
-                <div className="fixed inset-0 z-0"
+                <div className="absolute inset-0 z-0"
                     style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #1a1a1a 100%)" }}
                 />
             )}
