@@ -214,6 +214,11 @@ export default function ShowGroupSetupView({
     const [showAllSessions, setShowAllSessions] = useState(false);
     const [showPastSessions, setShowPastSessions] = useState(false);
 
+    // Casting equity panel
+    const [equityGroupId, setEquityGroupId] = useState<string | null>(null);
+    const [equityData, setEquityData] = useState<{ studentName: string; count: number }[]>([]);
+    const [equityLoading, setEquityLoading] = useState(false);
+
     // ─── Data loading ────────────────────────────────────────────────────
 
     const loadAll = useCallback(async () => {
@@ -614,6 +619,58 @@ function getSeasonLabel(seasonId: string | null): string {
         if (!groupMembers[group.id]) {
             loadRosterForGroup(group.id);
         }
+    }
+
+    async function handleEquityClick(groupId: string) {
+        if (equityGroupId === groupId) {
+            setEquityGroupId(null);
+            return;
+        }
+        setEquityGroupId(groupId);
+        setEquityLoading(true);
+
+        // 1. Load members
+        const { data: members } = await supabase
+            .from("show_group_student_memberships")
+            .select("student_id, students(first_name, last_initial)")
+            .eq("show_group_instance_id", groupId)
+            .eq("status", "active");
+
+        // 2. Load songs
+        const { data: songs } = await supabase
+            .from("show_group_songs")
+            .select("id")
+            .eq("show_group_instance_id", groupId);
+
+        const songIds = (songs ?? []).map((s: { id: string }) => s.id);
+
+        let assignments: { student_id: string }[] = [];
+        if (songIds.length > 0) {
+            // 3. Load slots
+            const { data: slots } = await supabase
+                .from("show_song_cast_slots")
+                .select("id")
+                .in("show_group_song_id", songIds);
+            const slotIds = (slots ?? []).map((s: { id: string }) => s.id);
+
+            if (slotIds.length > 0) {
+                // 4. Load assignments
+                const { data: asgn } = await supabase
+                    .from("show_song_cast_assignments")
+                    .select("student_id")
+                    .in("show_song_cast_slot_id", slotIds);
+                assignments = (asgn ?? []) as { student_id: string }[];
+            }
+        }
+
+        // 5. Build equity data
+        const data = (members ?? []).map((m: any) => ({
+            studentName: `${m.students?.first_name ?? ""} ${m.students?.last_initial ?? ""}.`.trim(),
+            count: assignments.filter((a) => a.student_id === m.student_id).length,
+        })).sort((a: { count: number }, b: { count: number }) => b.count - a.count);
+
+        setEquityData(data);
+        setEquityLoading(false);
     }
 
     function getInstrumentBucket(instrument: string): string {
@@ -1517,6 +1574,107 @@ function getSeasonLabel(seasonId: string | null): string {
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* ─── Casting Equity ─────────────────────────────────── */}
+                {showGroups.length > 0 && (
+                    <div className="rounded-none bg-[#111111] p-5">
+                        {/* Section header */}
+                        <h2
+                            className="text-2xl font-bold uppercase leading-none"
+                            style={{ fontFamily: "var(--font-oswald)" }}
+                        >
+                            <span style={{ color: "#cc0000" }}>CASTING</span>{" "}
+                            <em className="not-italic text-white">Equity</em>
+                        </h2>
+                        <div className="mt-2 h-0.5 w-12 bg-[#cc0000]" />
+                        <p className="mt-2 text-sm text-zinc-400">
+                            Select a show group to see how cast slots are distributed across students.
+                        </p>
+
+                        {/* Group tiles */}
+                        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+                            {showGroups.map((group) => (
+                                <button
+                                    key={group.id}
+                                    type="button"
+                                    onClick={() => handleEquityClick(group.id)}
+                                    className="rounded-none p-4 text-left transition border"
+                                    style={{
+                                        backgroundColor: equityGroupId === group.id ? "#1a1a1a" : "#111111",
+                                        borderColor: equityGroupId === group.id ? "#cc0000" : "#3f3f46",
+                                    }}
+                                >
+                                    <div className="text-sm font-bold uppercase text-white" style={{ fontFamily: "var(--font-oswald)" }}>
+                                        {group.name}
+                                    </div>
+                                    <div className="mt-1 text-xs text-zinc-400">
+                                        {memberCounts[group.id] ?? 0} students
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Equity panel */}
+                        {equityGroupId && (
+                            <div className="mt-4 rounded-none bg-[#1a1a1a] p-4">
+                                {equityLoading ? (
+                                    <div className="py-4 text-center text-sm text-zinc-400">Loading…</div>
+                                ) : (
+                                    <>
+                                        {/* Stats row */}
+                                        {equityData.length > 0 && (() => {
+                                            const counts = equityData.map((d) => d.count);
+                                            const avg = counts.reduce((s, c) => s + c, 0) / counts.length;
+                                            const max = Math.max(...counts);
+                                            const min = Math.min(...counts);
+                                            return (
+                                                <div className="mb-3 text-xs text-zinc-400">
+                                                    Avg: {avg.toFixed(1)} · Min: {min} · Max: {max}
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Student rows */}
+                                        {equityData.length > 0 ? (
+                                            <div className="space-y-1.5">
+                                                {equityData.map(({ studentName, count }) => {
+                                                    const counts = equityData.map((d) => d.count);
+                                                    const max = counts.length > 0 ? Math.max(...counts) : 0;
+                                                    const avg = counts.length > 0 ? counts.reduce((s, c) => s + c, 0) / counts.length : 0;
+                                                    const barPct = max > 0 ? Math.round((count / max) * 100) : 0;
+                                                    const isLow = count > 0 && count < avg - 2;
+                                                    return (
+                                                        <div key={studentName} className="flex items-center gap-3">
+                                                            <span className="w-28 shrink-0 truncate text-sm text-white">
+                                                                {studentName}
+                                                            </span>
+                                                            <div className="h-2 flex-1 rounded-none bg-[#333333]">
+                                                                <div
+                                                                    className="h-2 rounded-none"
+                                                                    style={{
+                                                                        width: `${barPct}%`,
+                                                                        backgroundColor: isLow ? "#b45309" : "#cc0000",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <span className="w-5 shrink-0 text-right text-xs text-zinc-400">
+                                                                {count}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="py-2 text-sm text-zinc-500">
+                                                No casting data yet for this group.
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
