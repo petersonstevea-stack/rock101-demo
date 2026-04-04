@@ -11,18 +11,18 @@ const ROLE_OPTIONS = [
     { value: "owner", label: "Owner" },
 ];
 
-type StaffRow = {
+// Flattened display row — role and school_slug come from staff_school_roles
+type StaffDisplayRow = {
     id: string;
     name: string;
     email: string;
-    role: string;
-    school_slug: string;
     active: boolean;
-    created_at: string | null;
+    ssrRole: string;      // staff_school_roles.role — source of truth for access control
+    schoolSlug: string;   // staff_school_roles.school_slug — needed for SSR update
 };
 
 export default function StaffEnrollmentPage() {
-    const [staffList, setStaffList] = useState<StaffRow[]>([]);
+    const [staffList, setStaffList] = useState<StaffDisplayRow[]>([]);
     const [schoolList, setSchoolList] = useState<{ id: string; name: string }[]>([]);
     const [showInactiveStaff, setShowInactiveStaff] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
@@ -43,8 +43,8 @@ export default function StaffEnrollmentPage() {
     async function loadStaff() {
         const { data, error } = await supabase
             .from("staff")
-            .select("*")
-            .order("created_at", { ascending: false });
+            .select("id, name, email, active, staff_school_roles(role, school_slug, active)")
+            .order("name", { ascending: true });
 
         if (error) {
             setStatusType("error");
@@ -53,7 +53,24 @@ export default function StaffEnrollmentPage() {
         }
 
         if (data) {
-            setStaffList(data as StaffRow[]);
+            // Flatten: one row per staff, using the primary SSR entry for role/school_slug
+            const rows: StaffDisplayRow[] = data.map((s) => {
+                const ssrEntries = (s.staff_school_roles ?? []) as {
+                    role: string;
+                    school_slug: string;
+                    active: boolean;
+                }[];
+                const primarySsr = ssrEntries[0];
+                return {
+                    id: s.id,
+                    name: s.name,
+                    email: s.email,
+                    active: s.active,
+                    ssrRole: primarySsr?.role ?? "instructor",
+                    schoolSlug: primarySsr?.school_slug ?? "",
+                };
+            });
+            setStaffList(rows);
         }
     }
 
@@ -61,11 +78,12 @@ export default function StaffEnrollmentPage() {
         loadStaff();
     }, []);
 
-    async function handleRoleChange(staff: StaffRow, newRole: string) {
+    async function handleRoleChange(staff: StaffDisplayRow, newRole: string) {
         setUpdatingId(staff.id);
         setStatusType("idle");
         setStatusMessage("");
 
+        // 1. Update staff.role (legacy column, kept in sync)
         const { error: staffError } = await supabase
             .from("staff")
             .update({ role: newRole })
@@ -78,33 +96,32 @@ export default function StaffEnrollmentPage() {
             return;
         }
 
+        // 2. Update staff_school_roles.role (source of truth for access control)
         const { error: ssrError } = await supabase
             .from("staff_school_roles")
-            .upsert(
-                {
-                    staff_id: staff.id,
-                    school_slug: staff.school_slug,
-                    role: newRole,
-                    is_primary: true,
-                    active: true,
-                },
-                { onConflict: "staff_id,school_slug" }
-            );
+            .update({ role: newRole })
+            .eq("staff_id", staff.id)
+            .eq("school_slug", staff.schoolSlug);
 
         if (ssrError) {
-            console.error("staff_school_roles upsert failed (non-blocking):", ssrError);
+            setStatusType("error");
+            setStatusMessage(`Role saved on staff, but staff_school_roles update failed for ${staff.name}: ${ssrError.message}`);
+            setUpdatingId(null);
+            return;
         }
 
         setStaffList((prev) =>
-            prev.map((s) => (s.id === staff.id ? { ...s, role: newRole } : s))
+            prev.map((s) => (s.id === staff.id ? { ...s, ssrRole: newRole } : s))
         );
 
         setStatusType("success");
-        setStatusMessage(`${staff.name} updated to ${ROLE_OPTIONS.find((r) => r.value === newRole)?.label ?? newRole}`);
+        setStatusMessage(
+            `${staff.name} updated to ${ROLE_OPTIONS.find((r) => r.value === newRole)?.label ?? newRole}`
+        );
         setUpdatingId(null);
     }
 
-    async function handleToggleActive(staff: StaffRow) {
+    async function handleToggleActive(staff: StaffDisplayRow) {
         setUpdatingId(staff.id);
         setStatusType("idle");
         setStatusMessage("");
@@ -200,7 +217,7 @@ export default function StaffEnrollmentPage() {
                                         <p className="font-semibold text-white">{staff.name}</p>
                                         <p className="text-xs text-white/60">{staff.email}</p>
                                         <p className="text-xs text-white/40">
-                                            {schoolList.find((s) => s.id === staff.school_slug)?.name ?? staff.school_slug}
+                                            {schoolList.find((s) => s.id === staff.schoolSlug)?.name ?? staff.schoolSlug}
                                         </p>
                                         <p className="mt-1 text-xs">
                                             {staff.active ? (
@@ -213,7 +230,7 @@ export default function StaffEnrollmentPage() {
 
                                     <div className="flex flex-wrap items-center gap-2">
                                         <select
-                                            value={staff.role}
+                                            value={staff.ssrRole}
                                             disabled={updatingId === staff.id}
                                             onChange={(e) => handleRoleChange(staff, e.target.value)}
                                             className="rounded-none border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none transition hover:border-zinc-500 disabled:opacity-50"
