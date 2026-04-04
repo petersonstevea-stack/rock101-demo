@@ -45,9 +45,9 @@ type StudentMeta = {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-none bg-[#111111] px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
-            <p className="mt-1 text-sm text-white">{value}</p>
+        <div className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center">
+            <p className="text-zinc-500 text-xs uppercase tracking-wide">{label}</p>
+            <p className="text-white text-sm mt-0.5">{value}</p>
         </div>
     );
 }
@@ -289,7 +289,7 @@ export default function StudentProfileView({
     return (
         <div className="w-full bg-black pb-12">
             {/* Hero block — wallpaper/collage background with avatar floating on top */}
-            <div className="relative w-full min-h-[280px] flex flex-col items-center justify-end pb-6">
+            <div className="relative w-full min-h-[280px] flex flex-col items-end justify-start">
 
                 {/* BACKGROUND LAYER — collage, wallpaper, or fallback */}
                 <div className="absolute inset-0 overflow-hidden">
@@ -324,7 +324,7 @@ export default function StudentProfileView({
                 </div>
 
                 {/* FOREGROUND LAYER — avatar + name on top */}
-                <div className="relative z-10 flex flex-col items-center gap-3">
+                <div className="relative z-10 flex flex-col items-start gap-3 pl-8 pb-6">
                     <div className="relative">
                         <div
                             className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-zinc-800 ${
@@ -388,7 +388,7 @@ export default function StudentProfileView({
             {!editMode ? (
                 <>
                     <div className="max-w-3xl mx-auto px-6 py-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
                         {/* LEFT — show history */}
                         <div className="flex flex-col gap-3">
@@ -404,16 +404,18 @@ export default function StudentProfileView({
                                     {showHistory.map((entry) => (
                                         <div
                                             key={entry.id}
-                                            className="flex items-center justify-between rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3"
+                                            className="rounded-none bg-[#1a1a1a] border-l-2 border-l-[#cc0000] px-4 py-3 min-h-[56px] flex flex-col justify-center"
                                         >
-                                            <span className="text-sm text-white">{entry.show_name}</span>
-                                            <div className="flex items-center gap-2">
-                                                {entry.status === "pending" && (
-                                                    <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
-                                                        Pending review
-                                                    </span>
-                                                )}
-                                                <span className="text-xs text-zinc-500">{entry.season_year}</span>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-white text-sm">{entry.show_name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    {entry.status === "pending" && (
+                                                        <span className="rounded-none bg-zinc-700 px-2 py-0.5 text-xs text-zinc-400">
+                                                            Pending review
+                                                        </span>
+                                                    )}
+                                                    <span className="text-xs text-zinc-500">{entry.season_year}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -513,6 +515,10 @@ export default function StudentProfileView({
 
                         {/* RIGHT — personal info */}
                         <div className="flex flex-col gap-3">
+                            <h2 style={{ fontFamily: "var(--font-oswald)" }} className="text-sm font-bold tracking-wide mb-3">
+                                <span style={{ color: "#cc0000" }}>ABOUT </span>
+                                <span className="text-white">ME</span>
+                            </h2>
                             {profile?.favorite_bands && (
                                 <ProfileField label="Favorite Bands" value={profile.favorite_bands} />
                             )}
